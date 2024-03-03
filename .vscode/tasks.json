@@ -1,0 +1,101 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+          "label": "Build",
+          "type": "shell",
+          "command": "make",
+          "options": {
+            "cwd": "${workspaceFolder}/jocktos/"
+        },
+          "group": {
+              "kind": "build",
+              "isDefault": true
+          }
+        },
+        {
+          "label": "Run QEMU",
+          "type": "shell",
+          "command": "echo 'QEMU started'; qemu-system-arm -machine olimex-stm32-h405 -kernel ${workspaceFolder}/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S",
+          "dependsOn": ["Build QEMU"],
+          "isBackground": true,
+          "problemMatcher": [
+            {
+              "pattern": [
+                {
+                  "regexp": ".",
+                  "file": 1,
+                  "location": 2,
+                  "message": 3
+                }
+              ],
+              "background": {
+                "activeOnStart": true,
+                "beginsPattern": ".",
+                "endsPattern": "QEMU started",
+              }
+            }
+          ]
+        },
+        {
+          "label": "Build in Docker",
+          "type": "shell",
+          "command": "docker-compose",
+          "args": [
+              "-f",
+              "${workspaceFolder}/.docker/docker-compose.yaml",
+              "up",
+              "--build",
+              "--remove-orphans",
+              "build"  // Specify the service name here
+          ],
+          "group": {
+              "kind": "build",
+              "isDefault": true
+          }
+        },
+        {
+          "label": "Run Emulator",
+          "type": "shell",
+          "command": "docker-compose",
+          "args": [
+              "-f",
+              "${workspaceFolder}/.docker/docker-compose.yaml",
+              "up",
+              "-d",
+              "--build",
+              "--remove-orphans",
+              "qemu-emulator"  // Specify the service name here
+          ],
+          "isBackground": true,
+          "problemMatcher": [
+            {
+              "pattern": [
+                {
+                  "regexp": ".",
+                  "file": 1,
+                  "location": 2,
+                  "message": 3
+                }
+              ],
+              "background": {
+                "activeOnStart": true,
+                "beginsPattern": ".",
+                "endsPattern": "QEMU started",
+              }
+            }
+          ]
+        },
+        {
+          "label": "Stop Emulator",
+          "type": "shell",
+          "command": "docker-compose",
+          "args": [
+              "-f",
+              "${workspaceFolder}/.docker/docker-compose.yaml",
+              "down",
+              "qemu-emulator"  // Specify the service name here
+          ],
+      }
+    ]
+}
