@@ -1,101 +1,75 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-          "label": "Build",
-          "type": "shell",
-          "command": "make",
-          "options": {
-            "cwd": "${workspaceFolder}/jocktos/"
-        },
-          "group": {
-              "kind": "build",
-              "isDefault": true
-          }
-        },
-        {
-          "label": "Run QEMU",
-          "type": "shell",
-          "command": "echo 'QEMU started'; qemu-system-arm -machine olimex-stm32-h405 -kernel ${workspaceFolder}/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S",
-          "dependsOn": ["Build QEMU"],
-          "isBackground": true,
-          "problemMatcher": [
-            {
-              "pattern": [
-                {
-                  "regexp": ".",
-                  "file": 1,
-                  "location": 2,
-                  "message": 3
-                }
-              ],
-              "background": {
-                "activeOnStart": true,
-                "beginsPattern": ".",
-                "endsPattern": "QEMU started",
-              }
-            }
-          ]
-        },
-        {
-          "label": "Build in Docker",
-          "type": "shell",
-          "command": "docker-compose",
-          "args": [
-              "-f",
-              "${workspaceFolder}/.docker/docker-compose.yaml",
-              "up",
-              "--build",
-              "--remove-orphans",
-              "build"  // Specify the service name here
-          ],
-          "group": {
-              "kind": "build",
-              "isDefault": true
-          }
-        },
-        {
-          "label": "Run Emulator",
-          "type": "shell",
-          "command": "docker-compose",
-          "args": [
-              "-f",
-              "${workspaceFolder}/.docker/docker-compose.yaml",
-              "up",
-              "-d",
-              "--build",
-              "--remove-orphans",
-              "qemu-emulator"  // Specify the service name here
-          ],
-          "isBackground": true,
-          "problemMatcher": [
-            {
-              "pattern": [
-                {
-                  "regexp": ".",
-                  "file": 1,
-                  "location": 2,
-                  "message": 3
-                }
-              ],
-              "background": {
-                "activeOnStart": true,
-                "beginsPattern": ".",
-                "endsPattern": "QEMU started",
-              }
-            }
-          ]
-        },
-        {
-          "label": "Stop Emulator",
-          "type": "shell",
-          "command": "docker-compose",
-          "args": [
-              "-f",
-              "${workspaceFolder}/.docker/docker-compose.yaml",
-              "down",
-              "qemu-emulator"  // Specify the service name here
-          ],
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-in-docker",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-v",
+        "${workspaceFolder}:/app",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "cd /app/jocktos/ && make clean && make",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
       }
-    ]
+    },
+    {
+      "label": "run-qemu-emulator",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-d",
+        "--name",
+        "my_qemu_emulator",
+        "--privileged",
+        "-p",
+        "1234:1234",
+        "-v",
+        "${workspaceFolder}:/app",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "qemu-system-arm -machine olimex-stm32-h405 -kernel /app/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S"
+      ],
+      "problemMatcher": {
+        "owner": "docker",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        }
+      }
+    },
+    {
+      "label": "stop-qemu-emulator",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "rm",
+        "-f",
+        "my_qemu_emulator"
+      ],
+      "problemMatcher": {
+        "owner": "docker",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        }
+      }
+    }
+  ]
 }

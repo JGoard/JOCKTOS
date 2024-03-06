@@ -6,10 +6,7 @@ RUN apt-get update && \
     wget \
     qemu-system \
     build-essential \
-    gcc-arm-none-eabi \
-    gdb-arm-none-eabi 
-
-RUN ln -s /usr/bin/gdb-multiarch /usr/bin/arm-none-eabi-gdb
+    gcc-arm-none-eabi
 
 WORKDIR /app
 
