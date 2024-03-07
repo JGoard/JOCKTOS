@@ -18,10 +18,16 @@
             "name": "Openocd Debug",
             "type": "cortex-debug",
             "servertype": "openocd",
-            "request": "launch",
+            "request": "attach",
             "executable": "${workspaceFolder}/jocktos/build/main.elf",
-            "configFiles": [ "target/board/stm32f4discovery.cfg" ],
-            "cwd": "${workspaceRoot}/jocktos"
+            "configFiles": ["interface/stlink.cfg",
+                "board/st_nucleo_f3.cfg"
+              ],
+            "showDevDebugOutput": "raw",
+            "cwd": "${workspaceRoot}/jocktos",
+            "gdbPath": "C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gdb.exe",
+            "gdbTarget": "localhost:3333"
+            
         },
     ]
 }
