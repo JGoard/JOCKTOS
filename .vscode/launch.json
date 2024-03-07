@@ -13,6 +13,15 @@
             "stopAtEntry": true,
             "preLaunchTask": "run-qemu-emulator",
             "postDebugTask": "stop-qemu-emulator",
-        }
+        },
+        {
+            "name": "Openocd Debug",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "request": "launch",
+            "executable": "${workspaceFolder}/jocktos/build/main.elf",
+            "configFiles": [ "target/board/stm32f4discovery.cfg" ],
+            "cwd": "${workspaceRoot}/jocktos"
+        },
     ]
 }
