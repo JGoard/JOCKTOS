@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "QEMU debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/jocktos/build/main.elf",
+            "cwd": "${workspaceFolder}/jocktos",
+            "externalConsole": false,
+            "miDebuggerPath": "C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gdb.exe",
+            "miDebuggerServerAddress": "localhost:1234",
+            "stopAtEntry": true,
+            "preLaunchTask": "run-qemu-emulator",
+            "postDebugTask": "stop-qemu-emulator",
+        },
+        {
+            "name": "Openocd Debug",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "request": "launch",
+            "executable": "${workspaceFolder}/jocktos/build/main.elf",
+            "configFiles": [ "target/board/stm32f4discovery.cfg" ],
+            "cwd": "${workspaceRoot}/jocktos"
+        },
+    ]
+}

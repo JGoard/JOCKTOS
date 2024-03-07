@@ -1,4 +1,4 @@
-ENTRY(OnReset)
+ENTRY(JocktosMain)
 
 MEMORY
 {
@@ -16,25 +16,11 @@ SECTIONS
 		/* rest of code & const data */
 		*(.text*)
 		*(.rodata*)
-
-		. = ALIGN(4);
-		__end_of_text__ = .;
 	} >FLASH
-
-	.data : 
-	{
-		__data_beg_src__ = __end_of_text__;
-		__data_beg__ = .;
-		*(.data*)
-		. = ALIGN(4);
-		__data_end__ = .;
-	} >RAM AT>FLASH
 
 	.bss (NOLOAD):
 	{
-		__bss_beg__ = .;
-		*(.bss*)
-		__bss_end__ = .;
+		*(COMMON)
 		StackTop = ORIGIN(RAM) + LENGTH(RAM);
 	} > RAM
 }
