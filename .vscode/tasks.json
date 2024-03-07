@@ -2,22 +2,97 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build-in-docker",
+      "label": "Compile Project",
       "type": "shell",
       "command": "docker",
       "args": [
         "run",
         "-v",
-        "${workspaceFolder}:/app",
+        "${workspaceFolder}:/JOCKTOS",
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "cd /app/jocktos/ && make clean && make",
+        "cd /JOCKTOS/jocktos/ && make clean && make",
       ],
+      "icon": {
+        "id": "tools",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#a8fdbb"
+        }
+      },
       "group": {
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "Build Docs",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/JOCKTOS",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "cd docs && make html && make latexpdf"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "icon": {
+        "id": "file-pdf",
+        "color": "terminal.ansiCyan"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#a2beee"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Open Dev Shell",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/JOCKTOS",
+        "jocktos:latest",
+        "/bin/bash"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "icon": {
+        "id": "terminal-ubuntu",
+        "color": "terminal.ansiRed"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#fab1b1"
+        }
+      },
+      "problemMatcher": []
     },
     {
       "label": "run-qemu-emulator",
@@ -32,12 +107,17 @@
         "-p",
         "1234:1234",
         "-v",
-        "${workspaceFolder}:/app",
+        "${workspaceFolder}:/JOCKTOS",
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "qemu-system-arm -machine olimex-stm32-h405 -kernel /app/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S"
+        "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S"
       ],
+      "options": {
+        "statusbar": {
+          "hide" : true
+        }
+      },
       "problemMatcher": {
         "owner": "docker",
         "fileLocation": [
@@ -59,6 +139,11 @@
         "-f",
         "my_qemu_emulator"
       ],
+      "options": {
+        "statusbar": {
+          "hide" : true
+        }
+      },
       "problemMatcher": {
         "owner": "docker",
         "fileLocation": [
