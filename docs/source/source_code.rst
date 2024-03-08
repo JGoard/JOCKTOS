@@ -2,6 +2,8 @@
 Source Code!
 =================================================
 
+for gods sake trigger the docs build
+
 Embedded LaTeX Equations
 -------------------------------------------------
 Here's some LaTeX inside the reStructured-Text:
