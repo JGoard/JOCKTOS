@@ -25,8 +25,8 @@
 				"${workspaceRoot}/jocktos/inc"
 			],
 			"defines": [
-				"DEBUG=1",
-				"SystemCoreClock = 180000000UL"
+				"DEBUG=1",  
+                "STM32F303xE"
 			],
 			"intelliSenseMode": "gcc-x64",
 			"compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc",

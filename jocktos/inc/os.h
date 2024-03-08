@@ -16,8 +16,6 @@
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
-void vEnableInterrupts();
-void vDisableInterrupts();
 
 
 
