@@ -1,0 +1,42 @@
+name: Test Build Docs
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - 'jocktos/**'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'jocktos/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install tools
+      run: |
+        apt-get install -y \
+        python3-sphinx \
+        python3-sphinx-rtd-theme \
+        python3-breathe \
+        doxygen \
+        graphviz \
+        texlive-xetex \
+        latexmk \
+        fonts-freefont-otf \
+        xindy
+
+    - name: Build html docs
+      run: cd docs && make html
+    
+    - name: Build PDF docs
+      run: make latexpdf

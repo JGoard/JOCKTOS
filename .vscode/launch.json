@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/jocktos/build/main.elf",
             "cwd": "${workspaceFolder}/jocktos",
             "externalConsole": false,
-            "miDebuggerPath": "C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gdb.exe",
+            "miDebuggerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
             "miDebuggerServerAddress": "localhost:1234",
             "stopAtEntry": true,
             "preLaunchTask": "run-qemu-emulator",
@@ -20,14 +20,51 @@
             "servertype": "openocd",
             "request": "attach",
             "executable": "${workspaceFolder}/jocktos/build/main.elf",
-            "configFiles": ["interface/stlink.cfg",
-                "board/st_nucleo_f3.cfg"
-              ],
+            "device": "stlink",
+            "configFiles": 
+            [ 
+                "interface/stlink.cfg",
+                "target/stm32f3x.cfg",
+            ],
             "showDevDebugOutput": "raw",
             "cwd": "${workspaceRoot}/jocktos",
-            "gdbPath": "C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gdb.exe",
-            "gdbTarget": "localhost:3333"
+            "gdbPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
+            "gdbTarget": "localhost:3333",
+            "runToEntryPoint": "main",
             
         },
+        {
+            "name": "Debug (OpenOCD)",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/jocktos/build/main.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "interface": "swd",
+            "device": "STM32F303xE",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "parsed",
+            "svdFile": "${workspaceRoot}/jocktos/build/STM32F303.svd",
+            "gdbPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f3x.cfg",
+            ],
+            "preLaunchCommands": [
+                "monitor reset",
+            ],
+            "postLaunchCommands": [
+                "monitor reset init",
+
+            ],
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            }
+        },
+
+        {
+
+        }
     ]
 }

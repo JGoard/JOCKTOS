@@ -1,0 +1,28 @@
+\begin{sphinxtheindex}
+\let\lettergroup\sphinxstyleindexlettergroup
+\let\lettergroupDefault\sphinxstyleindexlettergroupDefault
+\let\spxpagem\sphinxstyleindexpagemain
+\let\spxentry\sphinxstyleindexentry
+\let\spxextra\sphinxstyleindexextra
+
+
+  \lettergroup{C}
+  \item \spxentry{coreRegistersDef}\spxextra{C++ struct}, \hyperpage{3}
+  \item \spxentry{coreRegistersDef::control\_register}\spxextra{C++ member}, \hyperpage{4}
+  \item \spxentry{coreRegistersDef::exception\_markers}\spxextra{C++ member}, \hyperpage{4}
+  \item \spxentry{coreRegistersDef::link\_register}\spxextra{C++ member}, \hyperpage{3}
+  \item \spxentry{coreRegistersDef::program\_counter}\spxextra{C++ member}, \hyperpage{3}
+  \item \spxentry{coreRegistersDef::program\_status\_register}\spxextra{C++ member}, \hyperpage{4}
+  \item \spxentry{coreRegistersDef::registers}\spxextra{C++ member}, \hyperpage{3}
+  \item \spxentry{coreRegistersDef::stack\_pointer}\spxextra{C++ member}, \hyperpage{3}
+
+  \indexspace
+
+  \lettergroup{J}
+  \item \spxentry{jocktos\_TaskState}\spxextra{C++ enum}, \hyperpage{4}
+  \item \spxentry{jocktos\_TaskState::BLOCKED}\spxextra{C++ enumerator}, \hyperpage{5}
+  \item \spxentry{jocktos\_TaskState::READY}\spxextra{C++ enumerator}, \hyperpage{5}
+  \item \spxentry{jocktos\_TaskState::RUNNING}\spxextra{C++ enumerator}, \hyperpage{5}
+  \item \spxentry{jocktos\_TaskState::SUSPENDED}\spxextra{C++ enumerator}, \hyperpage{5}
+
+\end{sphinxtheindex}

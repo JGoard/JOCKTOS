@@ -1,12 +1,16 @@
-name: Build
+name: Test Compile
 
 on:
   push:
+    paths:
+      - 'jocktos/**'
     branches:
       - main
   pull_request:
     branches:
       - main
+    paths:
+      - 'jocktos/**'
 
 jobs:
   build:
@@ -16,8 +20,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install gcc-arm-none-eabi
-      run: apt-get install gcc-arm-none-eabi
+    - name: Install tools
+      run: apt-get install -y build-essential gcc-arm-none-eabi
 
     - name: Build jocktos
       run: cd jocktos && make
