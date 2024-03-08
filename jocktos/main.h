@@ -5,7 +5,7 @@
 typedef struct {
 
     /** @brief R0-R12 are 32-bit general-purpose registers for data operations. */
-    uint32_t registers[13];
+    uint32_t u32Registers[13];
 
     /** @brief The Stack Pointer (SP) is register R13.
      *
@@ -14,14 +14,14 @@ typedef struct {
      * - 1: Process Stack Pointer (PSP).
      * On reset, the processor loads the MSP with the value from address 0x00000000.
      */
-    uint32_t *stack_pointer;
+    uint32_t * pu32StackPointer;
 
     /** @brief The Link Register (LR) is register R14.
      *
      * It stores the return information for subroutines, function calls, and exceptions.
      * On reset, the processor loads the LR value 0xFFFFFFFF.
      */
-    uint32_t link_register;
+    uint32_t u32LinkRegister;
 
     /** @brief The Program Counter (PC) is register R15.
      *
@@ -29,29 +29,29 @@ typedef struct {
      * value of the reset vector, which is at address 0x00000004. Bit[0] of the value is loaded
      * into the EPSR T-bit at reset and must be 1.
      */
-    uint32_t *program_counter;
+    uint32_t *pu32ProgramCounter;
 
     /** @brief The Program Status Register (PSR) combines:
      * - Application Program Status Register (APSR)
      * - Interrupt Program Status Register (IPSR)
      * - Execution Program Status Register (EPSR)
      */
-    uint32_t program_status_register;
+    uint32_t u32ProgramStatusRegister;
 
     /** @brief Exception Markers contain:
      * - Priority Fault Mask Register (PRIMASK)
      * - Fault Mask Register (FAULTMASK)
      * - Base Priority Mask Register (BASEPRI)
      */
-    uint32_t exception_markers[3];
+    uint32_t u32ExceptionMarkers[3];
 
     /** @brief The CONTROL register controls the stack used and the privilege level for software
      * execution when the processor is in Thread mode and indicates whether the FPU state is
      * active.
      */
-    uint32_t control_register;
+    uint32_t u32ControlRegister;
 
-} coreRegistersDef;
+} T_CoreRegistersDef;
 
 
 //=============================================================================================
@@ -62,7 +62,7 @@ typedef struct {
  * \code{.unparsed}
  *                                     -------------
  *                      /-->----->---->| SUSPENDED |<-----<-----<--\
- *                     /               -------------                \
+ *           gmagma          /               -------------                \
  *                    /                    ^   v                     \
  *                   /          suspend(); |   | resume();            |
  *                  |                      ^   v                      ^
@@ -86,23 +86,27 @@ typedef struct {
  */                   
 
 typedef enum {
-    RUNNING,   /**< Currently active task. */
-    READY,     /**< In the queue and ready to run. */
-    BLOCKED,   /**< Awaiting a resource. */
-    SUSPENDED  /**< Delayed or intentionally released. */
-} jocktos_TaskState;
+    eRUNNING    = 0,    /**< Currently active task. */
+    eREADY      = 1,    /**< In the queue and ready to run. */
+    eBLOCKED    = 2,    /**< Awaiting a resource. */
+    eSUSPENDED, = 3,    /**< Delayed or intentionally released. */
+    eTaskStateAmount
+} E_TaskState;
 
 //=============================================================================================
 /** 
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
-    coreRegistersDef registers;
-    uint8_t priority;
-    char* name;
-    jocktos_TaskState state;
-    uint32_t delay;
+    T_CoreRegistersDef  tRegisters; ///<
+    uint8_t             u8Priority;
+    char*               u8Name;
+    E_TaskState         eState;
+    uint32_t            u32Delay;
 
-} jocktos_TaskContextBlock;
+} T_TaskContextBlock;
+
 
 int main(void);
+__attribute__((naked)) void SysTick_Handler(void);
+
