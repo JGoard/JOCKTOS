@@ -21,14 +21,15 @@
 			"name": "ARM none eabi GCC",
 			"includePath": [
 				"${workspaceRoot}",
-				"${workspaceRoot}/src"
+				"${workspaceRoot}/jocktos/CubeMx",
+				"${workspaceRoot}/jocktos/inc"
 			],
 			"defines": [
 				"DEBUG=1",
 				"SystemCoreClock = 180000000UL"
 			],
 			"intelliSenseMode": "gcc-x64",
-			"compilerPath": "C:/Users/JoshGoard/Embedded_ToolChains/arm-gnu-toolchain-12.2.mpacbti-bet1-mingw-w64-i686-arm-none-eabi/binarm-none-eabi-gcc",
+			"compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc",
 			"compilerArgs": [
 				"-mcpu=cortex-m4",
 				"-mthumb",
