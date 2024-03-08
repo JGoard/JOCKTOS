@@ -1,6 +1,6 @@
 #include "main.h"
 
-void JocktosMain(void)
+int main(void)
 {
     int x = 0;
     int y = 100;
