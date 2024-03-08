@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="main_8h" kind="file" language="C++">
+    <compoundname>main.h</compoundname>
+    <includes local="no">stdint.h</includes>
+    <includedby refid="main_8c" local="yes">/JOCKTOS/jocktos/main.c</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>/JOCKTOS/jocktos/main.h</label>
+        <link refid="main_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>stdint.h</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="structcoreRegistersDef" prot="public">coreRegistersDef</innerclass>
+    <innerclass refid="structjocktos__TaskContextBlock" prot="public">jocktos_TaskContextBlock</innerclass>
+      <sectiondef kind="enum">
+      <memberdef kind="enum" id="main_8h_1a5b7c6af2cfa85d5d7bdcb589dfd20aff" prot="public" static="no" strong="no">
+        <type></type>
+        <name>jocktos_TaskState</name>
+        <enumvalue id="main_8h_1a5b7c6af2cfa85d5d7bdcb589dfd20affa1061be6c3fb88d32829cba6f6b2be304" prot="public">
+          <name>RUNNING</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+<para>Currently active task. </para>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="main_8h_1a5b7c6af2cfa85d5d7bdcb589dfd20affa6564f2f3e15be06b670547bbcaaf0798" prot="public">
+          <name>READY</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+<para>In the queue and ready to run. </para>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="main_8h_1a5b7c6af2cfa85d5d7bdcb589dfd20affa376c1b6a3f75d283a2efacf737438d61" prot="public">
+          <name>BLOCKED</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+<para>Awaiting a resource. </para>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="main_8h_1a5b7c6af2cfa85d5d7bdcb589dfd20affa1c2114335a42993ac5cc5dbf65f83d41" prot="public">
+          <name>SUSPENDED</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+<para>Delayed or intentionally released. </para>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+<para>Task State Machine Enumeration. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="warning"><para>super janky image: <programlisting filename=".unparsed"><codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-------------</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>/--&gt;-----&gt;----&gt;|<sp/>SUSPENDED<sp/>|&lt;-----&lt;-----&lt;--\</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/>/<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-------------<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>/<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>^<sp/><sp/><sp/>v<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline><highlight class="normal"><sp/>/<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>suspend();<sp/>|<sp/><sp/><sp/>|<sp/>resume();<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|</highlight></codeline>
+<codeline><highlight class="normal">|<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>^<sp/><sp/><sp/>v<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>^</highlight></codeline>
+<codeline><highlight class="normal">^<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>---------<sp/><sp/><sp/>scheduler<sp/><sp/><sp/>-----------</highlight></codeline>
+<codeline><highlight class="normal">|<sp/>suspend();<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|<sp/>READY<sp/>|<sp/>&gt;-----&gt;-----&gt;<sp/>|<sp/>RUNNING<sp/>|</highlight></codeline>
+<codeline><highlight class="normal">^<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|<sp/><sp/><sp/><sp/><sp/><sp/><sp/>|<sp/>&lt;-----&lt;-----&lt;<sp/>|<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|</highlight></codeline>
+<codeline><highlight class="normal">|<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>---------<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-----------</highlight></codeline>
+<codeline><highlight class="normal"><sp/>\<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>^<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>v</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>\<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|<sp/>event<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>|</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/>\<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>^<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>/</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>\<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-----------<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>/</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>\&lt;-----&lt;-----&lt;-|<sp/>BLOCKED<sp/>|&lt;-----&lt;-----&lt;---/</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-----------</highlight></codeline>
+</programlisting></para>
+</simplesect>
+<simplesect kind="attention"><para>Wild inline LaTeX <formula id="0">\[
+\int_a^b f(x) dx = F(b) - F(a)
+\]</formula> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/JOCKTOS/jocktos/main.h" line="88" column="1" bodyfile="/JOCKTOS/jocktos/main.h" bodystart="88" bodyend="93"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="main_8h_1a40f9f55ea47ed31048f4685b37c80f58" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void JocktosMain</definition>
+        <argsstring>(void)</argsstring>
+        <name>JocktosMain</name>
+        <param>
+          <type>void</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/JOCKTOS/jocktos/main.h" line="108" column="6" bodyfile="/JOCKTOS/jocktos/main.c" bodystart="3" bodyend="15" declfile="/JOCKTOS/jocktos/main.h" declline="108" declcolumn="6"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdint.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">//=============================================================================================</highlight></codeline>
+<codeline lineno="5" refid="structcoreRegistersDef" refkind="compound"><highlight class="comment"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8" refid="structcoreRegistersDef_1a5fef3e7e9e1e252deaefa4b34c06a4e6" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/>registers[13];</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17" refid="structcoreRegistersDef_1adeea21c076fcb4f87d1ecaed25895b6d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/>*<ref refid="structcoreRegistersDef_1adeea21c076fcb4f87d1ecaed25895b6d" kindref="member">stack_pointer</ref>;</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24" refid="structcoreRegistersDef_1ae52ca5652b22e7db3d77ae73f1062fa2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/><ref refid="structcoreRegistersDef_1ae52ca5652b22e7db3d77ae73f1062fa2" kindref="member">link_register</ref>;</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32" refid="structcoreRegistersDef_1a8b5a9b4ec34711856612808b662fe434" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/>*<ref refid="structcoreRegistersDef_1a8b5a9b4ec34711856612808b662fe434" kindref="member">program_counter</ref>;</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39" refid="structcoreRegistersDef_1a3f5cc5d105570494942ff52303451402" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/><ref refid="structcoreRegistersDef_1a3f5cc5d105570494942ff52303451402" kindref="member">program_status_register</ref>;</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="46" refid="structcoreRegistersDef_1ac3ccf963da6921d07110ee3b3b86f6ab" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/>exception_markers[3];</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52" refid="structcoreRegistersDef_1af745cb58b24bb2591c1431b31c85c3af" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/><ref refid="structcoreRegistersDef_1af745cb58b24bb2591c1431b31c85c3af" kindref="member">control_register</ref>;</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal">}<sp/><ref refid="structcoreRegistersDef" kindref="compound">coreRegistersDef</ref>;</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="comment">//=============================================================================================</highlight></codeline>
+<codeline lineno="88"><highlight class="comment"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/>RUNNING,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/>READY,<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/>BLOCKED,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/>SUSPENDED<sp/><sp/></highlight></codeline>
+<codeline lineno="93"><highlight class="normal">}<sp/>jocktos_TaskState;</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="comment">//=============================================================================================</highlight></codeline>
+<codeline lineno="99" refid="structjocktos__TaskContextBlock" refkind="compound"><highlight class="comment"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structcoreRegistersDef" kindref="compound">coreRegistersDef</ref><sp/>registers;</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/>uint8_t<sp/>priority;</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>name;</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"><sp/><sp/><sp/><sp/>jocktos_TaskState<sp/>state;</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/>uint32_t<sp/>delay;</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal">}<sp/><ref refid="structjocktos__TaskContextBlock" kindref="compound">jocktos_TaskContextBlock</ref>;</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>JocktosMain(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">);</highlight></codeline>
+    </programlisting>
+    <location file="/JOCKTOS/jocktos/main.h"/>
+  </compounddef>
+</doxygen>
