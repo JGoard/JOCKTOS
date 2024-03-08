@@ -17,11 +17,15 @@
 
 #define T_TASKCONTEXTBLOCK_DEF(...) \
 {                                   \
-    .tRegisters     = 0,            \
+    /* ---- Configured ---*/        \
     .u8Priority     = 0,            \
     .u8Name         = 0,            \
-    .eState         = eBLOCKED,     \
     .u32Delay       = 0,            \
+    .u32StackSize_By= 0,            \
+    /* ---- Output Data---*/        \
+    .eState         = eBLOCKED,     \
+    /* ---- Internal Data-*/        \
+    tRegisters      = 0,            \
     __VA_ARGS__                     \
 }
 
@@ -123,11 +127,20 @@ typedef enum {
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
-    T_CoreRegistersDef  tRegisters; ///<    Hold's the current task context
-    uint8_t             u8Priority; ///<    The priority of the task
-    char*               u8Name;     ///<    Name of the tast
-    E_TaskState         eState;     ///<    Defines current task state
-    uint32_t            u32Delay;   ///<    Delay in ms on 
+    /* ---- Configured ---*/
+    uint8_t             u8Priority;     ///<    The priority of the task
+    char*               u8Name;         ///<    Name of the tast
+    uint32_t            u32StackSize_By ///<    Configured task stack size
+    uint32_t            u32Delay;       ///<    Delay in ms on 
+
+    /* ---- Input Data ---*/
+
+    /* ---- Output Data---*/
+    E_TaskState         eState;         ///<    Defines current task state
+    /* ---- Working Data--*/
+
+    /* ---- Internal Data-*/
+    T_CoreRegistersDef  tRegisters;     ///<    Hold's the current task context
 
 } T_TaskContextBlock;
 

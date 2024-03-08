@@ -1,5 +1,5 @@
 /**
-* \brief This module contains the main function and etc etc
+* \brief This module contains the main function and etc
 */
 
 /* -- Includes ------------------------------------------------------------ */
