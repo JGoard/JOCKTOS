@@ -1,5 +1,31 @@
-
+/**
+* \brief This module is to act as companion header for main.c
+*/
+#ifndef _MAIN_H_
+#define _MAIN_H_
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
+// Middleware
+// Bios
+// Standard C
 #include <stdint.h>
+
+/* -- Defines ------------------------------------------------------------- */
+/**
+ * @brief Structure of a generic task default
+ */
+
+#define T_TASKCONTEXTBLOCK_DEF(...) \
+{                                   \
+    .tRegisters     = 0,            \
+    .u8Priority     = 0,            \
+    .u8Name         = 0,            \
+    .eState         = eBLOCKED,     \
+    .u32Delay       = 0,            \
+    __VA_ARGS__                     \
+}
+
+/* -- Types --------------------------------------------------------------- */
 //=============================================================================================
 /** @brief STM32 Cortex-M4 Core Registers */
 typedef struct {
@@ -53,7 +79,6 @@ typedef struct {
 
 } T_CoreRegistersDef;
 
-
 //=============================================================================================
 /**
  * @brief Task State Machine Enumeration
@@ -89,7 +114,7 @@ typedef enum {
     eRUNNING    = 0,    /**< Currently active task. */
     eREADY      = 1,    /**< In the queue and ready to run. */
     eBLOCKED    = 2,    /**< Awaiting a resource. */
-    eSUSPENDED, = 3,    /**< Delayed or intentionally released. */
+    eSUSPENDED  = 3,    /**< Delayed or intentionally released. */
     eTaskStateAmount
 } E_TaskState;
 
@@ -99,27 +124,20 @@ typedef enum {
  */
 typedef struct {
     T_CoreRegistersDef  tRegisters; ///<    Hold's the current task context
-    uint8_t             u8Priority;
-    char*               u8Name;
-    E_TaskState         eState;
-    uint32_t            u32Delay;
+    uint8_t             u8Priority; ///<    The priority of the task
+    char*               u8Name;     ///<    Name of the tast
+    E_TaskState         eState;     ///<    Defines current task state
+    uint32_t            u32Delay;   ///<    Delay in ms on 
 
 } T_TaskContextBlock;
 
-/**
- * @brief Structure of a generic task default
- */
 
-#define T_TASKCONTEXTBLOCK_DEF(...) \
-{                                   \
-    .tRegisters     = 0,            \
-    .u8Priority     = 0,            \
-    .u8Name         = 0,            \
-    .eState         = eBLOCKED,     \
-    .u32Delay       = 0,            \
-    __VA_ARGS__                     \
-}
+/* -- Externs (avoid these for library functions) ------------------------- */
 
+/* -- Function Declarations ----------------------------------------------- */
 int main(void);
 __attribute__((naked)) void SysTick_Handler(void);
+
+#endif /* _MAIN_H_ */
+
 

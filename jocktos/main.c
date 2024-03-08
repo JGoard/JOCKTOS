@@ -1,5 +1,31 @@
-#include "main.h"
+/**
+* \brief This module contains the main function and etc etc
+*/
 
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
+#include "main.h"
+// Middleware
+// Bios
+// Standard C
+
+/* -- Defines ------------------------------------------------------------- */
+
+/* -- Types --------------------------------------------------------------- */
+
+/* -- Local Globals (not for libraries with application instantiation) ---- */
+
+/* -- Private Function Declarations --------------------------------------- */
+
+/* -- Public Functions----------------------------------------------------- */
+
+/**
+* \brief Define function...
+*
+* Lorem Ipsum
+*
+* \return
+*/
 int main(void)
 {
     int x = 0;
@@ -13,6 +39,7 @@ int main(void)
         if (y <= 0) y = 100;
     };
 }
+
 /**
  * @brief   It is intended to use Cortex M's systick interrupt as the periodic interrupt intended for swapping
  *          tasks. The processor will save and restor some CPU registers as part of the interrupt's entry and exit
@@ -64,7 +91,7 @@ __attribute__((naked)) void SysTick_Handler(void)
     __asm("MOV     R7, R11");
     __asm("PUSH    {R4-R7}");
     // Load R0 with the address of pCurntTcb
-    __asm("LDR     R0, =pCurntTcb");
+    // __asm("LDR     R0, =pCurntTcb");
     // Load R1 with the content of pCurntTcb(i.e post this, R1 will contain the address of current TCB).
     __asm("LDR     R1, [R0]");
     // Move the SP value to R4
