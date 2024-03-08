@@ -40,4 +40,4 @@ jobs:
       run: cd docs && make html
     
     - name: Build PDF docs
-      run: make latexpdf
+      run: pwd && make latexpdf
