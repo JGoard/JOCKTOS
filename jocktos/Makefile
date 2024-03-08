@@ -8,10 +8,11 @@ OBJDUMP := $(CROSS)objdump
 OBJCOPY := $(CROSS)objcopy
 
 # gcc & ld compiler flags
-OPT := -Og
+
+OPT := -g
 FLAGS := -mcpu=cortex-m4 -mthumb
-CFLAGS := $(FLAGS) $(OPT) -fno-common -g3 -Wall -Werror -Wextra
-LDFLAGS := $(FLAGS) -Tlinker/minimal.ld -nostartfiles -nostdlib -lnosys
+CFLAGS := $(FLAGS) $(OPT) -Wall -fdata-sections -ffunction-sections -fno-exceptions
+LDFLAGS := $(FLAGS) -Tlinker/standard.ld -nostartfiles -nostdlib -lnosys
 
 SRC_FILES := $(wildcard *.c)
 OBJ_FILES := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC_FILES))
