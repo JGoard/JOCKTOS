@@ -98,7 +98,7 @@ typedef enum {
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
-    T_CoreRegistersDef  tRegisters; ///<
+    T_CoreRegistersDef  tRegisters; ///<    Hold's the current task context
     uint8_t             u8Priority;
     char*               u8Name;
     E_TaskState         eState;
@@ -106,6 +106,19 @@ typedef struct {
 
 } T_TaskContextBlock;
 
+/**
+ * @brief Structure of a generic task default
+ */
+
+#define T_TASKCONTEXTBLOCK_DEF(...) \
+{                                   \
+    .tRegisters     = 0,            \
+    .u8Priority     = 0,            \
+    .u8Name         = 0,            \
+    .eState         = eBLOCKED,     \
+    .u32Delay       = 0,            \
+    __VA_ARGS__                     \
+}
 
 int main(void);
 __attribute__((naked)) void SysTick_Handler(void);
