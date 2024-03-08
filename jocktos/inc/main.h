@@ -130,7 +130,7 @@ typedef struct {
     /* ---- Configured ---*/
     uint8_t             u8Priority;     ///<    The priority of the task
     char*               u8Name;         ///<    Name of the tast
-    uint32_t            u32StackSize_By ///<    Configured task stack size
+    uint32_t            u32StackSize_By; ///<    Configured task stack size
     uint32_t            u32Delay;       ///<    Delay in ms on 
 
     /* ---- Input Data ---*/

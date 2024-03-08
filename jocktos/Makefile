@@ -7,11 +7,13 @@ C_DEFS =  \
 -DSTM32F303xE
 
 C_SOURCES = \
-main.c \
-CubeMX/system_stm32f3xx.c
+src/main.c \
+CubeMX/system_stm32f3xx.c \
+src/os.c 
 
 C_INCLUDES = \
--ICubeMX/
+-ICubeMX/ \
+-Iinc
 
 ASM_SOURCES = \
 CubeMX/startup_stm32f303xe.s
