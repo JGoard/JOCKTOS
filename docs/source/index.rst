@@ -6,7 +6,6 @@
 Welcome to jocktos-docs's documentation!
 ========================================
 
-.. wip
 A journey of learning how to create an RTOS kernel from the ground up, by Nick Schneider and Joshua Goard
 
 .. toctree::
