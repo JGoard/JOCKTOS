@@ -27,8 +27,7 @@
 */
 void vEnableInterrupts()
 {
-	__asm("CPSIE I");
-    
+    void __enable_irq(void);    
 }
 
 /**
@@ -38,5 +37,5 @@ void vEnableInterrupts()
 */
 void vDisableInterrupts()
 {
-	__asm("CPSID I");
+    void __disable_irq(void);
 }
