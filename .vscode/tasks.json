@@ -111,7 +111,7 @@
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/main.elf -monitor none -nographic -serial stdio -s -S"
+        "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/firmware.elf -monitor none -nographic -serial stdio -s -S"
       ],
       "options": {
         "statusbar": {

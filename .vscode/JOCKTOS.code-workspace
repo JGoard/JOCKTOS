@@ -16,7 +16,17 @@
           "actboy168.tasks",
           "bbenoist.doxygen",
           "ritwickdey.liveserver",
-          "tomoki1207.pdf"
+          "tomoki1207.pdf",
+          "dan-c-underwood.arm",
+          "zixuanwang.linkerscript",
+          "trond-snekvik.gnu-mapfiles"
         ]
+      },
+      "settings": {
+        "files.associations": {
+          "*.html": "html",
+          "*.eol": "json",
+          "stm32f3xx.h": "c"
+        }
       }
 }

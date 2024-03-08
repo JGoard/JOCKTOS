@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22000.0",
+            "compilerPath": "cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        },
+
+        {
+			"name": "ARM none eabi GCC",
+			"includePath": [
+				"${workspaceRoot}",
+				"${workspaceRoot}/src"
+			],
+			"defines": [
+				"DEBUG=1",
+				"SystemCoreClock = 180000000UL"
+			],
+			"intelliSenseMode": "gcc-x64",
+			"compilerPath": "C:/Users/JoshGoard/Embedded_ToolChains/arm-gnu-toolchain-12.2.mpacbti-bet1-mingw-w64-i686-arm-none-eabi/binarm-none-eabi-gcc",
+			"compilerArgs": [
+				"-mcpu=cortex-m4",
+				"-mthumb",
+				"-mfloat-abi=hard"
+			],
+			"cStandard": "c11",
+			"cppStandard": "c++17"
+		}
+    ],
+    "version": 4
+}

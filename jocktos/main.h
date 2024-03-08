@@ -105,4 +105,4 @@ typedef struct {
 
 } jocktos_TaskContextBlock;
 
-void JocktosMain(void);
+int main(void);
