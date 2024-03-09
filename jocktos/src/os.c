@@ -16,6 +16,12 @@
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
+T_CoreRegistersDef tIdleRegisters;
+T_TaskContextBlock tOSIdleTask ={   .u8Priority     = 0xFF,    
+                                    .ptRegisters    = &tIdleRegisters,
+                                    .u32StackSize_By= 1024u
+                                };
+
 /* -- Private Function Declarations --------------------------------------- */
 
 /* -- Public Functions----------------------------------------------------- */

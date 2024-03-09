@@ -9,6 +9,7 @@
 // Bios
 // Standard C
 #include <stdint.h>
+#include <stddef.h>
 
 
 /* -- Defines ------------------------------------------------------------- */
@@ -26,7 +27,7 @@
     /* ---- Output Data---*/        \
     .eState         = eBLOCKED,     \
     /* ---- Internal Data-*/        \
-    tRegisters      = 0,            \
+    ptRegisters     = NULL,         \
     __VA_ARGS__                     \
 }
 /* -- Types --------------------------------------------------------------- */
@@ -140,7 +141,7 @@ typedef struct {
     /* ---- Working Data--*/
 
     /* ---- Internal Data-*/
-    T_CoreRegistersDef  tRegisters;     ///<    Hold's the current task context
+    T_CoreRegistersDef  *ptRegisters;  ///<    Hold's the current task context
 
 } T_TaskContextBlock;
 
