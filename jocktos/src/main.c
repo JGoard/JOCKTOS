@@ -30,12 +30,13 @@ int main(void)
 {
     int x = 0;
     int y = 100;
-    
+    // SysInit();
     while(1)
     {
         x++;
         if (x >= 100) x = 0;
-         y--;
+            y--;
         if (y <= 0) y = 100;
     };
 }
+

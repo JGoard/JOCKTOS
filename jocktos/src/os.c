@@ -108,3 +108,21 @@ __attribute__((naked)) void SysTick_Handler(void)
     __asm("CPSIE   I ");
     __asm("BX      LR");
 }
+
+/**
+ * @brief   This function is intended for initializing the system. It enters a critical state for manipulating the 
+ *          SysTick Handler.
+ * \return: none
+ */
+__attribute__((naked)) void SysInit(void)
+{
+    __disable_irq();
+
+    // Enter critical section to set up interrupt timers?
+    // Below is a test for setting up the systick handler as
+    // called in the vector table
+
+    __enable_irq();
+}
+
+

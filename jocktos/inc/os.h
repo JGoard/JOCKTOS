@@ -138,7 +138,7 @@ typedef struct {
 
     /* ---- Output Data---*/
     E_TaskState         eState;         ///<    Defines current task state
-    /* ---- Working Data--*/
+    /* ---s- Working Data--*/
 
     /* ---- Internal Data-*/
     T_CoreRegistersDef  *ptRegisters;  ///<    Hold's the current task context
@@ -148,7 +148,7 @@ typedef struct {
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
-__attribute__((naked)) void SysTick_Handler(void);
+__attribute__((naked)) void SysInit      (void);
 
 
 
