@@ -29,6 +29,27 @@
       }
     },
     {
+      "label": "Flash Device",
+      "type": "shell",
+      "command": "openocd",
+      "args": [
+        "-f", "board/st_nucleo_f3.cfg",
+        "-c", "init",
+        "-c", "reset init",
+        "-c", "flash write_image erase ./jocktos/build/firmware.elf",
+        "-c", "shutdown"
+      ],
+      "icon": {
+        "id": "export",
+        "color": "terminal.ansiMagenta"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#ffa9f8"
+        }
+      },
+    },
+    {
       "label": "Build Docs",
       "type": "shell",
       "command": "docker",
