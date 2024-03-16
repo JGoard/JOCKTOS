@@ -25,7 +25,6 @@
 #ifndef __CMSIS_GCC_H
 #define __CMSIS_GCC_H
 
-#include <stdint-gcc.h>
 
 /* ignore some GCC warnings */
 #pragma GCC diagnostic push

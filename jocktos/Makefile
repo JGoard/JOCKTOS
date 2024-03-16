@@ -35,7 +35,7 @@ FLOAT-ABI =
 #-mfloat-abi=hard
 MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 
-CFLAGS := $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -fno-exceptions
+CFLAGS := $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -Wno-unused-variable -fdata-sections -ffunction-sections -fno-exceptions
 
 LIBS = -lc -lm -lnosys
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map,--cref -Wl,--gc-sections
