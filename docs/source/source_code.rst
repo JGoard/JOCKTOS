@@ -14,9 +14,9 @@ Here's some LaTeX inside the reStructured-Text:
 
 Data Structure Reference
 -------------------------------------------------
-Here's an auto-gen blurb on a coreRegisters data structure:
+Here's an auto-gen blurb on the Task Control Block (TCB) data structure:
 
-.. doxygenstruct:: coreRegistersDef
+.. doxygenstruct:: T_TaskControlBlock
    :project: jocktos-docs
    :members:
 
@@ -24,9 +24,9 @@ Enum Reference
 -------------------------------------------------
 Here's an auto-gen blurb on the task state enumeration:
 
-.. doxygenenum:: jocktos_TaskState
+.. doxygenenum:: E_TaskState
    :project: jocktos-docs
 
 .. admonition:: This was all in the header file!
 
-    The figure and LaTeX can both be found in jocktos/main.h
+    The figure and LaTeX can both be found in jocktos/inc/os.h

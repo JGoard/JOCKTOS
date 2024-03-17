@@ -25,8 +25,6 @@
       "settings": {
         "files.associations": {
           "*.html": "html",
-          "*.eol": "json",
-          "stm32f3xx.h": "c"
-        }
+          "*.eol": "json"
       }
 }
