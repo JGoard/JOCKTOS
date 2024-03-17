@@ -35,6 +35,6 @@ typedef struct {
 
 /* -- Function Declarations ----------------------------------------------- */
 
-void SysTick_Configuration(void);
+void SysTick_Configuration(int freq);
 
 #endif /* _TIMERS_H_ */
