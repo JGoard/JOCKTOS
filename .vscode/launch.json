@@ -5,7 +5,7 @@
             "name": "QEMU debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/jocktos/build/main.elf",
+            "program": "${workspaceFolder}/jocktos/build/firmware.elf",
             "cwd": "${workspaceFolder}/jocktos",
             "externalConsole": false,
             "miDebuggerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
@@ -15,56 +15,43 @@
             "postDebugTask": "stop-qemu-emulator",
         },
         {
-            "name": "Openocd Debug",
+            "name": "Attach OpenOCD",
             "type": "cortex-debug",
             "servertype": "openocd",
             "request": "attach",
-            "executable": "${workspaceFolder}/jocktos/build/main.elf",
-            "device": "stlink",
-            "configFiles": 
-            [ 
-                "interface/stlink.cfg",
-                "target/stm32f3x.cfg",
+            "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
+            "configFiles": [
+                "board/st_nucleo_f3.cfg",
             ],
             "showDevDebugOutput": "raw",
-            "cwd": "${workspaceRoot}/jocktos",
-            "gdbPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
-            "gdbTarget": "localhost:3333",
-            "runToEntryPoint": "main",
+            "cwd": "${workspaceFolder}/jocktos"
             
         },
         {
-            "name": "Debug (OpenOCD)",
-            "cwd": "${workspaceRoot}",
-            "executable": "${workspaceRoot}/jocktos/build/main.elf",
+            "name": "Launch OpenOCD",
+            "cwd": "${workspaceFolder}/jocktos",
+            "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
             "interface": "swd",
-            "device": "STM32F303xE",
             "runToEntryPoint": "main",
             "showDevDebugOutput": "parsed",
-            "svdFile": "${workspaceRoot}/jocktos/build/STM32F303.svd",
+            "svdFile": "${workspaceFolder}/jocktos/STM32F303.svd",
             "gdbPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
             "configFiles": [
-                "interface/stlink.cfg",
-                "target/stm32f3x.cfg",
+                "board/st_nucleo_f3.cfg",
             ],
             "preLaunchCommands": [
                 "monitor reset",
             ],
             "postLaunchCommands": [
                 "monitor reset init",
-
             ],
             "liveWatch": {
                 "enabled": true,
                 "samplesPerSecond": 4
             }
-        },
-
-        {
-
         }
     ]
 }
