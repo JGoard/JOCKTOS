@@ -7,6 +7,8 @@
 #include "os.h"
 #include "tcb.h"
 // Middleware
+#include "stm32f303xe.h"
+#include "core_cm4.h"
 // Bios
 // Standard C
 #include <stdlib.h>
@@ -68,7 +70,7 @@ void createTask(T_TaskControlBlock* tcb) {
     if (!taskStack) {
         JOCKTOSError.failedToAllocate++;
         return;
-        }
+    }
     tcb->u32TaskStackOverflow = taskStack;
     insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
@@ -76,7 +78,7 @@ void createTask(T_TaskControlBlock* tcb) {
 void switchTask(void) {
     // move the current running task into READY if it exists (not NULL)
     if (JOCKTOSScheduler.running) {
-        JOCKTOSScheduler.running->eState = eREADY;
+                JOCKTOSScheduler.running->eState = eREADY;
         insert(&JOCKTOSScheduler.ready, JOCKTOSScheduler.running);
     }
     // Pop task of the top of READY linked-list and move into running

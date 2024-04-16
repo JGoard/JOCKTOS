@@ -9,6 +9,7 @@
 // Middleware
 // Bios
 #include "system_stm32f3xx.h"
+#include "stm32f303xe.h"
 // Standard C
 #include <stdlib.h>
 /* -- Defines ------------------------------------------------------------- */
