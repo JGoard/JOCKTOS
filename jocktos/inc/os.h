@@ -60,7 +60,14 @@ void createTask(T_TaskControlBlock* tcb);
 */
 void switchRunningTask(void);
 
-
+/**
+* \brief Updates the task control blocks stackUsage
+* \return
+*/
+static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
+    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
+    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uint32_t)));
+}
 /**
 * \brief Enable scheduler and context switching ISR's
 *

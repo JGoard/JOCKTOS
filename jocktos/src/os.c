@@ -147,6 +147,7 @@ void switchRunningTask(void) {
             }
         }
         insertTCB(head, JOCKTOSScheduler.running);
+        monitorStackUsage(&JOCKTOSScheduler.running);
         
     }
     TRIGGER_PendSV;
