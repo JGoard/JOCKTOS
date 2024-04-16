@@ -17,10 +17,11 @@
 #define CRITICAL_SECTION(...)                      \
     do {                                           \
         __asm volatile ("cpsid i" : : : "memory"); \
-        arg;                                       \
+        __VA_ARGS__;                               \
         __asm volatile ("cpsie i" : : : "memory"); \
     } while (0)
 
+#define TRIGGER_PendSV *(uint32_t volatile *)0xE000ED04 = (1U << 28)
 /* -- Types --------------------------------------------------------------- */
 
 
@@ -30,7 +31,6 @@
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
-    volatile _Bool               active;    ///<    Initialization flag
     volatile T_TaskControlBlock* running;   ///<    Currently running task
     volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
     volatile T_TaskControlBlock* blocked;   ///<    Singly linked list of blocked tasks, in decending order of priority
@@ -55,6 +55,19 @@ void createTask(T_TaskControlBlock* tcb);
 * \brief Switch the currently running task
 *
 * Updates the Schedulers linked lists and task states upon context switch 
+*
+* \return
+*/
+void switchRunningTask(void);
 
+
+/**
+* \brief Enable scheduler and context switching ISR's
+*
+* Sets the priorities and enables systick and pendSV handlers
+*
+* \return
+*/
+void runJOCKTOS(void);
 
 #endif /* _OS_H_ */

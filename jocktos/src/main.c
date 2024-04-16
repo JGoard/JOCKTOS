@@ -15,18 +15,15 @@
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
-int swamp = 0;
-extern T_Scheduler JOCKTOSScheduler;
-extern uint32_t* psp_test;
-extern uint32_t* msp_test;
+extern T_Scheduler JOCKTOSScheduler; ///<  Used for debugging (include in Watch List)
 /* -- Private Function Declarations --------------------------------------- */
 
 /* -- Public Functions----------------------------------------------------- */
 
 /**
-* \brief Define function...
+* \brief Place holder task
 *
-* Lorem Ipsum
+* changes some numbers in a predictable way
 *
 * \return
 */
@@ -48,32 +45,26 @@ int main(void)
      * Create 3 random TCBs to test linked list insertion
      */
     T_TaskControlBlock task1 = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=1024, 
+        .u32StackSize_By=256, 
         .taskFunct=initial_task,
         .u8Name="task 1",
         .u8Priority=10);
     createTask(&task1);
 
     T_TaskControlBlock task2 = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=1024, 
+        .u32StackSize_By=256, 
         .taskFunct=initial_task,
         .u8Name="task 2",
-        .u8Priority=2);
+        .u8Priority=10);
     createTask(&task2);
 
     T_TaskControlBlock task3 = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=1024, 
+        .u32StackSize_By=256, 
         .taskFunct=initial_task,
         .u8Name="task 3",
-        .u8Priority=3);
+        .u8Priority=10);
     createTask(&task3);
 
-    SysTick_Configuration(1000);
-    for(;;){
-        // push/pop registers to test SP memory view
-        __asm volatile ("PUSH {R0-R11}");
-        swamp++;
-        __asm volatile ("POP {R0-R11}");
-    }
+    runJOCKTOS();
 
 }
