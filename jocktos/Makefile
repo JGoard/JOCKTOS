@@ -10,7 +10,8 @@ C_SOURCES = \
 src/main.c \
 CubeMX/system_stm32f3xx.c \
 src/os.c \
-src/timers.c
+src/timers.c \
+src/tcb.c
 
 C_INCLUDES = \
 -ICubeMX/ \
