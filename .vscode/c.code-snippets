@@ -1,0 +1,64 @@
+{
+	"C_File": {
+		"prefix": "cfile",
+		"body": [
+		  "/**",
+		  "* \\brief This module is to...",
+		  "*/",
+		  "",
+		  "/* -- Includes ------------------------------------------------------------ */",
+		  "// Jocktos",
+		  "// Middleware",
+		  "// Bios",
+		  "// Standard C",
+		  "",
+		  "/* -- Defines ------------------------------------------------------------- */",
+		  "",
+		  "/* -- Types --------------------------------------------------------------- */",
+		  "",
+		  "/* -- Local Globals (not for libraries with application instantiation) ---- */",
+		  "",
+		  "/* -- Private Function Declarations --------------------------------------- */",
+		  "",
+		  "/* -- Public Functions----------------------------------------------------- */",
+		  "",
+		  "/**",
+		  "* \\brief Define function...",
+		  "*",
+		  "* Lorem Ipsum",
+		  "*",
+		  "* \\return",
+		  "*/"
+		],
+		"description": "C_File"
+	  },
+
+	  "H_File": {
+		"prefix": "hfile",
+		"body": [
+		  "/**",
+		  "* \\brief This module is to...",
+		  "*/",
+		  "#ifndef _TEMPLATE_H_",
+		  "#define _TEMPLATE_H_",
+		  "/* -- Includes ------------------------------------------------------------ */",
+		  "// Jocktos",
+		  "// Middleware",
+		  "// Bios",
+		  "// Standard C",
+		  "",
+		  "/* -- Defines ------------------------------------------------------------- */",
+		  "",
+		  "/* -- Types --------------------------------------------------------------- */",
+		  "",
+		  "/* -- Externs (avoid these for library functions) ------------------------- */",
+		  "",
+		  "/* -- Function Declarations ----------------------------------------------- */",
+		  "",
+		  "",
+		  "",
+		  "#endif /* _TEMPLATE_H_ */"
+		],
+		"description": "H_File"
+	  }
+}
