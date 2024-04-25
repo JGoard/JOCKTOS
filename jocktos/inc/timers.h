@@ -1,5 +1,5 @@
 /**
-* \brief This module is to...
+* \brief This header is to act as companion header for timers.c
 */
 #ifndef _TIMERS_H_
 #define _TIMERS_H_
@@ -9,8 +9,11 @@
 // Bios
 // Standard C
 #include <stdint.h>
+
 /* -- Defines ------------------------------------------------------------- */
+
 /* -- Types --------------------------------------------------------------- */
+
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */

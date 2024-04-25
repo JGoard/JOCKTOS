@@ -1,9 +1,30 @@
+/**
+* \brief This module contains the logic for a single linked list of
+* Task Control Blocks
+*/
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
 #include "tcb.h"
+// Middleware
+// Bios
+// Standard C
 #include <stdlib.h>
+
+/* -- Defines ------------------------------------------------------------- */
+
+/* -- Types --------------------------------------------------------------- */
+
+/* -- Local Globals (not for libraries with application instantiation) ---- */
 
 T_TCBError JOCKTOS_TCBError = {0, 0, 0, 0, 0};
 
+/* -- Private Function Declarations --------------------------------------- */
+
 void insertTCB(volatile T_TaskControlBlock** head, volatile T_TaskControlBlock* tcb) {
+    if (head == NULL) {
+        JOCKTOS_TCBError.invalidListHead++;
+        return;
+    }
     // if tcb is the first entry or the highest priority, updated the head
     if (*head == NULL || tcb->u8Priority > (*head)->u8Priority) {
         tcb->TCBNext = *head;
@@ -66,7 +87,7 @@ void updateTCB(volatile T_TaskControlBlock** head, volatile T_TaskControlBlock* 
 
 void moveTCB(volatile T_TaskControlBlock** currentHead, volatile T_TaskControlBlock** newHead, volatile T_TaskControlBlock* tcb) {
     // catch and log invalid linked list head
-    if (*currentHead == NULL || *newHead == NULL) {
+    if (currentHead == NULL || newHead == NULL) {
         JOCKTOS_TCBError.invalidListHead++;
         return;
     }
@@ -78,3 +99,5 @@ void moveTCB(volatile T_TaskControlBlock** currentHead, volatile T_TaskControlBl
     removeTCB(currentHead, tcb);
     insertTCB(newHead, tcb);
 }
+
+/* -- Public Functions----------------------------------------------------- */

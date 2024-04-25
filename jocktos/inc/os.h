@@ -1,19 +1,23 @@
 /**
-* \brief This module is the core JOCKTOS kernel functionality
+* \brief This header is to act as companion header for os.c
 */
 #ifndef _OS_H_
 #define _OS_H_
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "tcb.h"
 // Middleware
 // Bios
 // Standard C
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
-#include "tcb.h"
-
 
 /* -- Defines ------------------------------------------------------------- */
+
+/** 
+ * @brief enable / disablt ISR wrapper
+ */
 #define CRITICAL_SECTION(...)                      \
     do {                                           \
         __asm volatile ("cpsid i" : : : "memory"); \
@@ -21,16 +25,18 @@
         __asm volatile ("cpsie i" : : : "memory"); \
     } while (0)
 
+/** 
+ * @brief TODO: should move this somewhere that isn't exposed to end user
+ */
 #define TRIGGER_PendSV *(uint32_t volatile *)0xE000ED04 = (1U << 28)
+
 /* -- Types --------------------------------------------------------------- */
-
-
-//=============================================================================================
 
 /** 
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
+    volatile bool pending;
     volatile T_TaskControlBlock* running;   ///<    Currently running task
     volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
     volatile T_TaskControlBlock* blocked;   ///<    Singly linked list of blocked tasks, in decending order of priority
@@ -58,7 +64,7 @@ void createTask(T_TaskControlBlock* tcb);
 *
 * \return
 */
-void switchRunningTask(void);
+void switchRunningTask(volatile T_TaskControlBlock** head);
 
 /**
 * \brief Updates the task control blocks stackUsage

@@ -8,7 +8,8 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "__CC_ARM"
             ],
             "windowsSdkVersion": "10.0.22000.0",
             "compilerPath": "cl.exe",
@@ -26,7 +27,8 @@
 			],
 			"defines": [
 				"DEBUG=1",  
-                "STM32F303xE"
+                "STM32F303xE",
+                "__CC_ARM"
 			],
 			"intelliSenseMode": "gcc-x64",
 			"compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc",
