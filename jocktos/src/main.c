@@ -3,7 +3,6 @@
 */
 #include "main.h"
 #include <stdint.h>
-
 /* -- Defines ------------------------------------------------------------- */
 
 /* -- Types --------------------------------------------------------------- */
@@ -24,21 +23,26 @@ int main(void)
         .u8Priority=10);
     createTask(&task1);
 
-    T_TaskControlBlock task2 = T_TASKCONTROLBLOCK_DEF(
+    T_TaskControlBlock lockTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
         .taskFunct=mutexTestTask,
-        .u8Name="task 2",
-        .u8Priority=10);
-    createTask(&task2);
+        .u8Name="semaphore test");
+    createTask(&lockTask);
 
-    T_TaskControlBlock task3 = T_TASKCONTROLBLOCK_DEF(
+    T_TaskControlBlock stackTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
-        .taskFunct=intentionalStackOverflowTask,
-        .u8Name="task 3",
-        .u8Priority=10);
-    createTask(&task3);
-
+        .taskFunct=stackInflationTestTask,
+        .u8Name="stack inflation");
+    createTask(&stackTask);
     runJOCKTOS();
+    int x = 100;
+    int y = 0;
+    while(1) {
+        x++;
+        if (x == 0) x = 100;
+        y--;
+        if (y == 100) y = 0;
+    }
 
 }
 
@@ -76,6 +80,6 @@ int inflateStack(int depth, int cycles) {
     return localVar;
 }
 
-void intentionalStackOverflowTask(uint32_t* new_sp) {
+void stackInflationTestTask(uint32_t* new_sp) {
     while(1) (void)inflateStack(10, 100);
 }

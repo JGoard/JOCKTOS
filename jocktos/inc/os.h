@@ -37,13 +37,15 @@
  */
 typedef struct {
     volatile bool pending;
+    volatile uint32_t tickCount;
     volatile T_TaskControlBlock* running;   ///<    Currently running task
     volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
-    volatile T_TaskControlBlock* blocked;   ///<    Singly linked list of blocked tasks, in decending order of priority
     volatile T_TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
 } T_Scheduler;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
+
+extern T_Scheduler JOCKTOSScheduler;
 
 /* -- Function Declarations ----------------------------------------------- */
 
@@ -58,29 +60,51 @@ typedef struct {
 void createTask(T_TaskControlBlock* tcb);
 
 /**
-* \brief Switch the currently running task
-*
-* Updates the Schedulers linked lists and task states upon context switch 
-*
-* \return
-*/
+ * \brief Switch the currently running task
+ *
+ * Updates the Schedulers linked lists and task states upon context switch 
+ *
+ * \param head Pointer to destination for current running task.
+ */
 void switchRunningTask(volatile T_TaskControlBlock** head);
 
 /**
-* \brief Updates the task control blocks stackUsage
-* \return
-*/
+ * \brief Updates the task control blocks stackUsage
+ * 
+ * \param tcb Pointer to task control block to be monitored.
+ */
 static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
     (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
     - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uint32_t)));
 }
+
 /**
-* \brief Enable scheduler and context switching ISR's
+* \brief pre defined OS task for idle.
 *
-* Sets the priorities and enables systick and pendSV handlers
-*
-* \return
+* Infinite while loop.
+* TODO: Figure out how to low power sleep without disabling ISR's
 */
+void idleJOCKTOS(uint32_t* new_sp);
+
+/**
+ * \brief pre defined OS task to monitor stack usage
+ */
+void monitorJOCKTOS(uint32_t* new_sp);
+
+/**
+ * \brief Enable scheduler and context switching ISR's
+ *
+ * Sets the priorities and enables systick and pendSV handlers
+ *
+ */
 void runJOCKTOS(void);
+
+/**
+ * \brief returns the current OS tick count
+ * 
+ * unsigned 32 bit millisecond counter
+ * 
+ */
+static inline uint32_t currentTime() { return JOCKTOSScheduler.tickCount; }
 
 #endif /* _OS_H_ */

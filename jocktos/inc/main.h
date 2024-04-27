@@ -54,7 +54,9 @@ int inflateStack(int depth, int cycles);
 *
 * \return
 */
-void intentionalStackOverflowTask(uint32_t* new_sp);
+void stackInflationTestTask(uint32_t* new_sp);
+
+void sleepTest(uint32_t* new_sp);
 
 int main(void);
 
