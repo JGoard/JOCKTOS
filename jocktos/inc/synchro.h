@@ -31,7 +31,7 @@
  *  @brief Represents a semaphore for controlling access to a shared resource. 
  */
 typedef struct {
-    uint16_t value_;                                ///< [INTERNAL] current 
+    uint16_t value_;                                ///< [INTERNAL] current value
     uint16_t count;                                 ///< Queue size for lock instance
     volatile T_TaskControlBlock *pendingTCBQueue_;  ///< [INTERNAL] Linked list of tasks awaiting lock
     uint8_t ownersPriority_;                        ///< [INTERNAL] TODO: prevent priority inversion
@@ -63,5 +63,12 @@ void takeSemaphore(T_Semaphore* lock);
  * @param lock Pointer to the semaphore to be given.
  */
 void giveSemaphore(T_Semaphore* lock);
+
+/**
+ * @brief Suspends the current running task for a fixed amount of time.
+ * 
+ * @param delay (milliseconds)
+ */
+void sleep(uint32_t delay);
 
 #endif // _SEMAPHORE_H_

@@ -21,12 +21,11 @@
 /* -- Private Function Declarations --------------------------------------- */
 
 void SysTick_Configuration(int freq) {
-    // Configure SysTick to generate an interrupt every 1 ms
-    CRITICAL_SECTION(
-        SysTick->LOAD = (SystemCoreClock / freq) - 1; // Set the reload value for a 1ms interrupt
-        SysTick->VAL = 0;                             // Clear the current value
-        SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk;
-    );
+    __asm volatile ("cpsid i" : : : "memory");
+    SysTick->LOAD = (SystemCoreClock / freq) - 1; // Set the reload value for a 1ms interrupt
+    SysTick->VAL = 0;                             // Clear the current value
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk;
+    __asm volatile ("cpsie i" : : : "memory");
 }
 
 /* -- Public Functions----------------------------------------------------- */

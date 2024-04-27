@@ -44,4 +44,13 @@ void giveSemaphore(T_Semaphore* lock) {
     return;
 }
 
+void sleep(uint32_t delay) {
+    __asm volatile ("cpsid i" : : : "memory");
+    JOCKTOSScheduler.running->u32Delay = currentTime() + delay;
+    JOCKTOSScheduler.running->eState = eSUSPENDED;
+    switchRunningTask(&JOCKTOSScheduler.suspended);
+    __asm volatile ("cpsie i" : : : "memory");
+    return;
+
+}
 /* -- Public Functions----------------------------------------------------- */

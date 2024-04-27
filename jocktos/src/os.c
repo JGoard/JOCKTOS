@@ -136,12 +136,19 @@ void createTask(T_TaskControlBlock* tcb) {
 }
 
 void switchRunningTask(volatile T_TaskControlBlock** head) {
+    volatile T_TaskControlBlock* suspended = NULL;
     if (JOCKTOSScheduler.pending) return;
     JOCKTOSScheduler.pending = true;
     if (JOCKTOSScheduler.running) {
         insertTCB(head, JOCKTOSScheduler.running);  
-        monitorStackUsage(&JOCKTOSScheduler.running);
-        
+    }
+    suspended = JOCKTOSScheduler.suspended;
+    while (suspended != NULL) {
+        if (currentTime() >= suspended->u32Delay) {
+            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
+            suspended->eState = eREADY;
+        }
+        suspended = suspended->TCBNext;
     }
     TRIGGER_PendSV;
 }
@@ -211,6 +218,7 @@ void runJOCKTOS(void) {
     */
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     NVIC_SetPriority(PendSV_IRQn, 0xFFU);
-    SysTick_Configuration(1000);
+    // Configure SysTick to generate an interrupt every 1 ms 
+    SysTick_Configuration(127); // TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }

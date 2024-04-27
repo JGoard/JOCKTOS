@@ -16,12 +16,11 @@ T_Semaphore testMutex = T_SEMAPHORE_DEF();
 
 int main(void)
 {
-    T_TaskControlBlock task1 = T_TASKCONTROLBLOCK_DEF(
+    T_TaskControlBlock sleepTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
-        .taskFunct=mutexTestTask,
-        .u8Name="task 1",
-        .u8Priority=10);
-    createTask(&task1);
+        .taskFunct=sleepTest,
+        .u8Name="sleep test");
+    createTask(&sleepTask);
 
     T_TaskControlBlock lockTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
@@ -43,7 +42,15 @@ int main(void)
         y--;
         if (y == 100) y = 0;
     }
+}
 
+void sleepTest(uint32_t* new_sp) {
+    while (true) {
+        takeSemaphore(&testMutex);
+        sleep(1000);
+        giveSemaphore(&testMutex);
+        sleep(1000);
+    }
 }
 
 void mutexTestTask(uint32_t* new_sp) {
