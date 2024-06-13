@@ -28,8 +28,15 @@
 /** 
  * @brief TODO: should move this somewhere that isn't exposed to end user
  */
-#define TRIGGER_PendSV *(uint32_t volatile *)0xE000ED04 = (1U << 28)
+#define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
+#define T_JOCKTOSCONFIG_DEF(...) \
+{                                \
+    .enableMonitor      = false, \
+    .enableMain         = false, \
+    .enableIdle         = false, \
+     __VA_ARGS__                 \
+}
 /* -- Types --------------------------------------------------------------- */
 
 /** 
@@ -42,6 +49,12 @@ typedef struct {
     volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
     volatile T_TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
 } T_Scheduler;
+
+typedef struct {
+    bool enableMonitor;
+    bool enableIdle;
+    bool enableMain;
+} T_JocktosConfig;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
@@ -75,7 +88,7 @@ void switchRunningTask(volatile T_TaskControlBlock** head);
  */
 static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
     (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
-    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uint32_t)));
+    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uintptr_t)));
 }
 
 /**
@@ -84,12 +97,17 @@ static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
 * Infinite while loop.
 * TODO: Figure out how to low power sleep without disabling ISR's
 */
-void idleJOCKTOS(uint32_t* new_sp);
+void idleJOCKTOS(uintptr_t* new_sp);
 
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorJOCKTOS(uint32_t* new_sp);
+void monitorJOCKTOS(uintptr_t* new_sp);
+
+/**
+ * \brief configure / enable built in OS tasks
+ */
+void configureJOCKTOS(T_JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's

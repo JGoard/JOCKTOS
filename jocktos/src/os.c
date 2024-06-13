@@ -15,8 +15,6 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
-// #define ENABLE_MONITOR
-// #define USER_MAIN 1024
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
@@ -43,13 +41,12 @@ T_TaskControlBlock defaultOSIdle = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=32, 
         .taskFunct=idleJOCKTOS,
         .u8Name="default OS idle task");
-#endif
+
 /* -- Private Function Declarations --------------------------------------- */
 
 void SysTick_Handler(void) {
     __asm volatile ("cpsid i" : : : "memory");
     JOCKTOSScheduler.tickCount++;
-    JOCKTOSScheduler.running->eState = eREADY;
     switchRunningTask(&JOCKTOSScheduler.ready);
    __asm volatile ("cpsie i" : : : "memory");
 }
@@ -82,14 +79,14 @@ void PendSV_Handler(void) {
     __asm volatile ("cpsie i" : : : "memory");
 }
 void initializeStack(T_TaskControlBlock* tcb) {
-    uint32_t* taskStack = tcb->u32TaskStackOverflow;
+    uintptr_t* taskStack = tcb->u32TaskStackOverflow;
     // set intermediate stack pointer to bottom of range
-    taskStack = (uint32_t*)(taskStack + ((tcb->u32StackSize_By) / 8) * 8);
+    taskStack = (uintptr_t*)(taskStack + ((tcb->u32StackSize_By) / 8) * 8);
     // define tasks initial exception return stack
-    uint32_t* initStackPtr;
+    uintptr_t* initStackPtr;
     //  - non-critical registers are initialized to their index
     *(--taskStack) = (1U << 24);                ///<   Set thumb state bit in EPSR
-    *(--taskStack) = (uint32_t)tcb->taskFunct;  ///<   Set PC to task function handle
+    *(--taskStack) = (uintptr_t)tcb->taskFunct; ///<   Set PC to task function handle
     *(--taskStack) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
     // *(--taskStack) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
     *(--taskStack) = 0x0000000CU;               ///<   Set R12 register deafult to its index
@@ -98,12 +95,12 @@ void initializeStack(T_TaskControlBlock* tcb) {
     *(--taskStack) = 0x00000001U;               ///<   Set R1  register deafult to its index
     *(--taskStack) = 0x00000000U;               ///<   Set R0  register deafult to its index
     initStackPtr = taskStack - 1;               ///<   Catch top of initial post-exception stack
-    *(--taskStack) = (uint32_t)initStackPtr;    ///<   ISR push / pop "working stack pointer" as R7
+    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   ISR push / pop "working stack pointer" as R7
     *(--taskStack) = 0x0000000BU;               ///<   Set R11 register deafult to its index
     *(--taskStack) = 0x0000000AU;               ///<   Set R10 register deafult to its index
     *(--taskStack) = 0x00000009U;               ///<   Set R9  register deafult to its index
     *(--taskStack) = 0x00000008U;               ///<   Set R8  register deafult to its index
-    *(--taskStack) = (uint32_t)initStackPtr;    ///<   Set R7 to "working stack pointer"
+    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   Set R7 to "working stack pointer"
     *(--taskStack) = 0x00000006U;               ///<   Set R6  register deafult to its index
     *(--taskStack) = 0x00000005U;               ///<   Set R5  register deafult to its index
     *(--taskStack) = 0x00000004U;               ///<   Set R4  register deafult to its index
@@ -112,27 +109,9 @@ void initializeStack(T_TaskControlBlock* tcb) {
     while (taskStack > tcb->u32TaskStackOverflow + 8) {
         *(--taskStack) = 0xBABEFACEU;
     }
-    while (taskStack >= tcb->u32TaskStackOverflow) {
+    while (taskStack > tcb->u32TaskStackOverflow) {
         *(--taskStack) = 0xDEADBEEFU; ///< set top 8 bytes to something else
     }
-}
-
-void createTask(T_TaskControlBlock* tcb) {
-    // check if task function handle is valid
-    if (!tcb->taskFunct) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.invalidTaskHandle++;
-        return;
-    }
-    
-    tcb->u32TaskStackOverflow = (uint32_t*) malloc(tcb->u32StackSize_By * sizeof(uint32_t));
-    if (!tcb->u32TaskStackOverflow) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.failedToAllocate++;
-        return;
-    }
-    initializeStack(tcb);
-    insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
 void switchRunningTask(volatile T_TaskControlBlock** head) {
@@ -153,9 +132,7 @@ void switchRunningTask(volatile T_TaskControlBlock** head) {
     TRIGGER_PendSV;
 }
 
-
-#ifdef ENABLE_MONITOR
-void monitorJOCKTOS(uint32_t* new_sp) {
+void monitorJOCKTOS(uintptr_t* new_sp) {
     volatile T_TaskControlBlock* head = NULL;
     E_TaskState monitorScope = eRUNNING;
     while(true) {
@@ -182,31 +159,37 @@ void monitorJOCKTOS(uint32_t* new_sp) {
         }
     }
 }
-#endif // ENABLE_MONITOR
 
-#if !defined(USER_MAIN) && !defined(ENABLE_MONITOR)
-void idleJOCKTOS(uint32_t* new_sp) {
+void idleJOCKTOS(uintptr_t* new_sp) {
     while(true) {}
-    // TODO: Figure out how to low power sleep without disabling ISR's
+    // TODO: Figure out how to low power
 }
-#endif // ENABLE_MONITOR
-
 /* -- Public Functions----------------------------------------------------- */
 
+void createTask(T_TaskControlBlock* tcb) {
+    // check if task function handle is valid
+    if (!tcb->taskFunct) {
+        // TODO: better error handling
+        JOCKTOS_TCBError.invalidTaskHandle++;
+        return;
+    }
+    tcb->u32TaskStackOverflow = (uintptr_t*)malloc(tcb->u32StackSize_By * sizeof(uintptr_t));
+    if (!tcb->u32TaskStackOverflow) {
+        // TODO: better error handling
+        JOCKTOS_TCBError.failedToAllocate++;
+        return;
+    }
+    initializeStack(tcb);
+    insertTCB(&JOCKTOSScheduler.ready, tcb);
+}
+
+void configureJOCKTOS(T_JocktosConfig* config) {
+    if (config->enableMonitor) createTask(&stackUsageMonitor);
+    if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
+    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
+}
+
 void runJOCKTOS(void) {
-
-#ifdef USER_MAIN
-    insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
-#endif // USER_MAIN
-
-#ifdef ENABLE_MONITOR
-    createTask(&stackUsageMonitor);
-#endif // ENABLE_MONITOR
-
-#if !defined(USER_MAIN) && !defined(ENABLE_MONITOR)
-    createTask(&defaultOSIdle);
-#endif
-
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;

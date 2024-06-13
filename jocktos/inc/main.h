@@ -26,7 +26,7 @@
 *
 * \return
 */
-void mutexTestTask(uint32_t* new_sp);
+void mutexTestTask(uintptr_t* new_sp);
 
 /**
  * @brief Burn clock cycles and occupy stack space
@@ -54,9 +54,9 @@ int inflateStack(int depth, int cycles);
 *
 * \return
 */
-void stackInflationTestTask(uint32_t* new_sp);
+void stackInflationTestTask(uintptr_t* new_sp);
 
-void sleepTest(uint32_t* new_sp);
+void sleepTest(uintptr_t* new_sp);
 
 int main(void);
 

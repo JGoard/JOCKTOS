@@ -16,6 +16,13 @@ T_Semaphore testMutex = T_SEMAPHORE_DEF();
 
 int main(void)
 {
+    T_JocktosConfig config = T_JOCKTOSCONFIG_DEF(
+        .enableIdle = true,
+        .enableMain = true,
+        .enableMonitor = true
+    );
+    configureJOCKTOS(&config);
+
     T_TaskControlBlock sleepTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
         .taskFunct=sleepTest,
@@ -33,7 +40,9 @@ int main(void)
         .taskFunct=stackInflationTestTask,
         .u8Name="stack inflation");
     createTask(&stackTask);
+
     runJOCKTOS();
+
     int x = 100;
     int y = 0;
     while(1) {
@@ -44,7 +53,7 @@ int main(void)
     }
 }
 
-void sleepTest(uint32_t* new_sp) {
+void sleepTest(uintptr_t* new_sp) {
     while (true) {
         takeSemaphore(&testMutex);
         sleep(1000);
@@ -53,7 +62,7 @@ void sleepTest(uint32_t* new_sp) {
     }
 }
 
-void mutexTestTask(uint32_t* new_sp) {
+void mutexTestTask(uintptr_t* new_sp) {
     uint32_t x = 10000;
     while(1) {
         x--;
@@ -87,6 +96,6 @@ int inflateStack(int depth, int cycles) {
     return localVar;
 }
 
-void stackInflationTestTask(uint32_t* new_sp) {
+void stackInflationTestTask(uintptr_t* new_sp) {
     while(1) (void)inflateStack(10, 100);
 }
