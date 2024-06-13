@@ -10,6 +10,7 @@ C_SOURCES = \
 src/main.c \
 CubeMX/system_stm32f3xx.c \
 src/os.c \
+src/allocator.c \
 src/timers.c \
 src/tcb.c \
 src/synchro.c

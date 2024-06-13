@@ -19,7 +19,8 @@ int main(void)
     T_JocktosConfig config = T_JOCKTOSCONFIG_DEF(
         .enableIdle = true,
         .enableMain = true,
-        .enableMonitor = true
+        .enableMonitor = true,
+        .allocatorBlockSize = 128
     );
     configureJOCKTOS(&config);
 

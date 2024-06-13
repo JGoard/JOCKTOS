@@ -6,6 +6,7 @@
 #include "os.h"
 #include "tcb.h"
 #include "timers.h"
+#include "allocator.h"
 // Middleware
 #include "stm32f303xe.h"
 #include "core_cm4.h"
@@ -15,30 +16,25 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
+#define ALLOCATOR_SIZE 8192 // TODO: redefine this to use full heap as per the linker file
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
-
+static Allocator allocator;
 T_Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
 extern T_TCBError JOCKTOS_TCBError;
 
-#ifdef USER_MAIN
 T_TaskControlBlock userMainControlBlock = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=USER_MAIN, 
         .taskFunct=NULL,
         .u8Name="user space `main`");
-#endif // USER_MAIN
 
-#ifdef ENABLE_MONITOR
 T_TaskControlBlock stackUsageMonitor = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+        .u32StackSize_By=1024, 
         .taskFunct=monitorJOCKTOS,
         .u8Name="stack usage monitor");
-#endif // ENABLE_MONITOR
 
-#if !defined(USER_MAIN) && !defined(ENABLE_MONITOR)
 T_TaskControlBlock defaultOSIdle = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=32, 
+        .u32StackSize_By=256, 
         .taskFunct=idleJOCKTOS,
         .u8Name="default OS idle task");
 
@@ -173,7 +169,7 @@ void createTask(T_TaskControlBlock* tcb) {
         JOCKTOS_TCBError.invalidTaskHandle++;
         return;
     }
-    tcb->u32TaskStackOverflow = (uintptr_t*)malloc(tcb->u32StackSize_By * sizeof(uintptr_t));
+    tcb->u32TaskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->u32StackSize_By * sizeof(uintptr_t));
     if (!tcb->u32TaskStackOverflow) {
         // TODO: better error handling
         JOCKTOS_TCBError.failedToAllocate++;
@@ -184,6 +180,8 @@ void createTask(T_TaskControlBlock* tcb) {
 }
 
 void configureJOCKTOS(T_JocktosConfig* config) {
+    void* memory = calloc(ALLOCATOR_SIZE, 1);
+    initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
     if (config->enableMonitor) createTask(&stackUsageMonitor);
     if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
     if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);

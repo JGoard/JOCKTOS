@@ -35,6 +35,7 @@
     .enableMonitor      = false, \
     .enableMain         = false, \
     .enableIdle         = false, \
+    .allocatorBlockSize = 128,   \
      __VA_ARGS__                 \
 }
 /* -- Types --------------------------------------------------------------- */
@@ -50,10 +51,14 @@ typedef struct {
     volatile T_TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
 } T_Scheduler;
 
+/**
+ * @brief Configuration settings for JOCKTOS allocator and built in tasks
+ */
 typedef struct {
-    bool enableMonitor;
-    bool enableIdle;
-    bool enableMain;
+    bool enableMonitor;        ///< Enable or disable monitoring
+    bool enableIdle;           ///< Enable or disable idle task
+    bool enableMain;           ///< return execution after enabling, with `main` considered a new task
+    size_t allocatorBlockSize; ///< Size of the allocator block
 } T_JocktosConfig;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
