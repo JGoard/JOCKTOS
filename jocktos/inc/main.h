@@ -14,26 +14,36 @@
 #include <stdint.h>
 
 /* -- Defines ------------------------------------------------------------- */
-// #define B1_Pin GPIO_PIN_13
-// #define B1_GPIO_Port GPIOC
-// #define USART_TX_Pin GPIO_PIN_2
-// #define USART_TX_GPIO_Port GPIOA
-// #define USART_RX_Pin GPIO_PIN_3
-// #define USART_RX_GPIO_Port GPIOA
-// #define LD2_Pin GPIO_PIN_5
-// #define LD2_GPIO_Port GPIOA
-// #define TMS_Pin GPIO_PIN_13
-// #define TMS_GPIO_Port GPIOA
-// #define TCK_Pin GPIO_PIN_14
-// #define TCK_GPIO_Port GPIOA
-// #define SWO_Pin GPIO_PIN_3
-// #define SWO_GPIO_Port GPIOB
+
 /* -- Types --------------------------------------------------------------- */
+
+/**
+ * \brief Struct for testing purposes.
+ *
+ * This struct is used for testing purposes in the main module.
+ * It contains an integer value and a string ID.
+ */
+typedef struct {
+    int value;    ///< Integer value.
+    char ID[10];  ///< String ID.
+} TestArgStruct;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
 
+/**
+ * \brief Task function that tests passing arguments to a task.
+ *
+ * This function demonstrates how to pass arguments to a task.
+ * It takes a pointer to a `TestArgStruct` as its argument,
+ * which contains an integer value and a string ID.
+ *
+ * \param arg Pointer to a `TestArgStruct` cast as a `void*`.
+ *
+ * \return
+ */
+void testArgsTask(void* arg);
 /**
 * \brief Takes and gives a binary Semaphore
 *
@@ -41,7 +51,7 @@
 *
 * \return
 */
-void mutexTestTask(uintptr_t* new_sp);
+void mutexTestTask(void* arg);
 
 /**
  * @brief Burn clock cycles and occupy stack space
@@ -69,9 +79,9 @@ int inflateStack(int depth, int cycles);
 *
 * \return
 */
-void stackInflationTestTask(uintptr_t* new_sp);
+void stackInflationTestTask(void* arg);
 
-void sleepTest(uintptr_t* new_sp);
+void sleepTest(void* arg);
 
 int main(void);
 

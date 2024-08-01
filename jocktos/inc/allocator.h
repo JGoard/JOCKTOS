@@ -13,7 +13,7 @@
 #include <stdbool.h>
 
 /* -- Defines ------------------------------------------------------------- */
-
+#define ALLOCATOR_SIZE 8192 // TODO: redefine this to use full heap as per the linker file
 /* -- Types --------------------------------------------------------------- */
 
 /**

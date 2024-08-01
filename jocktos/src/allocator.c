@@ -1,5 +1,21 @@
+/**
+* \brief This module defines the custom bitmap allocator used by the OS
+*/
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
 #include "allocator.h"
+// Middleware
+// Bios
+// Standard C
 #include <memory.h>
+
+/* -- Defines ------------------------------------------------------------- */
+
+/* -- Types --------------------------------------------------------------- */
+
+/* -- Local Globals (not for libraries with application instantiation) ---- */
+
+/* -- Private Function Declarations --------------------------------------- */
 
 void setBit(uint64_t* bitmap, size_t index) {
     bitmap[index / 64] |= (1ULL << (index % 64));
@@ -41,6 +57,8 @@ void initAllocator(Allocator* allocator, void* memory, size_t size, size_t block
     allocator->memory.size = size - bitmapSize;
     allocator->blockSize = blockSize;
 }
+
+/* -- Public Functions----------------------------------------------------- */
 
 void* allocate(Allocator* allocator, size_t size) {
     size_t numBlocks = (size + allocator->blockSize - 1) / allocator->blockSize;

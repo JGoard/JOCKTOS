@@ -60,7 +60,7 @@ typedef struct {
 /** 
  * @brief Task function handle
  */
-typedef void (*T_FunctionHandle)(uintptr_t*);
+typedef void (*T_FunctionHandle)(void*);
 
 /** 
  * @brief Cortex-M4 Context Control Block

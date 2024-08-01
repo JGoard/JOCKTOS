@@ -102,12 +102,12 @@ static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
 * Infinite while loop.
 * TODO: Figure out how to low power sleep without disabling ISR's
 */
-void idleJOCKTOS(uintptr_t* new_sp);
+void idleJOCKTOS(void* arg);
 
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorJOCKTOS(uintptr_t* new_sp);
+void monitorJOCKTOS(void* arg);
 
 /**
  * \brief configure / enable built in OS tasks

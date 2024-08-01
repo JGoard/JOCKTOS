@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
-#define ALLOCATOR_SIZE 8192 // TODO: redefine this to use full heap as per the linker file
+
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
@@ -89,7 +89,7 @@ void initializeStack(T_TaskControlBlock* tcb) {
     *(--taskStack) = 0x00000003U;               ///<   Set R3  register deafult to its index
     *(--taskStack) = 0x00000002U;               ///<   Set R2  register deafult to its index
     *(--taskStack) = 0x00000001U;               ///<   Set R1  register deafult to its index
-    *(--taskStack) = 0x00000000U;               ///<   Set R0  register deafult to its index
+    *(--taskStack) = (uintptr_t)tcb->taskArg;   ///<   Set R0  register to the argument for the tasks function
     initStackPtr = taskStack - 1;               ///<   Catch top of initial post-exception stack
     *(--taskStack) = (uintptr_t)initStackPtr;   ///<   ISR push / pop "working stack pointer" as R7
     *(--taskStack) = 0x0000000BU;               ///<   Set R11 register deafult to its index
@@ -128,7 +128,7 @@ void switchRunningTask(volatile T_TaskControlBlock** head) {
     TRIGGER_PendSV;
 }
 
-void monitorJOCKTOS(uintptr_t* new_sp) {
+void monitorJOCKTOS(void* arg) {
     volatile T_TaskControlBlock* head = NULL;
     E_TaskState monitorScope = eRUNNING;
     while(true) {
@@ -156,10 +156,11 @@ void monitorJOCKTOS(uintptr_t* new_sp) {
     }
 }
 
-void idleJOCKTOS(uintptr_t* new_sp) {
+void idleJOCKTOS(void* arg) {
     while(true) {}
     // TODO: Figure out how to low power
 }
+
 /* -- Public Functions----------------------------------------------------- */
 
 void createTask(T_TaskControlBlock* tcb) {

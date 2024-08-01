@@ -24,6 +24,15 @@ int main(void)
     );
     configureJOCKTOS(&config);
 
+    TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
+
+    T_TaskControlBlock testTask = T_TASKCONTROLBLOCK_DEF(
+        .u32StackSize_By=256, 
+        .taskFunct=testArgsTask,
+        .taskArg=(void*)&test_val,
+        .u8Name="test args");
+    createTask(&testTask);
+
     T_TaskControlBlock sleepTask = T_TASKCONTROLBLOCK_DEF(
         .u32StackSize_By=256, 
         .taskFunct=sleepTest,
@@ -54,7 +63,18 @@ int main(void)
     }
 }
 
-void sleepTest(uintptr_t* new_sp) {
+void testArgsTask(void* arg) {
+    TestArgStruct* test_val = (TestArgStruct*)arg;
+    int check = 0;
+    while(1) {
+        check++;
+        if (check == test_val->value) {
+            check = 0;
+        }
+    }
+}
+
+void sleepTest(void* arg) {
     while (true) {
         takeSemaphore(&testMutex);
         sleep(1000);
@@ -63,7 +83,7 @@ void sleepTest(uintptr_t* new_sp) {
     }
 }
 
-void mutexTestTask(uintptr_t* new_sp) {
+void mutexTestTask(void* arg) {
     uint32_t x = 10000;
     while(1) {
         x--;
@@ -97,6 +117,6 @@ int inflateStack(int depth, int cycles) {
     return localVar;
 }
 
-void stackInflationTestTask(uintptr_t* new_sp) {
+void stackInflationTestTask(void* arg) {
     while(1) (void)inflateStack(10, 100);
 }
