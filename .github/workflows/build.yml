@@ -5,10 +5,10 @@ on:
     paths:
       - 'jocktos/**'
     branches:
-      - main
+      - cpp_real_time_scheduler
   pull_request:
     branches:
-      - main
+      - cpp_real_time_scheduler
     paths:
       - 'jocktos/**'
 
