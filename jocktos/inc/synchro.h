@@ -16,13 +16,13 @@
 /**
  * @brief default semaphore is binary (mutex)
  */
-#define T_SEMAPHORE_DEF(...) \
-{   /* ---Internal Data---*/  \
-    .value_           = 1,    \
-    .count            = 2,    \
-    .pendingTCBQueue_ = NULL, \
-    .ownersPriority_  = 0,    \
-     __VA_ARGS__              \
+#define T_SEMAPHORE_DEF(...)    \
+{   /* ---Internal Data---*/    \
+    .value_           = 1,      \
+    .count            = 2,      \
+    .pendingTCBQueue_ = NULL,   \
+    .ownersPriority_  = 0,      \
+     __VA_ARGS__                \
 }
 
 /* -- Types --------------------------------------------------------------- */

@@ -16,33 +16,41 @@
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 /* -- Private Function Declarations --------------------------------------- */
+/**
+ * @brief Sets the indexed bit to true.
+ * 
+ * @param bitmap The bitmap to be modified
+ * @param index The index of the bit to be enabled
+ */
+void setBit(uint64_t* bitmap, size_t index);
 
-void setBit(uint64_t* bitmap, size_t index) {
-    bitmap[index / 64] |= (1ULL << (index % 64));
-}
+/**
+ * @brief Sets the indexed bit to false.
+ * 
+ * @param bitmap The bitmap to be modified
+ * @param index The index of the bit to be disabled
+ */
+void clearBit(uint64_t* bitmap, size_t index);
 
-void clearBit(uint64_t* bitmap, size_t index) {
-    bitmap[index / 64] &= ~(1ULL << (index % 64));
-}
+/**
+ * @brief Get the value of the indexed bit.
+ * 
+ * @param bitmap The bitmap to be sampled
+ * @param index The index of the bit to be sampled
+ */
+bool getBit(uint64_t* bitmap, size_t index);
 
-bool getBit(uint64_t* bitmap, size_t index) {
-    return (bitmap[index / 64] & (1ULL << (index % 64))) != 0;
-}
+/**
+ * @brief Finds a contiguous sequence of free blocks.
+ * 
+ * @param used The bitmap representing used blocks
+ * @param size The size of the bitmap
+ * @param numBlocks The number of contiguous blocks needed
+ * @return The index of the first block in the contiguous sequence if found, or -1 if not found
+ */
+size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks);
 
-size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks) {
-    size_t count = 0;
-    for (size_t i = 0; i < size; i++) {
-        if (!getBit(used, i)) {
-            count++;
-            if (count == numBlocks) {
-                return i - numBlocks + 1;
-            }
-        } else {
-            count = 0;
-        }
-    }
-    return SIZE_MAX;
-}
+/* -- Public Functions----------------------------------------------------- */
 
 // Allocator functions
 void initAllocator(Allocator* allocator, void* memory, size_t size, size_t blockSize) {
@@ -57,8 +65,6 @@ void initAllocator(Allocator* allocator, void* memory, size_t size, size_t block
     allocator->memory.size = size - bitmapSize;
     allocator->blockSize = blockSize;
 }
-
-/* -- Public Functions----------------------------------------------------- */
 
 void* allocate(Allocator* allocator, size_t size) {
     size_t numBlocks = (size + allocator->blockSize - 1) / allocator->blockSize;
@@ -86,3 +92,32 @@ bool deallocate(Allocator* allocator, void* ptr) {
     return true;
 }
 
+
+/* -- Private Functions --------------------------------------------------- */
+
+size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks) {
+    size_t count = 0;
+    for (size_t i = 0; i < size; i++) {
+        if (!getBit(used, i)) {
+            count++;
+            if (count == numBlocks) {
+                return i - numBlocks + 1;
+            }
+        } else {
+            count = 0;
+        }
+    }
+    return SIZE_MAX;
+}
+
+void setBit(uint64_t* bitmap, size_t index) {
+    bitmap[index / 64] |= (1ULL << (index % 64));
+}
+
+void clearBit(uint64_t* bitmap, size_t index) {
+    bitmap[index / 64] &= ~(1ULL << (index % 64));
+}
+
+bool getBit(uint64_t* bitmap, size_t index) {
+    return (bitmap[index / 64] & (1ULL << (index % 64))) != 0;
+}
