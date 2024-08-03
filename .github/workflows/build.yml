@@ -13,7 +13,7 @@ on:
       - 'jocktos/**'
 
 jobs:
-  build:
+  build: 
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +25,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential gcc-arm-none-eabi
 
-    - name: Build jocktos
-      run: cd jocktos && make
+    - name: Build JOCKTOS debug
+      run: cd jocktos && make debug
+
+    - name: Build JOCKTOS Release
+      run: cd jocktos && make release
+
+   
+
+      
