@@ -28,7 +28,7 @@ jobs:
       run: cd jocktos/test && make
 
     - name: Bitmap BLock Allocator
-      run: cd jocktos/test/build && allocator.test
+      run: cd jocktos/test/build && ./allocator.test
 
       
 
