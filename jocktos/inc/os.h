@@ -25,11 +25,10 @@
         __asm volatile ("cpsie i" : : : "memory"); \
     } while (0)
 
-/** 
- * @brief TODO: should move this somewhere that isn't exposed to end user
- */
-#define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
+/** 
+ * @brief Default JOCKTOS configuration
+ */
 #define T_JOCKTOSCONFIG_DEF(...) \
 {                                \
     .enableMonitor      = false, \
@@ -85,29 +84,6 @@ void createTask(T_TaskControlBlock* tcb);
  * \param head Pointer to destination for current running task.
  */
 void switchRunningTask(volatile T_TaskControlBlock** head);
-
-/**
- * \brief Updates the task control blocks stackUsage
- * 
- * \param tcb Pointer to task control block to be monitored.
- */
-static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
-    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
-    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uintptr_t)));
-}
-
-/**
-* \brief pre defined OS task for idle.
-*
-* Infinite while loop.
-* TODO: Figure out how to low power sleep without disabling ISR's
-*/
-void idleJOCKTOS(void* arg);
-
-/**
- * \brief pre defined OS task to monitor stack usage
- */
-void monitorJOCKTOS(void* arg);
 
 /**
  * \brief configure / enable built in OS tasks

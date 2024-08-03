@@ -9,7 +9,6 @@
 // Bios
 // Standard C
 #include <stdint.h>
-#include <stdint.h>
 #include <stddef.h>
 
 /* -- Defines ------------------------------------------------------------- */
@@ -67,21 +66,21 @@ typedef void (*T_FunctionHandle)(void*);
  */
 typedef struct T_TaskControlBlock {
     /* ---- Configured ---*/
-    volatile double      stackUsage;           ///<    Percentage of stack used as of last preemption
-    volatile uint8_t     u8Priority;           ///<    The priority of the task
-    char*                u8Name;               ///<    Name of the tast
-    uintptr_t            u32StackSize_By;      ///<    Configured task stack size
-    uint32_t             u32Delay;             ///<    Delay in ms on 
+    volatile double      stackUsage;            ///<    Percentage of stack used as of last preemption
+    volatile uint8_t     u8Priority;            ///<    The priority of the task
+    char*                u8Name;                ///<    Name of the tast
+    uintptr_t            u32StackSize_By;       ///<    Configured task stack size
+    uint32_t             u32Delay;              ///<    Delay in ms on 
     /* ---- Input Data ---*/
-    T_FunctionHandle     taskFunct;            ///<    Main function handle for task
-    void*                taskArg;              ///<    Argument to be passed into the task function
+    T_FunctionHandle     taskFunct;             ///<    Main function handle for task
+    void*                taskArg;               ///<    Argument to be passed into the task function
     /* ---- Output Data---*/
-    volatile E_TaskState eState;               ///<    Defines current task state
+    volatile E_TaskState eState;                ///<    Defines current task state
     /* ---- Working Data--*/
     /* ---- Internal Data-*/
-    uintptr_t*           u32TaskStackOverflow; ///<    lowest accessible address for this tasks stack pointer
-    volatile uintptr_t*  u32TaskStackPointer;  ///<    Hold's the current task stack pointer
-    volatile struct T_TaskControlBlock* TCBNext;      ///<    Next item for singly linked list
+    uintptr_t*           u32TaskStackOverflow;  ///<    lowest accessible address for this tasks stack pointer
+    volatile uintptr_t*  u32TaskStackPointer;   ///<    Hold's the current task stack pointer
+    volatile struct T_TaskControlBlock* TCBNext;///<    Next item for singly linked list
 } T_TaskControlBlock;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
