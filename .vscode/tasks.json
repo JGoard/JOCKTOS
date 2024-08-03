@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Compile Project",
+      "label": "Compile Debug",
       "type": "shell",
       "command": "docker",
       "args": [
@@ -14,7 +14,7 @@
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "cd /JOCKTOS/jocktos/ && make clean && make",
+        "cd /JOCKTOS/jocktos/ && make clean debug && make debug",
       ],
       "icon": {
         "id": "tools",
@@ -23,6 +23,35 @@
       "options": {
         "statusbar": {
           "color" : "#a8fdbb"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Compile Release",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/JOCKTOS",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "cd /JOCKTOS/jocktos/ && make clean release && make release",
+      ],
+      "icon": {
+        "id": "tools",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#f6fa05"
         }
       },
       "group": {
