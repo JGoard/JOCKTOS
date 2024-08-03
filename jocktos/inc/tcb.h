@@ -1,13 +1,21 @@
+/**
+* \brief This header is to act as companion header for tcb.c
+*/
 #ifndef _TCB_H_
 #define _TCB_H_
-
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
+// Middleware
+// Bios
+// Standard C
 #include <stdint.h>
 #include <stddef.h>
+
+/* -- Defines ------------------------------------------------------------- */
 
 /**
  * @brief default task control block
  */
-
 #define T_TASKCONTROLBLOCK_DEF(...) \
 {   /* ---- Configured ---*/        \
     .u8Priority      = 0,           \
@@ -25,37 +33,11 @@
      __VA_ARGS__                    \
 }
 
-//=============================================================================================
-/**
- * @brief Task State Machine Enumeration
- * 
- * @warning super janky image:
- * \code{.unparsed}
- *                                     -------------
- *                      /-->----->---->| SUSPENDED |<-----<-----<--\
- *                     /               -------------                \
- *                    /                    ^   v                     \
- *                   /          suspend(); |   | resume();            |
- *                  |                      ^   v                      ^
- *                  ^                    ---------   scheduler   -----------
- *                  | suspend();         | READY | >----->-----> | RUNNING |
- *                  ^                    |       | <-----<-----< |         |
- *                  |                    ---------               -----------
- *                   \                       ^                        v
- *                    \                      | event                  |
- *                     \                     ^                       /
- *                      \               -----------                 /
- *                       \<-----<-----<-| BLOCKED |<-----<-----<---/
- *                                      -----------
- * \endcode
- * 
- * @attention Wild inline LaTeX
- * @f[
- * \int_a^b f(x) dx = F(b) - F(a)
- * @f]
- * 
- */                   
+/* -- Types --------------------------------------------------------------- */
 
+/** 
+ * @brief Enumeration of possible task states (stale feature)
+ */
 typedef enum {
     eRUNNING    = 0,    /**< Currently active task. */
     eREADY      = 1,    /**< In the queue and ready to run. */
@@ -63,6 +45,9 @@ typedef enum {
     eSUSPENDED  = 3    /**< Delayed or intentionally released. */
 } E_TaskState;
 
+/** 
+ * @brief colelction of potential error counters
+ */
 typedef struct {
     volatile uint16_t invalidTaskHandle;
     volatile uint16_t failedToAllocate;
@@ -71,32 +56,36 @@ typedef struct {
     volatile uint16_t invalidListElement;
 } T_TCBError;
 
+/** 
+ * @brief Task function handle
+ */
+typedef void (*T_FunctionHandle)(void*);
 
-typedef void (*T_FunctionHandle)(uint32_t*);
-typedef struct T_TaskControlBlock T_TaskControlBlock; ///< the compiler did not like `typedef struct X {...} X;`
 /** 
  * @brief Cortex-M4 Context Control Block
  */
-struct T_TaskControlBlock {
+typedef struct T_TaskControlBlock {
     /* ---- Configured ---*/
-    volatile double     stackUsage;          ///<    Percentage of stack used as of last preemption
-    volatile uint8_t    u8Priority;          ///<    The priority of the task
-    char*               u8Name;              ///<    Name of the tast
-    uint32_t            u32StackSize_By;     ///<    Configured task stack size
-    uint32_t            u32Delay;            ///<    Delay in ms on 
+    volatile double      stackUsage;            ///<    Percentage of stack used as of last preemption
+    volatile uint8_t     u8Priority;            ///<    The priority of the task
+    char*                u8Name;                ///<    Name of the tast
+    uintptr_t            u32StackSize_By;       ///<    Configured task stack size
+    uint32_t             u32Delay;              ///<    Delay in ms on 
     /* ---- Input Data ---*/
-    T_FunctionHandle    taskFunct;           ///<    Main function handle for task
-    void*               taskArg;             ///<    Argument to be passed into the task function
+    T_FunctionHandle     taskFunct;             ///<    Main function handle for task
+    void*                taskArg;               ///<    Argument to be passed into the task function
     /* ---- Output Data---*/
-    volatile E_TaskState         eState;     ///<    Defines current task state
-    /* ---s- Working Data--*/
+    volatile E_TaskState eState;                ///<    Defines current task state
+    /* ---- Working Data--*/
     /* ---- Internal Data-*/
-    uint32_t*                    u32TaskStackOverflow; ///<    lowest accessible address for this tasks stack pointer
-    volatile uint32_t*           u32TaskStackPointer;  ///<    Hold's the current task stack pointer
-    volatile uint32_t*           u32ProgramCounter;    ///<    Hold's the current tasks program counter
-    volatile T_TaskControlBlock* TCBNext;              ///<    Next item for singly linked list
-};
+    uintptr_t*           u32TaskStackOverflow;  ///<    lowest accessible address for this tasks stack pointer
+    volatile uintptr_t*  u32TaskStackPointer;   ///<    Hold's the current task stack pointer
+    volatile struct T_TaskControlBlock* TCBNext;///<    Next item for singly linked list
+} T_TaskControlBlock;
 
+/* -- Externs (avoid these for library functions) ------------------------- */
+
+/* -- Function Declarations ----------------------------------------------- */
 
 /**
  * \brief Insert a task control block into a linked list.

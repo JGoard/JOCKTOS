@@ -6,10 +6,10 @@ on:
       - 'docs/**'
       - 'jocktos/**'
     branches:
-      - main
+      - c_based_scheduler
   pull_request:
     branches:
-      - main
+      - c_based_scheduler
     paths:
       - 'docs/**'
       - 'jocktos/**'

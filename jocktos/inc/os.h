@@ -1,19 +1,23 @@
 /**
-* \brief This module is the core JOCKTOS kernel functionality
+* \brief This header is to act as companion header for os.c
 */
 #ifndef _OS_H_
 #define _OS_H_
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "tcb.h"
 // Middleware
 // Bios
 // Standard C
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
-#include "tcb.h"
-
 
 /* -- Defines ------------------------------------------------------------- */
+
+/** 
+ * @brief enable / disablt ISR wrapper
+ */
 #define CRITICAL_SECTION(...)                      \
     do {                                           \
         __asm volatile ("cpsid i" : : : "memory"); \
@@ -21,23 +25,44 @@
         __asm volatile ("cpsie i" : : : "memory"); \
     } while (0)
 
-#define TRIGGER_PendSV *(uint32_t volatile *)0xE000ED04 = (1U << 28)
+
+/** 
+ * @brief Default JOCKTOS configuration
+ */
+#define T_JOCKTOSCONFIG_DEF(...) \
+{                                \
+    .enableMonitor      = false, \
+    .enableMain         = false, \
+    .enableIdle         = false, \
+    .allocatorBlockSize = 128,   \
+     __VA_ARGS__                 \
+}
 /* -- Types --------------------------------------------------------------- */
-
-
-//=============================================================================================
 
 /** 
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct {
+    volatile bool pending;
+    volatile uint32_t tickCount;
     volatile T_TaskControlBlock* running;   ///<    Currently running task
     volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
-    volatile T_TaskControlBlock* blocked;   ///<    Singly linked list of blocked tasks, in decending order of priority
     volatile T_TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
 } T_Scheduler;
 
+/**
+ * @brief Configuration settings for JOCKTOS allocator and built in tasks
+ */
+typedef struct {
+    bool enableMonitor;        ///< Enable or disable monitoring
+    bool enableIdle;           ///< Enable or disable idle task
+    bool enableMain;           ///< return execution after enabling, with `main` considered a new task
+    size_t allocatorBlockSize; ///< Size of the allocator block
+} T_JocktosConfig;
+
 /* -- Externs (avoid these for library functions) ------------------------- */
+
+extern T_Scheduler JOCKTOSScheduler;
 
 /* -- Function Declarations ----------------------------------------------- */
 
@@ -52,29 +77,33 @@ typedef struct {
 void createTask(T_TaskControlBlock* tcb);
 
 /**
-* \brief Switch the currently running task
-*
-* Updates the Schedulers linked lists and task states upon context switch 
-*
-* \return
-*/
-void switchRunningTask(void);
+ * \brief Switch the currently running task
+ *
+ * Updates the Schedulers linked lists and task states upon context switch 
+ *
+ * \param head Pointer to destination for current running task.
+ */
+void switchRunningTask(volatile T_TaskControlBlock** head);
 
 /**
-* \brief Updates the task control blocks stackUsage
-* \return
-*/
-static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
-    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
-    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uint32_t)));
-}
+ * \brief configure / enable built in OS tasks
+ */
+void configureJOCKTOS(T_JocktosConfig* config);
+
 /**
-* \brief Enable scheduler and context switching ISR's
-*
-* Sets the priorities and enables systick and pendSV handlers
-*
-* \return
-*/
+ * \brief Enable scheduler and context switching ISR's
+ *
+ * Sets the priorities and enables systick and pendSV handlers
+ *
+ */
 void runJOCKTOS(void);
+
+/**
+ * \brief returns the current OS tick count
+ * 
+ * unsigned 32 bit millisecond counter
+ * 
+ */
+static inline uint32_t currentTime() { return JOCKTOSScheduler.tickCount; }
 
 #endif /* _OS_H_ */
