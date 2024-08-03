@@ -31,7 +31,6 @@ OBJCOPY := $(CROSS)objcopy
 SIZE := $(CROSS)size
 
 # gcc & ld compiler flags
-OPT := -g
 CPU = -mcpu=cortex-m4
 FPU = 
 #-mfpu=fpv4-sp-d16
@@ -39,44 +38,104 @@ FLOAT-ABI =
 #-mfloat-abi=hard
 MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 
-CFLAGS := $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -fno-exceptions
-
 LIBS = -lc -lm -lnosys
-LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map,--cref -Wl,--gc-sections
 
-OBJ_FILES = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
+
+# 
+# Debug Build Settings
+# 
+DBG_BUILD_DIR := ./build/debug
+DBG_OPT := -g -O0 -Wall -Wextra -Wnull-dereference -Wno-override-init -fdata-sections -ffunction-sections -fno-exceptions
+DBG_CFLAGS := $(MCU) $(C_DEFS) $(C_INCLUDES) $(DBG_OPT) 
+DBG_OBJ_FILES = $(addprefix $(DBG_BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
-# list of ASM program objects
-OBJ_FILES += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
+DBG_OBJ_FILES += $(addprefix $(DBG_BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
+DBG_LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(DBG_BUILD_DIR)/$(PROJECT).map,--cref -Wl,--gc-sections
 
-.SECONDARY: $(OBJ_FILES)
-.PRECIOUS: $(BUILD_DIR)/%.elf
+# 
+# Release Build Settings
+# 
+REL_BUILD_DIR := ./build/release
+REL_OPT := -Os -Wall -Wextra -Wnull-dereference -Wno-override-init -fdata-sections -ffunction-sections -fno-exceptions
+REL_CFLAGS := $(MCU) $(C_DEFS) $(C_INCLUDES) $(REL_OPT) 
+REL_OBJ_FILES = $(addprefix $(REL_BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
+vpath %.c $(sort $(dir $(C_SOURCES)))
+REL_OBJ_FILES += $(addprefix $(REL_BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
+vpath %.c $(sort $(dir $(ASM_SOURCES)))
+REL_LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(REL_BUILD_DIR)/$(PROJECT).map,--cref -Wl,--gc-sections
 
-.PHONY: all
-all: $(BUILD_DIR)/$(PROJECT).elf $(BUILD_DIR)/$(PROJECT).asm $(BUILD_DIR)/$(PROJECT).bin
 
-$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
+.PHONY: all clean debug prep release remake
+all: prep release
+
+.SECONDARY: $(REL_OBJ_FILES)
+.PRECIOUS: $(REL_BUILD_DIR)/%.elf
+
+# 
+# Release Rules
+# 
+
+.PHONY: release
+
+.SECONDARY: $(REL_OBJ_FILES)
+.PRECIOUS: $(REL_BUILD_DIR)/%.elf
+
+release: $(REL_BUILD_DIR)/$(PROJECT).elf $(REL_BUILD_DIR)/$(PROJECT).asm $(REL_BUILD_DIR)/$(PROJECT).bin
+
+$(REL_BUILD_DIR)/%.bin: $(REL_BUILD_DIR)/%.elf
 	$(OBJCOPY) $< $@
 
-$(BUILD_DIR)/%.asm: $(BUILD_DIR)/%.elf
+$(REL_BUILD_DIR)/%.asm: $(REL_BUILD_DIR)/%.elf
 	$(OBJDUMP) -S $< > $@
 
-$(BUILD_DIR)/$(PROJECT).elf: $(OBJ_FILES) Makefile
-	$(CC) $(OBJ_FILES) $(LDFLAGS) -o $@
+$(REL_BUILD_DIR)/$(PROJECT).elf: $(REL_OBJ_FILES) Makefile
+	$(CC) $(REL_OBJ_FILES) $(REL_LDFLAGS) -o $@
 	$(SIZE) $@
 
 # $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 # 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
-	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+$(REL_BUILD_DIR)/%.o: %.c Makefile | $(REL_BUILD_DIR) 
+	$(CC) -c $(REL_CFLAGS) -Wa,-a,-ad,-alms=$(REL_BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 
-$(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
-	$(AS) -c $(CFLAGS) $< -o $@
+$(REL_BUILD_DIR)/%.o: %.s Makefile | $(REL_BUILD_DIR)
+	$(AS) -c $(REL_CFLAGS) $< -o $@
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+$(REL_BUILD_DIR):
+	mkdir -p $(REL_BUILD_DIR)
 
-clean:
-	rm -f $(BUILD_DIR)/*
+# 
+# Debug Rules
+# 
+
+.PHONY: debug
+debug: $(DBG_BUILD_DIR)/$(PROJECT).elf $(DBG_BUILD_DIR)/$(PROJECT).asm $(DBG_BUILD_DIR)/$(PROJECT).bin
+
+$(DBG_BUILD_DIR)/%.bin: $(DBG_BUILD_DIR)/%.elf
+	$(OBJCOPY) $< $@
+
+$(DBG_BUILD_DIR)/%.asm: $(DBG_BUILD_DIR)/%.elf
+	$(OBJDUMP) -S $< > $@
+
+$(DBG_BUILD_DIR)/$(PROJECT).elf: $(DBG_OBJ_FILES) Makefile
+	$(CC) $(DBG_OBJ_FILES) $(DBG_LDFLAGS) -o $@
+	$(SIZE) $@
+
+# $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+# 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(DBG_BUILD_DIR)/%.o: %.c Makefile | $(DBG_BUILD_DIR) 
+	$(CC) -c $(DBG_CFLAGS) -Wa,-a,-ad,-alms=$(DBG_BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+
+$(DBG_BUILD_DIR)/%.o: %.s Makefile | $(DBG_BUILD_DIR)
+	$(AS) -c $(DBG_CFLAGS) $< -o $@
+
+$(DBG_BUILD_DIR):
+	mkdir -p $(DBG_BUILD_DIR)
+
+prep:
+	@mkdir -p $(DBG_BUILD_DIR) $(REL_BUILD_DIR)
+
+# clean:
+# 	rm -f $(DBG_BUILD_DIR) $(REL_BUILD_DIR) $(DBG_OBJ_FILES) $(REL_OBJ_FILES)
