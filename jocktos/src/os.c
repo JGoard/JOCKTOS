@@ -17,9 +17,48 @@
 
 /* -- Defines ------------------------------------------------------------- */
 
+#define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
+
 /* -- Types --------------------------------------------------------------- */
 
+/* -- Private Function Declarations --------------------------------------- */
+
+/**
+ * \brief Updates the task control blocks stackUsage
+ * 
+ * \param tcb Pointer to task control block to be monitored.
+ */
+static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
+    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
+    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uintptr_t)));
+}
+
+/**
+ * @brief Initializes the stack for a task in a real-time operating system (RTOS).
+ *
+ * This function sets up the initial stack frame for the task by populating the stack with default values for various registers.
+ * It also sets the program counter (PC) to the task function handle, the link register (LR) to a specific value, and the stack pointer (SP) to the bottom of the stack range.
+ * After setting up the initial stack frame, the function fills the remaining unused stack space with a known value and sets the top 8 bytes to another known value.
+ *
+ * @param tcb Pointer to a T_TaskControlBlock structure representing the task.
+ */
+void initializeStack(T_TaskControlBlock* tcb);
+
+/**
+* \brief pre defined OS task for idle.
+*
+* Infinite while loop.
+* TODO: Figure out how to low power sleep without disabling ISR's
+*/
+void idleJOCKTOS(void* arg);
+
+/**
+ * \brief pre defined OS task to monitor stack usage
+ */
+void monitorJOCKTOS(void* arg);
+
 /* -- Local Globals (not for libraries with application instantiation) ---- */
+
 static Allocator allocator;
 T_Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
 extern T_TCBError JOCKTOS_TCBError;
@@ -38,43 +77,70 @@ T_TaskControlBlock defaultOSIdle = T_TASKCONTROLBLOCK_DEF(
         .taskFunct=idleJOCKTOS,
         .u8Name="default OS idle task");
 
-/* -- Private Function Declarations --------------------------------------- */
-
 /* -- Public Functions----------------------------------------------------- */
-void SysTick_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.tickCount++;
-    switchRunningTask(&JOCKTOSScheduler.ready);
-   __asm volatile ("cpsie i" : : : "memory");
+
+void createTask(T_TaskControlBlock* tcb) {
+    // check if task function handle is valid
+    if (!tcb->taskFunct) {
+        // TODO: better error handling
+        JOCKTOS_TCBError.invalidTaskHandle++;
+        return;
+    }
+    tcb->u32TaskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->u32StackSize_By * sizeof(uintptr_t));
+    if (!tcb->u32TaskStackOverflow) {
+        // TODO: better error handling
+        JOCKTOS_TCBError.failedToAllocate++;
+        return;
+    }
+    initializeStack(tcb);
+    insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
-void PendSV_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
+void switchRunningTask(volatile T_TaskControlBlock** head) {
+    volatile T_TaskControlBlock* suspended = NULL;
+    if (JOCKTOSScheduler.pending) return;
+    JOCKTOSScheduler.pending = true;
     if (JOCKTOSScheduler.running) {
-        // --------------------------------------------------------------------------------------
-        // push additional registers onto current process stack and store process stack pointer
-        __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
-        // __asm volatile ("mrs r0, psp");
-        __asm volatile ("stmdb r0!, {r4-r11}");
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->u32TaskStackPointer) :: );
-        // --------------------------------------------------------------------------------------
+        insertTCB(head, JOCKTOSScheduler.running);  
     }
-    // pop off of ready task list into running
-    JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->TCBNext;
-    JOCKTOSScheduler.running->TCBNext = NULL;
-    JOCKTOSScheduler.running->eState = eRUNNING;
-    JOCKTOSScheduler.pending = false;
-    // ------------------------------------------------------------------------------------------
-    // pop additional registers from the new process stack and load new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->u32TaskStackPointer) : "r0");
-    __asm volatile ("ldmia r0!, {r4-r11}");
-    __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
-    // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
-    __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
-    // ------------------------------------------------------------------------------------------
-    __asm volatile ("cpsie i" : : : "memory");
+    suspended = JOCKTOSScheduler.suspended;
+    while (suspended != NULL) {
+        if (currentTime() >= suspended->u32Delay) {
+            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
+            suspended->eState = eREADY;
+        }
+        suspended = suspended->TCBNext;
+    }
+    TRIGGER_PendSV;
 }
+
+void configureJOCKTOS(T_JocktosConfig* config) {
+    void* memory = calloc(ALLOCATOR_SIZE, 1);
+    initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
+    if (config->enableMonitor) createTask(&stackUsageMonitor);
+    if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
+    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
+}
+
+void runJOCKTOS(void) {
+    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    /** failed attempt to utilize PSP Thread Mode
+    uint32_t initPSP;
+    uint32_t ctrl = 0x2; // set only the SPSEL bit
+    __asm volatile ("mrs %0, msp" : "=r" (initPSP) );
+    __asm volatile ("msr psp, %0" : : "r" (initPSP) : "memory");
+    __asm volatile ("msr control, %0" : : "r" (ctrl) : "memory");
+    __asm volatile ("isb"); // Required after modifications to special register MSP or PSP
+    */
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    NVIC_SetPriority(PendSV_IRQn, 0xFFU);
+    // Configure SysTick to generate an interrupt every 1 ms 
+    SysTick_Configuration(127); // TODO: where tf does 127 come from...
+    NVIC_SetPriority(SysTick_IRQn, 0U);
+}
+
+/* -- Private Functions --------------------------------------------------- */
+
 void initializeStack(T_TaskControlBlock* tcb) {
     uintptr_t* taskStack = tcb->u32TaskStackOverflow;
     // set intermediate stack pointer to bottom of range
@@ -111,22 +177,39 @@ void initializeStack(T_TaskControlBlock* tcb) {
     }
 }
 
-void switchRunningTask(volatile T_TaskControlBlock** head) {
-    volatile T_TaskControlBlock* suspended = NULL;
-    if (JOCKTOSScheduler.pending) return;
-    JOCKTOSScheduler.pending = true;
+void SysTick_Handler(void) {
+    __asm volatile ("cpsid i" : : : "memory");
+    JOCKTOSScheduler.tickCount++;
+    switchRunningTask(&JOCKTOSScheduler.ready);
+   __asm volatile ("cpsie i" : : : "memory");
+}
+
+void PendSV_Handler(void) {
+    __asm volatile ("cpsid i" : : : "memory");
     if (JOCKTOSScheduler.running) {
-        insertTCB(head, JOCKTOSScheduler.running);  
+        // --------------------------------------------------------------------------------------
+        // push additional registers onto current process stack and store process stack pointer
+        __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
+        // __asm volatile ("mrs r0, psp");
+        __asm volatile ("stmdb r0!, {r4-r11}");
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->u32TaskStackPointer) :: );
+        // --------------------------------------------------------------------------------------
     }
-    suspended = JOCKTOSScheduler.suspended;
-    while (suspended != NULL) {
-        if (currentTime() >= suspended->u32Delay) {
-            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
-            suspended->eState = eREADY;
-        }
-        suspended = suspended->TCBNext;
-    }
-    TRIGGER_PendSV;
+    // pop off of ready task list into running
+    JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
+    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->TCBNext;
+    JOCKTOSScheduler.running->TCBNext = NULL;
+    JOCKTOSScheduler.running->eState = eRUNNING;
+    JOCKTOSScheduler.pending = false;
+    // ------------------------------------------------------------------------------------------
+    // pop additional registers from the new process stack and load new process stack pointer
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->u32TaskStackPointer) : "r0");
+    __asm volatile ("ldmia r0!, {r4-r11}");
+    __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
+    // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
+    __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
+    // ------------------------------------------------------------------------------------------
+    __asm volatile ("cpsie i" : : : "memory");
 }
 
 void monitorJOCKTOS(void* arg) {
@@ -161,47 +244,3 @@ void idleJOCKTOS(void* arg) {
     while(true) {}
     // TODO: Figure out how to low power
 }
-///< TODO: Encapsulate the above for no external usage
-void createTask(T_TaskControlBlock* tcb) {
-    // check if task function handle is valid
-    if (!tcb->taskFunct) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.invalidTaskHandle++;
-        return;
-    }
-    tcb->u32TaskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->u32StackSize_By * sizeof(uintptr_t));
-    if (!tcb->u32TaskStackOverflow) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.failedToAllocate++;
-        return;
-    }
-    initializeStack(tcb);
-    insertTCB(&JOCKTOSScheduler.ready, tcb);
-}
-
-void configureJOCKTOS(T_JocktosConfig* config) {
-    void* memory = calloc(ALLOCATOR_SIZE, 1);
-    initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
-    if (config->enableMonitor) createTask(&stackUsageMonitor);
-    if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
-    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
-}
-
-void runJOCKTOS(void) {
-    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    /** failed attempt to utilize PSP Thread Mode
-    uint32_t initPSP;
-    uint32_t ctrl = 0x2; // set only the SPSEL bit
-    __asm volatile ("mrs %0, msp" : "=r" (initPSP) );
-    __asm volatile ("msr psp, %0" : : "r" (initPSP) : "memory");
-    __asm volatile ("msr control, %0" : : "r" (ctrl) : "memory");
-    __asm volatile ("isb"); // Required after modifications to special register MSP or PSP
-    */
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    NVIC_SetPriority(PendSV_IRQn, 0xFFU);
-    // Configure SysTick to generate an interrupt every 1 ms 
-    SysTick_Configuration(127); // TODO: where tf does 127 come from...
-    NVIC_SetPriority(SysTick_IRQn, 0U);
-}
-
-/* -- Private Functions --------------------------------------------------- */
