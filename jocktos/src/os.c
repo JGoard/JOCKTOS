@@ -40,6 +40,7 @@ T_TaskControlBlock defaultOSIdle = T_TASKCONTROLBLOCK_DEF(
 
 /* -- Private Function Declarations --------------------------------------- */
 
+/* -- Public Functions----------------------------------------------------- */
 void SysTick_Handler(void) {
     __asm volatile ("cpsid i" : : : "memory");
     JOCKTOSScheduler.tickCount++;
@@ -160,9 +161,7 @@ void idleJOCKTOS(void* arg) {
     while(true) {}
     // TODO: Figure out how to low power
 }
-
-/* -- Public Functions----------------------------------------------------- */
-
+///< TODO: Encapsulate the above for no external usage
 void createTask(T_TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->taskFunct) {
@@ -204,3 +203,5 @@ void runJOCKTOS(void) {
     SysTick_Configuration(127); // TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }
+
+/* -- Private Functions --------------------------------------------------- */

@@ -20,6 +20,7 @@ extern T_Scheduler JOCKTOSScheduler;
 
 /* -- Private Function Declarations --------------------------------------- */
 
+/* -- Public Functions----------------------------------------------------- */
 void takeSemaphore(T_Semaphore* lock) {
     __asm volatile ("cpsid i" : : : "memory");
     if (!lock->value_) switchRunningTask(&lock->pendingTCBQueue_);
@@ -53,4 +54,5 @@ void sleep(uint32_t delay) {
     return;
 
 }
-/* -- Public Functions----------------------------------------------------- */
+
+/* -- Private Functions --------------------------------------------------- */

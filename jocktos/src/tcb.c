@@ -16,10 +16,11 @@
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
-T_TCBError JOCKTOS_TCBError = {0, 0, 0, 0, 0};
+T_TCBError JOCKTOS_TCBError = {0};
 
 /* -- Private Function Declarations --------------------------------------- */
 
+/* -- Public Functions----------------------------------------------------- */
 void insertTCB(volatile T_TaskControlBlock** head, volatile T_TaskControlBlock* tcb) {
     if (head == NULL) {
         JOCKTOS_TCBError.invalidListHead++;
@@ -100,4 +101,4 @@ void moveTCB(volatile T_TaskControlBlock** currentHead, volatile T_TaskControlBl
     insertTCB(newHead, tcb);
 }
 
-/* -- Public Functions----------------------------------------------------- */
+/* -- Private Functions --------------------------------------------------- */
