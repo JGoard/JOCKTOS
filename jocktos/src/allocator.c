@@ -56,7 +56,7 @@ size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks);
 void initAllocator(Allocator* allocator, void* memory, size_t size, size_t blockSize) {
     size_t numBlocks = size / blockSize;
     size_t bitmapSize = (numBlocks + 63) / 64 * 2 * sizeof(uint64_t);
-    allocator->bitmaps.size = numBlocks;
+    allocator->bitmaps.size = (size - bitmapSize) / blockSize;
     allocator->bitmaps.used = (uint64_t*)memory;
     memory = (void*)((uintptr_t)memory + bitmapSize / 2);
     allocator->bitmaps.alloc = (uint64_t*)memory;
