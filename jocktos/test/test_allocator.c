@@ -165,6 +165,7 @@ void testDeallocate() {
 }
 
 int main(void) {
+    LOG("ALLOCATOR TESTS\n", BLUE);
     TEST_EVAL(testInitAllocator);
     TEST_EVAL(testAllocate);
     TEST_EVAL(testDeallocate);

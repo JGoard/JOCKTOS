@@ -35,6 +35,13 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
+#define BLUE "\x1b[34m"
+#define GREEN "\x1b[32m"
+#define RED "\x1b[31m"
+#define RESET "\x1b[0m"
+#define CYAN "\x1b[36m"
+
+#define LOG(msg, col)   printf(col "%s" RESET, msg);
 
 /**
  * @brief Evaluate a statement and print its name.

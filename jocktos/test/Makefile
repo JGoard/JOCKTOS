@@ -14,7 +14,7 @@ SRCDIR = ../src
 OBJDIR = build
 
 # Executable name
-EXECS = $(OBJDIR)/allocator.test
+EXECS = $(OBJDIR)/test_allocator.test
 
 # Default target
 all: $(OBJDIR) $(EXECS)
@@ -25,8 +25,8 @@ $(OBJDIR):
 
 
 # Compile source files into object files
-$(OBJDIR)/allocator.test: test_allocator.c $(SRCDIR)/allocator.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/allocator.test test_allocator.c $(SRCDIR)/allocator.c $(INC)
+$(OBJDIR)/test_allocator.test: test_allocator.c $(SRCDIR)/allocator.c $(OBJDIR)
+	$(CC) $(CFLAGS) -o $(OBJDIR)/test_allocator.test test_allocator.c $(SRCDIR)/allocator.c $(INC)
 
 
 # Clean up build artifacts
@@ -35,7 +35,7 @@ clean:
 
 
 # Run all .test files in OBJDIR
-test: $(OBJDIR) $(EXECS)
+run-tests: $(OBJDIR) $(EXECS)
 	@for test in $(EXECS); do \
 		$$test; \
 	done
