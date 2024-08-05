@@ -24,7 +24,7 @@ int main(void)
         .enableIdle = true,
         .enableMain = true,
         .enableMonitor = true,
-        .allocatorBlockSize = 128
+        .allocatorBlockSize = 256
     );
     /* Configures JOCKTOS Kernel with Default structure */
     configureJOCKTOS(&config);
@@ -32,7 +32,7 @@ int main(void)
     /* Sample Task Employing passing in a task argument of anytype */
     TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
     T_TaskControlBlock testTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+        .u32StackSize_By=512, 
         .taskFunct=testArgsTask,
         .taskArg=(void*)&test_val,
         .u8Name="test args");
@@ -40,21 +40,21 @@ int main(void)
 
     /* Sample Sleep Task */
     T_TaskControlBlock sleepTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+        .u32StackSize_By=512, 
         .taskFunct=sleepTest,
         .u8Name="sleep test");
     createTask(&sleepTask);
 
     /* Sample Semaphore Task */
     T_TaskControlBlock lockTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+        .u32StackSize_By=512, 
         .taskFunct=mutexTestTask,
         .u8Name="semaphore test");
     createTask(&lockTask);
 
     /* Sample Task Monitor Stack Test Task */
     T_TaskControlBlock stackTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+        .u32StackSize_By=512, 
         .taskFunct=stackInflationTestTask,
         .u8Name="stack inflation");
     createTask(&stackTask);
