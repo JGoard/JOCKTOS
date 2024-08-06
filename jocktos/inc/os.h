@@ -29,7 +29,7 @@
 /** 
  * @brief Default JOCKTOS configuration
  */
-#define T_JOCKTOSCONFIG_DEF(...) \
+#define JOCKTOSCONFIG_DEF(...) \
 {                                \
     .enableMonitor      = false, \
     .enableMain         = false, \
@@ -45,10 +45,10 @@
 typedef struct {
     volatile bool pending;
     volatile uint32_t tickCount;
-    volatile T_TaskControlBlock* running;   ///<    Currently running task
-    volatile T_TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
-    volatile T_TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
-} T_Scheduler;
+    volatile TaskControlBlock* running;   ///<    Currently running task
+    volatile TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
+    volatile TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
+} Scheduler;
 
 /**
  * @brief Configuration settings for JOCKTOS allocator and built in tasks
@@ -58,11 +58,11 @@ typedef struct {
     bool enableIdle;           ///< Enable or disable idle task
     bool enableMain;           ///< return execution after enabling, with `main` considered a new task
     size_t allocatorBlockSize; ///< Size of the allocator block
-} T_JocktosConfig;
+} JocktosConfig;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
-extern T_Scheduler JOCKTOSScheduler;
+extern Scheduler JOCKTOSScheduler;
 
 /* -- Function Declarations ----------------------------------------------- */
 
@@ -74,7 +74,7 @@ extern T_Scheduler JOCKTOSScheduler;
  *
  * \param tcb Pointer to the task control block representing the new task.
  */
-void createTask(T_TaskControlBlock* tcb);
+void createTask(TaskControlBlock* tcb);
 
 /**
  * \brief Switch the currently running task
@@ -83,12 +83,12 @@ void createTask(T_TaskControlBlock* tcb);
  *
  * \param head Pointer to destination for current running task.
  */
-void switchRunningTask(volatile T_TaskControlBlock** head);
+void switchRunningTask(volatile TaskControlBlock** head);
 
 /**
  * \brief configure / enable built in OS tasks
  */
-void configureJOCKTOS(T_JocktosConfig* config);
+void configureJOCKTOS(JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's

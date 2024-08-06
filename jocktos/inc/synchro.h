@@ -16,7 +16,7 @@
 /**
  * @brief default semaphore is binary (mutex)
  */
-#define T_SEMAPHORE_DEF(...)    \
+#define SEMAPHORE_DEF(...)    \
 {   /* ---Internal Data---*/    \
     .value_           = 1,      \
     .count            = 2,      \
@@ -33,9 +33,9 @@
 typedef struct {
     uint16_t value_;                                ///< [INTERNAL] current value
     uint16_t count;                                 ///< Queue size for lock instance
-    volatile T_TaskControlBlock *pendingTCBQueue_;  ///< [INTERNAL] Linked list of tasks awaiting lock
+    volatile TaskControlBlock *pendingTCBQueue_;  ///< [INTERNAL] Linked list of tasks awaiting lock
     uint8_t ownersPriority_;                        ///< [INTERNAL] TODO: prevent priority inversion
-} T_Semaphore;
+} Semaphore;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
@@ -50,7 +50,7 @@ typedef struct {
  * 
  * @param lock Pointer to the semaphore to be taken.
  */
-void takeSemaphore(T_Semaphore* lock);
+void takeSemaphore(Semaphore* lock);
 
 /**
  * @brief Gives a semaphore.
@@ -62,7 +62,7 @@ void takeSemaphore(T_Semaphore* lock);
  * 
  * @param lock Pointer to the semaphore to be given.
  */
-void giveSemaphore(T_Semaphore* lock);
+void giveSemaphore(Semaphore* lock);
 
 /**
  * @brief Suspends the current running task for a fixed amount of time.

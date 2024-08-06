@@ -9,8 +9,8 @@
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
-extern T_Scheduler JOCKTOSScheduler; ///<  Used for debugging (include in Watch List)
-T_Semaphore testMutex = T_SEMAPHORE_DEF();
+extern Scheduler JOCKTOSScheduler; ///<  Used for debugging (include in Watch List)
+Semaphore testMutex = SEMAPHORE_DEF();
 
 /* -- Functions----------------------------------------------------------- */
 /**
@@ -20,7 +20,7 @@ T_Semaphore testMutex = T_SEMAPHORE_DEF();
 int main(void)
 {
     /* Configuration Default for the Allocator and option for kernel servicing and monitoring */
-    T_JocktosConfig config = T_JOCKTOSCONFIG_DEF(
+    JocktosConfig config = JOCKTOSCONFIG_DEF(
         .enableIdle = true,
         .enableMain = true,
         .enableMonitor = true,
@@ -31,32 +31,32 @@ int main(void)
     
     /* Sample Task Employing passing in a task argument of anytype */
     TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
-    T_TaskControlBlock testTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+    TaskControlBlock testTask = TASKCONTROLBLOCK_DEF(
+        .stackSize_By=256, 
         .taskFunct=testArgsTask,
         .taskArg=(void*)&test_val,
-        .u8Name="test args");
+        .name="test args");
     createTask(&testTask);
 
     /* Sample Sleep Task */
-    T_TaskControlBlock sleepTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+    TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
+        .stackSize_By=256, 
         .taskFunct=sleepTest,
-        .u8Name="sleep test");
+        .name="sleep test");
     createTask(&sleepTask);
 
     /* Sample Semaphore Task */
-    T_TaskControlBlock lockTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+    TaskControlBlock lockTask = TASKCONTROLBLOCK_DEF(
+        .stackSize_By=256, 
         .taskFunct=mutexTestTask,
-        .u8Name="semaphore test");
+        .name="semaphore test");
     createTask(&lockTask);
 
     /* Sample Task Monitor Stack Test Task */
-    T_TaskControlBlock stackTask = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
+    TaskControlBlock stackTask = TASKCONTROLBLOCK_DEF(
+        .stackSize_By=256, 
         .taskFunct=stackInflationTestTask,
-        .u8Name="stack inflation");
+        .name="stack inflation");
     createTask(&stackTask);
 
     /* This will start the scheduler and tasking system */
