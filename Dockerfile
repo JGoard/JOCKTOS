@@ -4,14 +4,21 @@ FROM ubuntu:23.10
 RUN apt-get update && \
     apt-get install -y \
     curl \
+    udev \
     wget \
-    nano
+    nano \
+    build-essential \
+    symlinks \
+    expect \
+    git 
 
 # install emulator and C build tools
 RUN apt-get install -y \
     qemu-system \
     build-essential \
-    gcc-arm-none-eabi
+    gcc-arm-none-eabi \
+    gdb-arm-none-eabi \
+    libnewlib-arm-none-eabi
 
 # install documentation tools   
 RUN apt-get install -y \
@@ -24,7 +31,17 @@ RUN apt-get install -y \
     latexmk \
     fonts-freefont-otf \
     xindy
+    
+RUN apt-cache policy gcc-arm-none-eabi
 
+# install make and cmake build dependancies
+RUN apt-get install --no-install-recommends -y \
+    make \
+    automake \
+    cmake \
+    pkg-config \
+    autoconf \
+    texinfo
 
 WORKDIR /JOCKTOS
 
