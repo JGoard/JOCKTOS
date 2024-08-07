@@ -4,16 +4,16 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 import subprocess
 
-subprocess.call('doxygen /JOCKTOS/docs/Doxyfile', shell=True)
+subprocess.call('doxygen ../Doxyfile', shell=True)
 
 # Add Doxygen-generated files to Sphinx
 breathe_default_project = 'jocktos-docs'
 breathe_projects = {
-    'jocktos-docs': "/JOCKTOS/docs/build/xml",
+    'jocktos-docs': "../build/xml",
 }
 
 latex_engine = 'xelatex'  # or 'pdflatex' if you prefer
-latex_build_directory = '/JOCKTOS/docs/_latex'
+latex_build_directory = '../_latex'
 latex_elements = {
     'papersize': 'letterpaper',
     'pointsize': '10pt',

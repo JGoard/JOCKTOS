@@ -2,32 +2,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "QEMU debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/jocktos/build/firmware.elf",
-            "cwd": "${workspaceFolder}/jocktos",
-            "externalConsole": false,
-            "miDebuggerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
-            "miDebuggerServerAddress": "localhost:1234",
-            "stopAtEntry": true,
-            "preLaunchTask": "run-qemu-emulator",
-            "postDebugTask": "stop-qemu-emulator",
-        },
-        {
-            "name": "Attach OpenOCD",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "request": "attach",
-            "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
-            "configFiles": [
-                "board/st_nucleo_f3.cfg",
-            ],
-            "showDevDebugOutput": "raw",
-            "cwd": "${workspaceFolder}/jocktos"
-            
-        },
-        {
             "name": "Launch OpenOCD",
             "cwd": "${workspaceFolder}/jocktos",
             "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
@@ -52,6 +26,45 @@
                 "enabled": true,
                 "samplesPerSecond": 4
             }
+        },
+        {
+            "name": "Attach OpenOCD",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "request": "attach",
+            "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
+            "configFiles": [
+                "board/st_nucleo_f3.cfg",
+            ],
+            "showDevDebugOutput": "raw",
+            "cwd": "${workspaceFolder}/jocktos"
+            
+        },
+        {
+            "name": "Debug Current Unit Test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/jocktos/test/build/${fileBasenameNoExtension}.test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "build current unit test"
+        },
+        {
+            "name": "QEMU debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/jocktos/build/firmware.elf",
+            "cwd": "${workspaceFolder}/jocktos",
+            "externalConsole": false,
+            "miDebuggerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
+            "miDebuggerServerAddress": "localhost:1234",
+            "stopAtEntry": true,
+            "preLaunchTask": "run-qemu-emulator",
+            "postDebugTask": "stop-qemu-emulator",
         }
     ]
 }
