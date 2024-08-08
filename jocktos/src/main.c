@@ -33,7 +33,7 @@ int main(void)
     TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
 
     TaskControlBlock testTask = TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=512,
+        .stackSize_By=512,
         .taskFunct=testArgsTask,
         .taskArg=(void*)&test_val,
         .name="test args");
@@ -41,7 +41,7 @@ int main(void)
 
     /* Sample Sleep Task */
     TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=512, 
+        .stackSize_By=512, 
         .taskFunct=sleepTest,
         .name="sleep test");
     createTask(&sleepTask);
