@@ -24,12 +24,8 @@ jobs:
       run: |
         sudo apt-get update
 
-    - name: Build jocktos
+    - name: Build All Tests
       run: cd jocktos/test && make
 
-    - name: Bitmap BLock Allocator
-      run: cd jocktos/test/build && ./allocator.test
-
-      
-
-  
+    - name: Bitmap Block Allocator
+      run: cd jocktos/test/build && ./test_allocator.test

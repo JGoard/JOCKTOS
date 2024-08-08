@@ -73,7 +73,7 @@ TaskControlBlock stackUsageMonitor = TASKCONTROLBLOCK_DEF(
         .name="stack usage monitor");
 
 TaskControlBlock defaultOSIdle = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=256, 
+        .stackSize_By=512,
         .taskFunct=idleJOCKTOS,
         .name="default OS idle task");
 
@@ -86,7 +86,7 @@ void createTask(TaskControlBlock* tcb) {
         JOCKTOS_TCBError.invalidTaskHandle++;
         return;
     }
-    tcb->taskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->stackSize_By * sizeof(uintptr_t));
+    tcb->taskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->stackSize_By);
     if (!tcb->taskStackOverflow) {
         // TODO: better error handling
         JOCKTOS_TCBError.failedToAllocate++;
@@ -115,7 +115,7 @@ void switchRunningTask(volatile TaskControlBlock** head) {
 }
 
 void configureJOCKTOS(JocktosConfig* config) {
-    void* memory = calloc(ALLOCATOR_SIZE, 1);
+    void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
     if (config->enableMonitor) createTask(&stackUsageMonitor);
     if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
@@ -144,7 +144,7 @@ void runJOCKTOS(void) {
 void initializeStack(TaskControlBlock* tcb) {
     uintptr_t* taskStack = tcb->taskStackOverflow;
     // set intermediate stack pointer to bottom of range
-    taskStack = (uintptr_t*)(taskStack + ((tcb->stackSize_By) / 8) * 8);
+    taskStack = (uintptr_t*)(taskStack + tcb->stackSize_By / sizeof(uintptr_t));
     // define tasks initial exception return stack
     uintptr_t* initStackPtr;
     //  - non-critical registers are initialized to their index

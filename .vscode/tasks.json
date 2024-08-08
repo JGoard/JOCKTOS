@@ -81,6 +81,20 @@
       },
     },
     {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "cd ${workspaceFolder}/jocktos/test; make run-tests",
+      "icon": {
+        "id": "run",
+        "color": "terminal.ansiWhite"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#ffffff"
+        }
+      }
+    },    
+    {
       "label": "Build Docs",
       "type": "shell",
       "command": "docker",
@@ -207,6 +221,16 @@
           "message": 1
         }
       }
+    },
+    {
+      "label": "build current unit test",
+      "type": "shell",
+      "command": "cd ${workspaceFolder}/jocktos/test; make build/${fileBasenameNoExtension}.test",
+      "options": {
+        "statusbar": {
+          "hide" : true
+        }
+      },
     }
   ]
 }
