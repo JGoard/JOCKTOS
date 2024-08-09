@@ -12,15 +12,15 @@ void testInitAllocator(void) {
     TEST_CASE("Even multiple of block size") {
         Allocator allocator;
         uint8_t memory[128];
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
 
         ASSERT_EQUAL_INT(allocator.memory.size, 112, "incorrect size after initialization");
-        ASSERT_EQUAL_INT(allocator.blockSize, 16, "incorrect block size after initialization");
+        ASSERT_EQUAL_INT(allocator.block_size, 16, "incorrect block size after initialization");
         ASSERT_EQUAL_INT(allocator.bitmaps.size, 7, "incorrect bitmap size after initialization"); 
 
-        ASSERT_EQUAL_PTR((uint8_t*)(allocator.bitmaps.used), memory, "alloc bitmap placement is wrong"); 
-        ASSERT_EQUAL_PTR((uint8_t*)(allocator.bitmaps.alloc), memory + 2, "used bitmap placement is wrong");  
-        ASSERT_EQUAL_PTR((uint8_t*)(allocator.memory.head), memory + 4, "alloc bitmap placement is wrong"); 
+        ASSERT_EQUAL_PTR((uint8_t*)(allocator.bitmaps.used), memory, "heads bitmap placement is wrong"); 
+        ASSERT_EQUAL_PTR((uint8_t*)(allocator.bitmaps.heads), memory + 2, "used bitmap placement is wrong");  
+        ASSERT_EQUAL_PTR((uint8_t*)(allocator.memory.head), memory + 4, "heads bitmap placement is wrong"); 
 
     } CASE_COMPLETE;
 
@@ -40,12 +40,12 @@ void testAllocate() {
         Allocator allocator;
         uint8_t memory[128];
         for (int index = 0; index < 128; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
         void* block = allocate(&allocator, allocator.memory.size);
         ASSERT_EQUAL_PTR(block, allocator.memory.head, "incorrect block head returned");
         void* block2 = allocate(&allocator, 16);
         ASSERT_EQUAL_PTR(block2, NULL, "invalid allocation returned non-null");
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 0), "alloc bit not set");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 0), "heads bit not set");
         for (uint16_t i = 0; i < allocator.bitmaps.size; i++) {
             ASSERT_TRUE(get_bit(allocator.bitmaps.used, i), "used bit not set");
         }
@@ -55,13 +55,13 @@ void testAllocate() {
         Allocator allocator;
         uint8_t memory[128];
         for (int index = 0; index < 128; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
 
         void* block = allocate(&allocator, 1024);
         ASSERT_EQUAL_PTR(block, NULL, "invalid allocation returned non-null");
 
         for (uint16_t i = 0; i < allocator.bitmaps.size; i++) {
-            ASSERT_FALSE(get_bit(allocator.bitmaps.alloc, i), "alloc bit was set");
+            ASSERT_FALSE(get_bit(allocator.bitmaps.heads, i), "heads bit was set");
             ASSERT_FALSE(get_bit(allocator.bitmaps.used, i),  "used bit was set");
         }
     } CASE_COMPLETE;
@@ -70,18 +70,18 @@ void testAllocate() {
         Allocator allocator;
         uint8_t memory[4096];
         for (int index = 0; index < 4096; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 512, 16);
+        initAllocator(&allocator, 16, memory, 512);
 
         void* block1 = allocate(&allocator, 16 * 20);
         void* block2 = allocate(&allocator, 16);
         ASSERT_NOT_EQUAL_PTR(block1, NULL, "valid allocation returned null");
         ASSERT_NOT_EQUAL_PTR(block2, NULL, "valid allocation returned null");
 
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 0), "alloc bit not set");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 0), "heads bit not set");
         for (uint16_t i = 0; i < 20; i++) {
             ASSERT_TRUE(get_bit(allocator.bitmaps.used, i), "used bit not set");
         }
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 20), "alloc bit not set");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 20), "heads bit not set");
         ASSERT_TRUE(get_bit(allocator.bitmaps.used, 20), "used bit not set");
 
     } CASE_COMPLETE;
@@ -90,7 +90,7 @@ void testAllocate() {
         Allocator allocator;
         uint8_t memory[128];
         for (int index = 0; index < 128; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
 
         void* block1 = allocate(&allocator, 17);
         void* block2 = allocate(&allocator, 17);
@@ -99,8 +99,8 @@ void testAllocate() {
 
         ASSERT_EQUAL_PTR((uint8_t*)block1 + 32, (uint8_t*)block2, "blocks not adjacent");
 
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 0), "alloc bit not set");
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 2), "alloc bit not set");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 0), "heads bit not set");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 2), "heads bit not set");
         ASSERT_TRUE(get_bit(allocator.bitmaps.used, 0), "used bit not set");
         ASSERT_TRUE(get_bit(allocator.bitmaps.used, 1), "used bit not set");
         ASSERT_TRUE(get_bit(allocator.bitmaps.used, 2), "used bit not set");
@@ -115,12 +115,12 @@ void testDeallocate() {
         Allocator allocator;
         uint8_t memory[128];
         for (int index = 0; index < 128; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
 
         void* block = allocate(&allocator, 16);
         ASSERT_TRUE(deallocate(&allocator, block), "deallocation failed");
 
-        ASSERT_FALSE(get_bit(allocator.bitmaps.alloc, 0), "alloc bit was set");
+        ASSERT_FALSE(get_bit(allocator.bitmaps.heads, 0), "heads bit was set");
         ASSERT_FALSE(get_bit(allocator.bitmaps.used, 0), "used bit was set");
 
     } CASE_COMPLETE;
@@ -129,19 +129,19 @@ void testDeallocate() {
         Allocator allocator;
         uint8_t memory[4096];
         for (int index = 0; index < 4096; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 4096, 16);
+        initAllocator(&allocator, 16, memory, 4096);
 
         void* block1 = allocate(&allocator, 16 * 12);
         void* block2 = allocate(&allocator, 16 * 20);
 
         ASSERT_TRUE(deallocate(&allocator, block1), "deallocating block1 failed");
 
-        ASSERT_FALSE(get_bit(allocator.bitmaps.alloc, 0), "alloc bit still set after deallocation");
+        ASSERT_FALSE(get_bit(allocator.bitmaps.heads, 0), "heads bit still set after deallocation");
         for (uint16_t i = 0; i < 12; i++) {
             ASSERT_FALSE(get_bit(allocator.bitmaps.used, i), "used bit still set after deallocation");
         }
 
-        ASSERT_TRUE(get_bit(allocator.bitmaps.alloc, 12), "next allocs bit cleared after deallocation");
+        ASSERT_TRUE(get_bit(allocator.bitmaps.heads, 12), "next allocs bit cleared after deallocation");
         for (uint16_t i = 0; i < 20; i++) {
             ASSERT_TRUE(get_bit(allocator.bitmaps.used, 12 + i), "next used bit cleared after deallocation");
         }
@@ -154,12 +154,12 @@ void testDeallocate() {
         Allocator allocator;
         uint8_t memory[128];
         for (int index = 0; index < 128; index++) memory[index] = 0;
-        initAllocator(&allocator, memory, 128, 16);
+        initAllocator(&allocator, 16, memory, 128);
         void* block = (uint8_t*)(allocator.memory.head) + 2;
 
         ASSERT_FALSE(deallocate(&allocator, block), "invalid block was deallocation without error");
         for (uint16_t i = 0; i < 8; i++) {
-            ASSERT_FALSE(get_bit(allocator.bitmaps.alloc, i), "alloc bit was cleared during invalid deallocation");
+            ASSERT_FALSE(get_bit(allocator.bitmaps.heads, i), "heads bit was cleared during invalid deallocation");
         }
     } CASE_COMPLETE;
 }

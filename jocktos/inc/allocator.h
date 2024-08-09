@@ -29,7 +29,7 @@ typedef struct {
  */
 typedef struct {
     uint16_t* used;   ///< Bitmap tracking used blocks.
-    uint16_t* alloc;  ///< Bitmap tracking allocated blocks.
+    uint16_t* heads;  ///< Bitmap tracking allocated block heads.
     uint16_t size;    ///< Size of the bitmap.
 } BitMaps;
 
@@ -39,7 +39,7 @@ typedef struct {
 typedef struct {
     BitMaps bitmaps;      ///< Bitmaps for managing memory allocation.
     MemoryBlock memory;   ///< The memory block being managed.
-    uint16_t blockSize;     ///< Size of each memory block.
+    uint16_t block_size;  ///< Size of each memory block.
 } Allocator;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -50,14 +50,14 @@ typedef struct {
  * @brief Initializes an allocator.
  * 
  * @param allocator The allocator to initialize.
+ * @param block_size The size of each block.
  * @param memory The memory region to manage.
  * @param size The size of the memory region.
- * @param blockSize The size of each block.
  * 
  * @note
  * The provided `memory` MUST point to a block of free, zero-initialized memory of size `size`.
  */
-void initAllocator(Allocator* allocator, void* memory, uint16_t size, uint16_t blockSize);
+void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size);
 
 /**
  * @brief Allocates a block of memory from the allocator.

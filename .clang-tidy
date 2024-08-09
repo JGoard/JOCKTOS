@@ -1,0 +1,43 @@
+Checks:
+  readability-identifier-naming,
+  clang-analyzer-*,
+  modernize-*,
+  performance-*,
+  bugprone-*,
+  misc-*
+
+CheckOptions:
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  # Ignore functions with the prefix `jock_`, or suffix `_Handler`
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^jock_.*$|^.*_Handler$' 
+
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+
+  # Ignore variables with the prefix `JOCKTOS`
+  - key: readability-identifier-naming.GlobalVariableIgnoredRegexp
+    value: '^JOCKTOS.*$'
