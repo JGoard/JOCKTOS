@@ -14,7 +14,7 @@
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "cd /JOCKTOS/jocktos/ && make clean debug && make debug",
+        "cd /JOCKTOS/jocktos/ && make clean debug && make debug"
       ],
       "icon": {
         "id": "tools",
@@ -22,7 +22,7 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#a8fdbb"
+          "color": "#a8fdbb"
         }
       },
       "group": {
@@ -43,7 +43,7 @@
         "jocktos:latest",
         "/bin/sh",
         "-c",
-        "cd /JOCKTOS/jocktos/ && make clean release && make release",
+        "cd /JOCKTOS/jocktos/ && make clean release && make release"
       ],
       "icon": {
         "id": "tools",
@@ -51,7 +51,33 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#f6fa05"
+          "color": "#f6fa05"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+
+    {
+      "label": "Dock OpenOCD",
+      "type": "shell",
+      "command": "usbipd",
+      "args": [
+        "attach",    
+        "--wsl",
+        "--hardware-id",
+        "0483:374b",
+      
+      ],
+      "icon": {
+        "id": "bug",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color": "#f6fa05"
         }
       },
       "group": {
@@ -64,10 +90,49 @@
       "type": "shell",
       "command": "openocd",
       "args": [
-        "-f", "board/st_nucleo_f3.cfg",
+        "-f",
+        "board/st_nucleo_f3.cfg",
+        "-c",
+        "init",
+        "-c",
+        "reset init",
+        "-c",
+        "flash write_image erase ./jocktos/build/debug/firmware.elf",
+        "-c",
+        "shutdown"
+      ],
+      "icon": {
+        "id": "export",
+        "color": "terminal.ansiMagenta"
+      },
+      "options": {
+        "statusbar": {
+          "color": "#ffa9f8"
+        }
+      },
+      "problemMatcher": []
+    },
+    
+    {
+      "label": "Flash Device",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-v",
+        "/dev:/dev",
+        "--privileged",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "openocd",
+        "-f", "/usr/local/share/openocd/scripts/interface/stlink.cfg",
+        "-f", "/usr/local/share/openocd/scripts/board/st_nucleo_f3.cfg",
         "-c", "init",
         "-c", "reset init",
-        "-c", "flash write_image erase ./jocktos/build/firmware.elf",
+        "-c", "flash write_image erase ./jocktos/build/debug/firmware.elf",
         "-c", "shutdown"
       ],
       "icon": {
@@ -76,10 +141,11 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#ffa9f8"
+          "color" : "#9b7e98"
         }
       },
     },
+
     {
       "label": "Build Docs",
       "type": "shell",
@@ -109,7 +175,7 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#a2beee"
+          "color": "#a2beee"
         }
       },
       "problemMatcher": []
@@ -141,7 +207,7 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#fab1b1"
+          "color": "#fab1b1"
         }
       },
       "problemMatcher": []
@@ -167,7 +233,7 @@
       ],
       "options": {
         "statusbar": {
-          "hide" : true
+          "hide": true
         }
       },
       "problemMatcher": {
@@ -193,7 +259,7 @@
       ],
       "options": {
         "statusbar": {
-          "hide" : true
+          "hide": true
         }
       },
       "problemMatcher": {

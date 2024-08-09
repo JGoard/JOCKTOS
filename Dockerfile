@@ -15,7 +15,6 @@ RUN apt-get update && \
 # install emulator and C build tools
 RUN apt-get install -y \
     qemu-system \
-    build-essential \
     gcc-arm-none-eabi \
     gdb-arm-none-eabi \
     libnewlib-arm-none-eabi
@@ -36,13 +35,51 @@ RUN apt-cache policy gcc-arm-none-eabi
 
 # install make and cmake build dependancies
 RUN apt-get install --no-install-recommends -y \
-    make \
-    automake \
-    cmake \
-    pkg-config \
-    autoconf \
-    texinfo
+libhidapi-hidraw0 \
+libusb-0.1-4 \
+libusb-1.0-0 \
+libhidapi-dev \
+libusb-1.0-0-dev \
+libusb-dev \
+libftdi-dev \
+libtool \
+usbutils \
+make \
+libstlink-dev \
+cmake \
+automake \
+pkg-config \
+autoconf \
+texinfo
+#build and install OPENOCD from repository
+RUN cd /usr/src/ \
+&& git clone https://github.com/texane/stlink.git stlink \
+&& cd stlink && make release && ldconfig \
+&& cd /usr/src && git clone --depth 1 https://github.com/ntfreak/openocd.git && cd openocd\
+&& git submodule update --init --recursive \
+&& cd src/jtag/drivers/libjaylink \
+&& ./autogen.sh \
+&& ./configure \
+&& make \
+&& make install \
+&& ldconfig \
+&& cd /usr/src/openocd \
+&& ./bootstrap \
+&& ./configure --enable-stlink --enable-jlink --enable-ftdi --enable-cmsis-dap \
+&& make -j"$(nproc)" \
+&& make install \
+&& ldconfig 
 
-WORKDIR /JOCKTOS
+#remove unneeded directories
+RUN cd ..
+#OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
+RUN cp /usr/local/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d/60-openocd.rules 
+COPY openocd.cfg /usr/local/share/openocd/openocd.cfg  
+RUN /lib/systemd/systemd-udevd --daemon && udevadm control --reload-rules
 
+
+    #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
+EXPOSE 3333
+EXPOSE 4444
+EXPOSE 6666
 CMD ["tail", "-f", "/dev/null"]
