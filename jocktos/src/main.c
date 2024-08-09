@@ -27,7 +27,7 @@ int main(void)
         .allocatorBlockSize = 256
     );
     /* Configures JOCKTOS Kernel with Default structure */
-    configureJOCKTOS(&config);
+    jock_configure(&config);
     
     /* Sample Task Employing passing in a task argument of anytype */
     TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
@@ -37,31 +37,31 @@ int main(void)
         .taskFunct=testArgsTask,
         .taskArg=(void*)&test_val,
         .name="test args");
-    createTask(&testTask);
+    jock_createTask(&testTask);
 
     /* Sample Sleep Task */
     TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
         .stackSize_By=512, 
         .taskFunct=sleepTest,
         .name="sleep test");
-    createTask(&sleepTask);
+    jock_createTask(&sleepTask);
 
     /* Sample Semaphore Task */
     TaskControlBlock lockTask = TASKCONTROLBLOCK_DEF(
         .stackSize_By=512,
         .taskFunct=mutexTestTask,
         .name="semaphore test");
-    createTask(&lockTask);
+    jock_createTask(&lockTask);
 
     /* Sample Task Monitor Stack Test Task */
     TaskControlBlock stackTask = TASKCONTROLBLOCK_DEF(
         .stackSize_By=512,
         .taskFunct=stackInflationTestTask,
         .name="stack inflation");
-    createTask(&stackTask);
+    jock_createTask(&stackTask);
 
     /* This will start the scheduler and tasking system */
-    runJOCKTOS();
+    jock_run();
 
     int x = 100;
     int y = 0;
@@ -86,10 +86,10 @@ void testArgsTask(void* arg) {
 
 void sleepTest(void* arg) {
     while (true) {
-        takeSemaphore(&testMutex);
-        sleep(1000);
-        giveSemaphore(&testMutex);
-        sleep(1000);
+        jock_takeSemaphore(&testMutex);
+        jock_sleep(1000);
+        jock_giveSemaphore(&testMutex);
+        jock_sleep(1000);
     }
 }
 
@@ -98,10 +98,10 @@ void mutexTestTask(void* arg) {
     while(1) {
         x--;
         if (x == 5000) {
-            takeSemaphore(&testMutex);
+            jock_takeSemaphore(&testMutex);
         }
         if (x == 0) {
-            giveSemaphore(&testMutex);
+            jock_giveSemaphore(&testMutex);
             x = 10000;
         }
     }

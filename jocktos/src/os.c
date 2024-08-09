@@ -50,12 +50,12 @@ void initializeStack(TaskControlBlock* tcb);
 * Infinite while loop.
 * TODO: Figure out how to low power sleep without disabling ISR's
 */
-void idleJOCKTOS(void* arg);
+void idleTask(void* arg);
 
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorJOCKTOS(void* arg);
+void monitorTask(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
@@ -69,17 +69,17 @@ TaskControlBlock userMainControlBlock = TASKCONTROLBLOCK_DEF(
 
 TaskControlBlock stackUsageMonitor = TASKCONTROLBLOCK_DEF(
         .stackSize_By=1024, 
-        .taskFunct=monitorJOCKTOS,
+        .taskFunct=monitorTask,
         .name="stack usage monitor");
 
 TaskControlBlock defaultOSIdle = TASKCONTROLBLOCK_DEF(
         .stackSize_By=512,
-        .taskFunct=idleJOCKTOS,
+        .taskFunct=idleTask,
         .name="default OS idle task");
 
 /* -- Public Functions----------------------------------------------------- */
 
-void createTask(TaskControlBlock* tcb) {
+void jock_createTask(TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->taskFunct) {
         // TODO: better error handling
@@ -105,7 +105,7 @@ void switchRunningTask(volatile TaskControlBlock** head) {
     }
     suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (currentTime() >= suspended->delay) {
+        if (jock_currentTime() >= suspended->delay) {
             moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
             suspended->state = READY;
         }
@@ -114,15 +114,15 @@ void switchRunningTask(volatile TaskControlBlock** head) {
     TRIGGER_PendSV;
 }
 
-void configureJOCKTOS(JocktosConfig* config) {
+void jock_configure(JocktosConfig* config) {
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
-    if (config->enableMonitor) createTask(&stackUsageMonitor);
+    if (config->enableMonitor) jock_createTask(&stackUsageMonitor);
     if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
-    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
+    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) jock_createTask(&defaultOSIdle);
 }
 
-void runJOCKTOS(void) {
+void jock_run(void) {
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;
@@ -212,7 +212,7 @@ void PendSV_Handler(void) {
     __asm volatile ("cpsie i" : : : "memory");
 }
 
-void monitorJOCKTOS(void* arg) {
+void monitorTask(void* arg) {
     volatile TaskControlBlock* head = NULL;
     TaskState monitorScope = RUNNING;
     while(true) {
@@ -240,7 +240,7 @@ void monitorJOCKTOS(void* arg) {
     }
 }
 
-void idleJOCKTOS(void* arg) {
+void idleTask(void* arg) {
     while(true) {}
     // TODO: Figure out how to low power
 }
