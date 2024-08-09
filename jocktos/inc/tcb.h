@@ -16,20 +16,20 @@
 /**
  * @brief default task control block
  */
-#define TASKCONTROLBLOCK_DEF(...) \
+#define TASKCONTROLBLOCK_DEF(...)   \
 {   /* ---- Configured ---*/        \
-    .priority      = 0,           \
-    .name          = 0,           \
-    .delay        = 0,           \
-    .stackSize_By = 0,           \
+    .priority = 0,                  \
+    .name     = "\0",               \
+    .delay_ms = 0,                  \
+    .stack_size_bytes = 0,          \
     /* ---- Input Data ---*/        \
-    .taskFunct       = NULL,        \
-    .taskArg         = NULL,        \
+    .task_handle = NULL,            \
+    .task_arg    = NULL,            \
     /* ---- Output Data---*/        \
-    .state          = BLOCKED,    \
+    .state = BLOCKED,               \
     /* ---- Internal Data-*/        \
-    .taskStackPointer = NULL,    \
-    .TCBNext             = NULL,    \
+    .stack_pointer = NULL,          \
+    .next          = NULL,          \
      __VA_ARGS__                    \
 }
 
@@ -49,11 +49,11 @@ typedef enum {
  * @brief colelction of potential error counters
  */
 typedef struct {
-    volatile uint16_t invalidTaskHandle;
-    volatile uint16_t failedToAllocate;
-    volatile uint16_t invalidListHead;
-    volatile uint16_t invalidTCB;
-    volatile uint16_t invalidListElement;
+    volatile uint16_t invalid_task_handle;   ///< TaskControlBlock initialized with a task handle
+    volatile uint16_t failed_to_allocate;    ///< TaskControlBlock initialized failed to allocate the requested task stack size
+    volatile uint16_t invalid_list_head;     ///< Attempted to modify a list with a void list head
+    volatile uint16_t invalid_tcb;           ///< Void TaskControlBlock pointer used in a list
+    volatile uint16_t invalid_list_element;  ///< Provided a TCB that is not in the list
 } TCBError;
 
 /** 
@@ -65,22 +65,17 @@ typedef void (*FunctionHandle)(void*);
  * @brief Cortex-M4 Context Control Block
  */
 typedef struct TaskControlBlock {
-    /* ---- Configured ---*/
-    volatile double      stackUsage;            ///<    Percentage of stack used as of last preemption
-    volatile uint8_t     priority;            ///<    The priority of the task
-    char*                name;                ///<    Name of the tast
-    uintptr_t            stackSize_By;       ///<    Configured task stack size
-    uint32_t             delay;              ///<    Delay in ms on 
-    /* ---- Input Data ---*/
-    FunctionHandle     taskFunct;             ///<    Main function handle for task
-    void*                taskArg;               ///<    Argument to be passed into the task function
-    /* ---- Output Data---*/
-    volatile TaskState state;                ///<    Defines current task state
-    /* ---- Working Data--*/
-    /* ---- Internal Data-*/
-    uintptr_t*           taskStackOverflow;  ///<    lowest accessible address for this tasks stack pointer
-    volatile uintptr_t*  taskStackPointer;   ///<    Hold's the current task stack pointer
-    volatile struct TaskControlBlock* TCBNext;///<    Next item for singly linked list
+    volatile double  stack_usage;               ///< Percentage of stack used as of last preemption
+    volatile uint8_t priority;                  ///< The priority of the task
+    char*            name;                      ///< Name of the task
+    uintptr_t        stack_size_bytes;          ///< Configured task stack size
+    uint32_t         delay_ms;                  ///< Delay in ms on 
+    void             (*task_handle)(void*);     ///< Main function handle for task
+    void*            task_arg;                  ///< Argument to be passed into the task function
+    volatile TaskState state;                   ///< Defines current task state
+    uintptr_t*          stack_overflow;         ///< Lowest accessible address for this tasks stack pointer
+    volatile uintptr_t* stack_pointer;          ///< Hold's the current task stack pointer
+    volatile struct TaskControlBlock* next;     ///< Next item for singly linked list
 } TaskControlBlock;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -127,10 +122,10 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
  * This function moves a task control block from one linked list to another. It first removes the task
  * control block from the current linked list, and then inserts it into the new linked list.
  *
- * \param currentHead Pointer to the pointer to the head of the current linked list.
- * \param newHead Pointer to the pointer to the head of the new linked list.
+ * \param source Pointer to the pointer to the head of the current linked list.
  * \param tcb Pointer to the task control block to be moved.
+ * \param destination Pointer to the pointer to the head of the new linked list.
  */
-void moveTCB(volatile TaskControlBlock** currentHead, volatile TaskControlBlock** newHead, volatile TaskControlBlock* tcb);
+void moveTCB(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination);
 
 #endif // _TCB_H_

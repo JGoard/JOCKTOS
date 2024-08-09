@@ -10,7 +10,7 @@
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 extern Scheduler JOCKTOSScheduler; ///<  Used for debugging (include in Watch List)
-Semaphore testMutex = SEMAPHORE_DEF();
+Semaphore test_mutex = SEMAPHORE_DEF();
 
 /* -- Functions----------------------------------------------------------- */
 /**
@@ -21,42 +21,42 @@ int main(void)
 {
     /* Configuration Default for the Allocator and option for kernel servicing and monitoring */
     JocktosConfig config = JOCKTOSCONFIG_DEF(
-        .enableIdle = true,
-        .enableMain = true,
-        .enableMonitor = true,
-        .allocatorBlockSize = 256
+        .enable_idle = true,
+        .enable_main = true,
+        .enable_monitor = true,
+        .allocator_block_size = 256
     );
     /* Configures JOCKTOS Kernel with Default structure */
     jock_configure(&config);
     
     /* Sample Task Employing passing in a task argument of anytype */
-    TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
+    TestArgStruct test_val = {.value = 1234, .id = "Test Val!\n"};
 
     TaskControlBlock testTask = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=512,
-        .taskFunct=testArgsTask,
-        .taskArg=(void*)&test_val,
+        .stack_size_bytes=512,
+        .task_handle=testArgsTask,
+        .task_arg=(void*)&test_val,
         .name="test args");
     jock_createTask(&testTask);
 
     /* Sample Sleep Task */
     TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=512, 
-        .taskFunct=sleepTest,
+        .stack_size_bytes=512, 
+        .task_handle=sleepTest,
         .name="sleep test");
     jock_createTask(&sleepTask);
 
     /* Sample Semaphore Task */
     TaskControlBlock lockTask = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=512,
-        .taskFunct=mutexTestTask,
+        .stack_size_bytes=512,
+        .task_handle=mutexTestTask,
         .name="semaphore test");
     jock_createTask(&lockTask);
 
     /* Sample Task Monitor Stack Test Task */
     TaskControlBlock stackTask = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=512,
-        .taskFunct=stackInflationTestTask,
+        .stack_size_bytes=512,
+        .task_handle=stackInflationTestTask,
         .name="stack inflation");
     jock_createTask(&stackTask);
 
@@ -86,9 +86,9 @@ void testArgsTask(void* arg) {
 
 void sleepTest(void* arg) {
     while (true) {
-        jock_takeSemaphore(&testMutex);
+        jock_takeSemaphore(&test_mutex);
         jock_sleep(1000);
-        jock_giveSemaphore(&testMutex);
+        jock_giveSemaphore(&test_mutex);
         jock_sleep(1000);
     }
 }
@@ -98,10 +98,10 @@ void mutexTestTask(void* arg) {
     while(1) {
         x--;
         if (x == 5000) {
-            jock_takeSemaphore(&testMutex);
+            jock_takeSemaphore(&test_mutex);
         }
         if (x == 0) {
-            jock_giveSemaphore(&testMutex);
+            jock_giveSemaphore(&test_mutex);
             x = 10000;
         }
     }
@@ -117,14 +117,14 @@ int burnCycles(int cycles) {
 }
 
 int inflateStack(int depth, int cycles) {
-    int localVar = 0;  // This variable will occupy space on the stack
+    int local_var = 0;  // This variable will occupy space on the stack
 
     if (depth > 0) {
-        localVar = burnCycles(cycles);  // Burn cycles before making the recursive call
-        localVar = inflateStack(depth - 1, cycles);  // Recursive call to inflate the stack further
+        local_var = burnCycles(cycles);  // Burn cycles before making the recursive call
+        local_var = inflateStack(depth - 1, cycles);  // Recursive call to inflate the stack further
     } 
-    localVar = burnCycles(cycles);  // Burn cycles once the maximum depth is reached
-    return localVar;
+    local_var = burnCycles(cycles);  // Burn cycles once the maximum depth is reached
+    return local_var;
 }
 
 void stackInflationTestTask(void* arg) {

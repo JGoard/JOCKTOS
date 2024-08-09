@@ -16,12 +16,12 @@
 /**
  * @brief default semaphore is binary (mutex)
  */
-#define SEMAPHORE_DEF(...)    \
+#define SEMAPHORE_DEF(...)      \
 {   /* ---Internal Data---*/    \
     .value_           = 1,      \
     .count            = 2,      \
-    .pendingTCBQueue_ = NULL,   \
-    .ownersPriority_  = 0,      \
+    .pending_queue_ = NULL,     \
+    .owners_priority_  = 0,     \
      __VA_ARGS__                \
 }
 
@@ -33,8 +33,8 @@
 typedef struct {
     uint16_t value_;                                ///< [INTERNAL] current value
     uint16_t count;                                 ///< Queue size for lock instance
-    volatile TaskControlBlock *pendingTCBQueue_;  ///< [INTERNAL] Linked list of tasks awaiting lock
-    uint8_t ownersPriority_;                        ///< [INTERNAL] TODO: prevent priority inversion
+    volatile TaskControlBlock *pending_queue_;      ///< [INTERNAL] Linked list of tasks awaiting lock
+    uint8_t owners_priority_;                       ///< [INTERNAL] TODO: prevent priority inversion
 } Semaphore;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -67,8 +67,8 @@ void jock_giveSemaphore(Semaphore* lock);
 /**
  * @brief Suspends the current running task for a fixed amount of time.
  * 
- * @param delay (milliseconds)
+ * @param delay_ms (milliseconds)
  */
-void jock_sleep(uint32_t delay);
+void jock_sleep(uint32_t delay_ms);
 
 #endif // _SEMAPHORE_H_

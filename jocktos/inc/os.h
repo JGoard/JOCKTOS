@@ -29,13 +29,13 @@
 /** 
  * @brief Default JOCKTOS configuration
  */
-#define JOCKTOSCONFIG_DEF(...) \
-{                                \
-    .enableMonitor      = false, \
-    .enableMain         = false, \
-    .enableIdle         = false, \
-    .allocatorBlockSize = 128,   \
-     __VA_ARGS__                 \
+#define JOCKTOSCONFIG_DEF(...)      \
+{                                   \
+    .enable_monitor      = false,   \
+    .enable_main         = false,   \
+    .enable_idle         = false,   \
+    .allocator_block_size = 256,    \
+     __VA_ARGS__                    \
 }
 /* -- Types --------------------------------------------------------------- */
 
@@ -44,7 +44,7 @@
  */
 typedef struct {
     volatile bool pending;
-    volatile uint32_t tickCount;
+    volatile uint32_t tick_count;
     volatile TaskControlBlock* running;   ///<    Currently running task
     volatile TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
     volatile TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
@@ -54,10 +54,10 @@ typedef struct {
  * @brief Configuration settings for JOCKTOS allocator and built in tasks
  */
 typedef struct {
-    bool enableMonitor;        ///< Enable or disable monitoring
-    bool enableIdle;           ///< Enable or disable idle task
-    bool enableMain;           ///< return execution after enabling, with `main` considered a new task
-    size_t allocatorBlockSize; ///< Size of the allocator block
+    bool enable_monitor;         ///< Enable or disable monitoring
+    bool enable_idle;            ///< Enable or disable idle task
+    bool enable_main;            ///< return execution after enabling, with `main` considered a new task
+    size_t allocator_block_size; ///< Size of the allocator block
 } JocktosConfig;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -104,6 +104,6 @@ void jock_run(void);
  * unsigned 32 bit millisecond counter
  * 
  */
-static inline uint32_t jock_currentTime() { return JOCKTOSScheduler.tickCount; }
+static inline uint32_t jock_currentTime() { return JOCKTOSScheduler.tick_count; }
 
 #endif /* _OS_H_ */

@@ -24,13 +24,13 @@
 /* -- Private Function Declarations --------------------------------------- */
 
 /**
- * \brief Updates the task control blocks stackUsage
+ * \brief Updates the task control blocks stack_usage
  * 
  * \param tcb Pointer to task control block to be monitored.
  */
 static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
-    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->taskStackPointer \
-    - (*tcb)->taskStackOverflow)) / (double)((*tcb)->stackSize_By * sizeof(uintptr_t)));
+    (*tcb)->stack_usage = 100.0 * (1.0 - ((double)((*tcb)->stack_pointer \
+    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes * sizeof(uintptr_t)));
 }
 
 /**
@@ -63,33 +63,33 @@ static Allocator allocator;
 Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
 extern TCBError JOCKTOS_TCBError;
 
-TaskControlBlock userMainControlBlock = TASKCONTROLBLOCK_DEF(
-        .taskFunct=NULL,
+TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
+        .task_handle=NULL,
         .name="user space `main`");
 
-TaskControlBlock stackUsageMonitor = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=1024, 
-        .taskFunct=monitorTask,
+TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
+        .stack_size_bytes=1024, 
+        .task_handle=monitorTask,
         .name="stack usage monitor");
 
-TaskControlBlock defaultOSIdle = TASKCONTROLBLOCK_DEF(
-        .stackSize_By=512,
-        .taskFunct=idleTask,
+TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
+        .stack_size_bytes=512,
+        .task_handle=idleTask,
         .name="default OS idle task");
 
 /* -- Public Functions----------------------------------------------------- */
 
 void jock_createTask(TaskControlBlock* tcb) {
     // check if task function handle is valid
-    if (!tcb->taskFunct) {
+    if (!tcb->task_handle) {
         // TODO: better error handling
-        JOCKTOS_TCBError.invalidTaskHandle++;
+        JOCKTOS_TCBError.invalid_task_handle++;
         return;
     }
-    tcb->taskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->stackSize_By);
-    if (!tcb->taskStackOverflow) {
+    tcb->stack_overflow = (uintptr_t*)allocate(&allocator, tcb->stack_size_bytes);
+    if (!tcb->stack_overflow) {
         // TODO: better error handling
-        JOCKTOS_TCBError.failedToAllocate++;
+        JOCKTOS_TCBError.failed_to_allocate++;
         return;
     }
     initializeStack(tcb);
@@ -105,21 +105,21 @@ void switchRunningTask(volatile TaskControlBlock** head) {
     }
     suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (jock_currentTime() >= suspended->delay) {
-            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
+        if (jock_currentTime() >= suspended->delay_ms) {
+            moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
             suspended->state = READY;
         }
-        suspended = suspended->TCBNext;
+        suspended = suspended->next;
     }
     TRIGGER_PendSV;
 }
 
 void jock_configure(JocktosConfig* config) {
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
-    initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
-    if (config->enableMonitor) jock_createTask(&stackUsageMonitor);
-    if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
-    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) jock_createTask(&defaultOSIdle);
+    initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
+    if (config->enable_monitor) jock_createTask(&stack_monitor_tcb);
+    if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
+    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_createTask(&idle_tcb);
 }
 
 void jock_run(void) {
@@ -135,51 +135,51 @@ void jock_run(void) {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     NVIC_SetPriority(PendSV_IRQn, 0xFFU);
     // Configure SysTick to generate an interrupt every 1 ms 
-    SysTick_Configuration(127); // TODO: where tf does 127 come from...
+    sysTickConfiguration(127); // TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }
 
 /* -- Private Functions --------------------------------------------------- */
 
 void initializeStack(TaskControlBlock* tcb) {
-    uintptr_t* taskStack = tcb->taskStackOverflow;
+    uintptr_t* stack_ptr = tcb->stack_overflow;
     // set intermediate stack pointer to bottom of range
-    taskStack = (uintptr_t*)(taskStack + tcb->stackSize_By / sizeof(uintptr_t));
+    stack_ptr = (uintptr_t*)(stack_ptr + tcb->stack_size_bytes / sizeof(uintptr_t));
     // define tasks initial exception return stack
-    uintptr_t* initStackPtr;
+    uintptr_t* init_stack_ptr;
     //  - non-critical registers are initialized to their index
-    *(--taskStack) = (1U << 24);                ///<   Set thumb state bit in EPSR
-    *(--taskStack) = (uintptr_t)tcb->taskFunct; ///<   Set PC to task function handle
-    *(--taskStack) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
-    // *(--taskStack) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
-    *(--taskStack) = 0x0000000CU;               ///<   Set R12 register deafult to its index
-    *(--taskStack) = 0x00000003U;               ///<   Set R3  register deafult to its index
-    *(--taskStack) = 0x00000002U;               ///<   Set R2  register deafult to its index
-    *(--taskStack) = 0x00000001U;               ///<   Set R1  register deafult to its index
-    *(--taskStack) = (uintptr_t)tcb->taskArg;   ///<   Set R0  register to the argument for the tasks function
-    initStackPtr = taskStack - 1;               ///<   Catch top of initial post-exception stack
-    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   ISR push / pop "working stack pointer" as R7
-    *(--taskStack) = 0x0000000BU;               ///<   Set R11 register deafult to its index
-    *(--taskStack) = 0x0000000AU;               ///<   Set R10 register deafult to its index
-    *(--taskStack) = 0x00000009U;               ///<   Set R9  register deafult to its index
-    *(--taskStack) = 0x00000008U;               ///<   Set R8  register deafult to its index
-    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   Set R7 to "working stack pointer"
-    *(--taskStack) = 0x00000006U;               ///<   Set R6  register deafult to its index
-    *(--taskStack) = 0x00000005U;               ///<   Set R5  register deafult to its index
-    *(--taskStack) = 0x00000004U;               ///<   Set R4  register deafult to its index
-    tcb->taskStackPointer = taskStack;
+    *(--stack_ptr) = (1U << 24);                ///<   Set thumb state bit in EPSR
+    *(--stack_ptr) = (uintptr_t)tcb->task_handle; ///<   Set PC to task function handle
+    *(--stack_ptr) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
+    // *(--stack_ptr) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
+    *(--stack_ptr) = 0x0000000CU;               ///<   Set R12 register deafult to its index
+    *(--stack_ptr) = 0x00000003U;               ///<   Set R3  register deafult to its index
+    *(--stack_ptr) = 0x00000002U;               ///<   Set R2  register deafult to its index
+    *(--stack_ptr) = 0x00000001U;               ///<   Set R1  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)tcb->task_arg;   ///<   Set R0  register to the argument for the tasks function
+    init_stack_ptr = stack_ptr - 1;               ///<   Catch top of initial post-exception stack
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   ISR push / pop "working stack pointer" as R7
+    *(--stack_ptr) = 0x0000000BU;               ///<   Set R11 register deafult to its index
+    *(--stack_ptr) = 0x0000000AU;               ///<   Set R10 register deafult to its index
+    *(--stack_ptr) = 0x00000009U;               ///<   Set R9  register deafult to its index
+    *(--stack_ptr) = 0x00000008U;               ///<   Set R8  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   Set R7 to "working stack pointer"
+    *(--stack_ptr) = 0x00000006U;               ///<   Set R6  register deafult to its index
+    *(--stack_ptr) = 0x00000005U;               ///<   Set R5  register deafult to its index
+    *(--stack_ptr) = 0x00000004U;               ///<   Set R4  register deafult to its index
+    tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
-    while (taskStack > tcb->taskStackOverflow + 8) {
-        *(--taskStack) = 0xBABEFACEU;
+    while (stack_ptr > tcb->stack_overflow + 8) {
+        *(--stack_ptr) = 0xBABEFACEU;
     }
-    while (taskStack > tcb->taskStackOverflow) {
-        *(--taskStack) = 0xDEADBEEFU; ///< set top 8 bytes to something else
+    while (stack_ptr > tcb->stack_overflow) {
+        *(--stack_ptr) = 0xDEADBEEFU; ///< set top 8 bytes to something else
     }
 }
 
 void SysTick_Handler(void) {
     __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.tickCount++;
+    JOCKTOSScheduler.tick_count++;
     switchRunningTask(&JOCKTOSScheduler.ready);
    __asm volatile ("cpsie i" : : : "memory");
 }
@@ -192,18 +192,18 @@ void PendSV_Handler(void) {
         __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
         // __asm volatile ("mrs r0, psp");
         __asm volatile ("stmdb r0!, {r4-r11}");
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->taskStackPointer) :: );
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
         // --------------------------------------------------------------------------------------
     }
     // pop off of ready task list into running
     JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->TCBNext;
-    JOCKTOSScheduler.running->TCBNext = NULL;
+    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
+    JOCKTOSScheduler.running->next = NULL;
     JOCKTOSScheduler.running->state = RUNNING;
     JOCKTOSScheduler.pending = false;
     // ------------------------------------------------------------------------------------------
     // pop additional registers from the new process stack and load new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->taskStackPointer) : "r0");
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
     __asm volatile ("ldmia r0!, {r4-r11}");
     __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
     // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
@@ -214,28 +214,28 @@ void PendSV_Handler(void) {
 
 void monitorTask(void* arg) {
     volatile TaskControlBlock* head = NULL;
-    TaskState monitorScope = RUNNING;
+    TaskState monitor_scope = RUNNING;
     while(true) {
-        switch (monitorScope) {
+        switch (monitor_scope) {
             case READY: {
                 head = JOCKTOSScheduler.ready;
-                monitorScope = RUNNING;
+                monitor_scope = RUNNING;
                 break;
             }
             case RUNNING: {
                 head = JOCKTOSScheduler.running;
-                monitorScope = SUSPENDED;
+                monitor_scope = SUSPENDED;
                 break;
             }
             default: {
                 head = JOCKTOSScheduler.suspended;
-                monitorScope = READY;
+                monitor_scope = READY;
                 break;
             }
         }
         while(head != NULL) {
             monitorStackUsage(&head);
-            head = head->TCBNext;
+            head = head->next;
         }
     }
 }

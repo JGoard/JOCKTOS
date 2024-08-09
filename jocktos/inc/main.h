@@ -25,7 +25,7 @@
  */
 typedef struct {
     int value;    ///< Integer value.
-    char ID[10];  ///< String ID.
+    char id[10];  ///< String ID.
 } TestArgStruct;
 
 /* -- Externs (avoid these for library functions) ------------------------- */

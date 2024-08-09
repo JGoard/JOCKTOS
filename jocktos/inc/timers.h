@@ -18,6 +18,6 @@
 
 /* -- Function Declarations ----------------------------------------------- */
 
-void SysTick_Configuration(int freq);
+void sysTickConfiguration(int freq);
 
 #endif /* _TIMERS_H_ */
