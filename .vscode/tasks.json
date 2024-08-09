@@ -117,7 +117,7 @@
     {
       "label": "Flash Device",
       "type": "shell",
-      "command": "docker",
+      "command": "openocd",
       "args": [
         "-f",
         "board/st_nucleo_f3.cfg",
@@ -143,7 +143,7 @@
     },
     
     {
-      "label": "Flash Device",
+      "label": "Flash Docker",
       "type": "shell",
       "command": "docker",
       "args": [
