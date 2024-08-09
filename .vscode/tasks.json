@@ -86,9 +86,38 @@
       }
     },
     {
+      "label": "Compile Release",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/JOCKTOS",
+        "jocktos:latest",
+        "/bin/sh",
+        "-c",
+        "cd /JOCKTOS/jocktos/ && make clean release && make release",
+      ],
+      "icon": {
+        "id": "tools",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#f6fa05"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
       "label": "Flash Device",
       "type": "shell",
-      "command": "openocd",
+      "command": "docker",
       "args": [
         "-f",
         "board/st_nucleo_f3.cfg",

@@ -39,9 +39,31 @@
 }
 /* -- Types --------------------------------------------------------------- */
 
-/** 
+/**
  * @brief Cortex-M4 Context Control Block
+ *
+ * The T_Scheduler struct is used to maintain the state of the scheduler.
+ * It contains pointers to the currently running task, a singly linked list
+ * of tasks ready to run, and a singly linked list of suspended tasks. The
+ * tickCount member is used to keep track of the number of ticks since the
+ * scheduler was last run.
+ *
+ * The pending member is used to signal that a context switch is pending.
+ * This allows the scheduler to be called from interrupt handlers.
+ *
+ * The running member is a pointer to the T_TaskControlBlock that is
+ * currently running. It is used to modify the state of the current task,
+ * such as changing its priority or suspending it.
+ *
+ * The ready and suspended members are pointers to the head of the singly
+ * linked lists of tasks ready to run and suspended, respectively. These
+ * are used to modify the state of these tasks.
+ *
+ * The T_Scheduler struct is defined as a volatile, as it is used in ISRs
+ * to signal that a context switch is pending. This ensures that the
+ * compiler does not optimize away reads and writes to this struct.
  */
+
 typedef struct {
     volatile bool pending;
     volatile uint32_t tickCount;
@@ -51,7 +73,19 @@ typedef struct {
 } T_Scheduler;
 
 /**
- * @brief Configuration settings for JOCKTOS allocator and built in tasks
+ * @brief This structure is used to configure the JOCKTOS library.  It is passed to the
+ *        `Jocktos_Init` function and is used to configure how the library operates.
+ * 
+ * @details This structure is used to configure the JOCKTOS library.  It is passed to
+ *          the `Jocktos_Init` function and is used to configure how the library operates.
+ *          The configuration options include enabling or disabling the JOCKTOS
+ *          monitoring task, enabling or disabling the idle task, and enabling or
+ *          disabling the main task.  The `allocatorBlockSize` option is used to
+ *          configure the size of the memory blocks that are allocated for the
+ *          tasks' stacks.  If this size is too small then the tasks will not be
+ *          able to run and the library will not work properly.  This value should
+ *          be set to a reasonable value based on the size of the tasks and the
+ *          amount of memory available on the system.
  */
 typedef struct {
     bool enableMonitor;        ///< Enable or disable monitoring

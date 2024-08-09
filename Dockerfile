@@ -5,7 +5,13 @@ RUN apt-get update && \
     apt-get install -y \
     curl \
     udev \
+    udev \
     wget \
+    nano \
+    build-essential \
+    symlinks \
+    expect \
+    git 
     nano \
     build-essential \
     symlinks \
@@ -83,3 +89,10 @@ EXPOSE 3333
 EXPOSE 4444
 EXPOSE 6666
 CMD ["tail", "-f", "/dev/null"]
+
+
+# $ openocd 
+# -s "/usr/local/share/openocd/scripts" 
+# -f "interface/stlink-v2.cfg" 
+# -f "target/stm32f4x.cfg" 
+# -c "program blinky.elf verify reset exit")
