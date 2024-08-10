@@ -10,6 +10,7 @@
 // Middleware
 #include "stm32f303xe.h"
 #include "core_cm4.h"
+#include "cmsis_gcc.h"
 // Bios
 // Standard C
 #include <stdbool.h>
@@ -47,8 +48,11 @@ void initializeStack(T_TaskControlBlock* tcb);
 /**
 * \brief pre defined OS task for idle.
 *
-* Infinite while loop.
-* TODO: Figure out how to low power sleep without disabling ISR's
+* This function, idleJOCKTOS, enters an infinite loop where it continuously executes the __WFI instruction, 
+* which puts the CPU into a low-power wait state, waiting for an interrupt to occur. 
+* This function is used as the default idle task for the JOCKTOS kernel.
+* //TODO: Figure out in the future a more aggressive power saving feature
+* \param arg Unused
 */
 void idleJOCKTOS(void* arg);
 
@@ -115,10 +119,15 @@ void switchRunningTask(volatile T_TaskControlBlock** head) {
 }
 
 void configureJOCKTOS(T_JocktosConfig* config) {
+    // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, 1);
+    // Initialize the allocator with the allocated memory and the block size specified in the config
     initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
+    // If the monitor is enabled, create a task for the stack usage monitor
     if (config->enableMonitor) createTask(&stackUsageMonitor);
+    // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
     if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
+    // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
     if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
 }
 
@@ -135,7 +144,7 @@ void runJOCKTOS(void) {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     NVIC_SetPriority(PendSV_IRQn, 0xFFU);
     // Configure SysTick to generate an interrupt every 1 ms 
-    SysTick_Configuration(127); // TODO: where tf does 127 come from...
+    SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }
 
@@ -212,35 +221,92 @@ void PendSV_Handler(void) {
     __asm volatile ("cpsie i" : : : "memory");
 }
 
+
 void monitorJOCKTOS(void* arg) {
-    volatile T_TaskControlBlock* head = NULL;
-    E_TaskState monitorScope = eRUNNING;
-    while(true) {
-        switch (monitorScope) {
-            case eREADY: {
-                head = JOCKTOSScheduler.ready;
-                monitorScope = eRUNNING;
-                break;
+    volatile T_TaskControlBlock* head = NULL;       // Pointer to the current task
+    E_TaskState monitorScope = eRUNNING;            // Keeps track of which list of tasks to monitor next
+    while(true) {                                   // Loop indefinitely
+
+        switch (monitorScope) {                     // Switch on the current list to monitor
+            case eREADY: {                          // If the ready list is being monitored
+                head = JOCKTOSScheduler.ready;      // Set the head pointer to the ready list
+                monitorScope = eRUNNING;            // Set the monitorScope to eRUNNING
+                break;                              // Break out of the switch statement
+            }   
+            case eRUNNING: {                        // If the running list is being monitored
+                head = JOCKTOSScheduler.running;    // Set the head pointer to the running list
+                monitorScope = eSUSPENDED;          // Set the monitorScope to eSUSPENDED
+                break;                              // Break out of the switch statement
             }
-            case eRUNNING: {
-                head = JOCKTOSScheduler.running;
-                monitorScope = eSUSPENDED;
-                break;
-            }
-            default: {
-                head = JOCKTOSScheduler.suspended;
-                monitorScope = eREADY;
-                break;
+            default: {                              // If the suspended list is being monitored
+                head = JOCKTOSScheduler.suspended;  // Set the head pointer to the suspended list
+                monitorScope = eREADY;              // Set the monitorScope to eREADY
+                break;                              // Break out of the switch statement
             }
         }
-        while(head != NULL) {
-            monitorStackUsage(&head);
-            head = head->TCBNext;
+        while(head != NULL) {                       // Loop through all tasks in the current list
+            monitorStackUsage(&head);               // Monitor the stack usage of the current task
+            head = head->TCBNext;                   // Move to the next task in the list
         }
     }
 }
 
+volatile bool irq_flag;
+
 void idleJOCKTOS(void* arg) {
-    while(true) {}
+int was_masked;
+
+  /* Disable interrupts to make sure that the busy flag does not get 
+     modified between the check in the while condition and the system
+     sleep */
+    volatile bool irq_flag;
+  
+  while (!irq_flag)
+  {
+    while (1) {
+      // Disable interrupts to make sure that the busy flag does not get
+      // modified between the check in the while condition and the system
+      // sleep
+      __disable_irq();
+
+      // Check if the busy flag has been set
+      bool done = irq_flag;
+
+      // If the busy flag has been set, exit the loop
+      if (!done) {
+        // __DSB stands for Data Synchronization Barrier. It is an ARM
+        // instruction that ensures that all memory accesses before it are
+        // completed before any memory accesses after it start.
+        // Here, we use __DSB to ensure that all memory accesses before it
+        // are completed before any memory accesses after it start.
+
+        __DSB();
+        /*
+        __WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
+        into a low-power state, where it waits for an interrupt to occur before waking up and
+        executing the interrupt handler. This is useful for power saving, as it consumes very
+        little power when the processor is in this state.
+        */
+        __WFI();
+      }
+
+      // Enable interrupts again
+      __enable_irq();
+
+      // If the busy flag has been set, exit the loop
+      if (done) {
+        break;
+      }
+
+    // __ISB stands for Instruction Synchronization Barrier. It is an ARM
+    // instruction that flushes the pipeline in the processor, so that all
+    // instructions before it are completed before any instructions after
+    // it are started.
+    // We use __ISB to flush the pipeline in the processor, so that all
+    // instructions before it are completed before any instructions after
+    // it are started.
+      __ISB();
+    }
     // TODO: Figure out how to low power
+    }
 }
