@@ -11,7 +11,7 @@ RUN apt-get update && \
     build-essential \
     symlinks \
     expect \
-    git 
+    git \
     nano \
     build-essential \
     symlinks \
@@ -51,35 +51,39 @@ libftdi-dev \
 libtool \
 usbutils \
 make \
-libstlink-dev \
+# libstlink-dev \
 cmake \
 automake \
 pkg-config \
 autoconf \
-texinfo
+texinfo \
+openocd 
 #build and install OPENOCD from repository
-RUN cd /usr/src/ \
-&& git clone https://github.com/texane/stlink.git stlink \
-&& cd stlink && make release && ldconfig \
-&& cd /usr/src && git clone --depth 1 https://github.com/ntfreak/openocd.git && cd openocd\
-&& git submodule update --init --recursive \
-&& cd src/jtag/drivers/libjaylink \
-&& ./autogen.sh \
-&& ./configure \
-&& make \
-&& make install \
-&& ldconfig \
-&& cd /usr/src/openocd \
-&& ./bootstrap \
-&& ./configure --enable-stlink --enable-jlink --enable-ftdi --enable-cmsis-dap \
-&& make -j"$(nproc)" \
-&& make install \
-&& ldconfig 
+# RUN cd /usr/src/ 
+# && git clone https://github.com/texane/stlink.git stlink \
+# && cd stlink && make clean && make release && make install DESTDIR=$HOME && ldconfig \
+# && cp config/udev/rules.d/49-stlinkv2-1.rules /etc/udev/rules.d/49-stlinkv2-1.rules \
+# && cd /usr/src && git clone --depth 1 https://github.com/ntfreak/openocd.git && cd openocd\
+# && git submodule update --init --recursive \
+# build jaylink dependency
+# && cd src/jtag/drivers/libjaylink \
+# && ./autogen.sh \
+# && ./configure \
+# && make \
+# && make install \
+# && ldconfig \
+#build openocd
+# && cd /usr/src/openocd \
+# && ./bootstrap \
+# && ./configure --enable-stlink --enable-jlink --enable-ftdi --enable-cmsis-dap \
+# && make -j"$(nproc)" \
+# && make install \
+# && ldconfig 
 
 #remove unneeded directories
 RUN cd ..
 #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
-RUN cp /usr/local/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d/60-openocd.rules 
+# RUN cp /usr/local/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d/60-openocd.rules 
 COPY openocd.cfg /usr/local/share/openocd/openocd.cfg  
 RUN /lib/systemd/systemd-udevd --daemon && udevadm control --reload-rules
 
