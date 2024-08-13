@@ -20,7 +20,7 @@
 
 /* -- Private Function Declarations --------------------------------------- */
 
-void sysTickConfiguration(int freq) {
+void SysTick_Configuration(int freq) {
     __asm volatile ("cpsid i" : : : "memory");
     SysTick->LOAD = (SystemCoreClock / freq) - 1; // Set the reload value for a 1ms interrupt
     SysTick->VAL = 0;                             // Clear the current value
