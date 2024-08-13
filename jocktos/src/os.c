@@ -54,7 +54,7 @@ void initializeStack(TaskControlBlock* tcb);
 * //TODO: Figure out in the future a more aggressive power saving feature
 * \param arg Unused
 */
-void idleTask(void* arg);
+void idleJOCKTOS(void* arg);
 
 /**
  * \brief pre defined OS task to monitor stack usage
@@ -78,7 +78,7 @@ TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
 
 TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512,
-        .task_handle=idleTask,
+        .task_handle=idleJOCKTOS,
         .name="default OS idle task");
 
 /* -- Public Functions----------------------------------------------------- */
