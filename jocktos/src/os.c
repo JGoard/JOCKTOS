@@ -25,13 +25,13 @@
 /* -- Private Function Declarations --------------------------------------- */
 
 /**
- * \brief Updates the task control blocks stackUsage
+ * \brief Updates the task control blocks stack_usage
  * 
  * \param tcb Pointer to task control block to be monitored.
  */
-static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
-    (*tcb)->stackUsage = 100.0 * (1.0 - ((double)((*tcb)->u32TaskStackPointer \
-    - (*tcb)->u32TaskStackOverflow)) / (double)((*tcb)->u32StackSize_By * sizeof(uintptr_t)));
+static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
+    (*tcb)->stack_usage = 100.0 * (1.0 - ((double)((*tcb)->stack_pointer \
+    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes * sizeof(uintptr_t)));
 }
 
 /**
@@ -41,9 +41,9 @@ static inline void monitorStackUsage(volatile T_TaskControlBlock** tcb) {
  * It also sets the program counter (PC) to the task function handle, the link register (LR) to a specific value, and the stack pointer (SP) to the bottom of the stack range.
  * After setting up the initial stack frame, the function fills the remaining unused stack space with a known value and sets the top 8 bytes to another known value.
  *
- * @param tcb Pointer to a T_TaskControlBlock structure representing the task.
+ * @param tcb Pointer to a TaskControlBlock structure representing the task.
  */
-void initializeStack(T_TaskControlBlock* tcb);
+void initializeStack(TaskControlBlock* tcb);
 
 /**
 * \brief pre defined OS task for idle.
@@ -54,54 +54,54 @@ void initializeStack(T_TaskControlBlock* tcb);
 * //TODO: Figure out in the future a more aggressive power saving feature
 * \param arg Unused
 */
-void idleJOCKTOS(void* arg);
+void idleTask(void* arg);
 
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorJOCKTOS(void* arg);
+void monitorTask(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 static Allocator allocator;
-T_Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
-extern T_TCBError JOCKTOS_TCBError;
+Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
+extern TCBError JOCKTOS_TCBError;
 
-T_TaskControlBlock userMainControlBlock = T_TASKCONTROLBLOCK_DEF(
-        .taskFunct=NULL,
-        .u8Name="user space `main`");
+TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
+        .task_handle=NULL,
+        .name="user space `main`");
 
-T_TaskControlBlock stackUsageMonitor = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=1024, 
-        .taskFunct=monitorJOCKTOS,
-        .u8Name="stack usage monitor");
+TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
+        .stack_size_bytes=1024, 
+        .task_handle=monitorTask,
+        .name="stack usage monitor");
 
-T_TaskControlBlock defaultOSIdle = T_TASKCONTROLBLOCK_DEF(
-        .u32StackSize_By=256, 
-        .taskFunct=idleJOCKTOS,
-        .u8Name="default OS idle task");
+TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
+        .stack_size_bytes=512,
+        .task_handle=idleTask,
+        .name="default OS idle task");
 
 /* -- Public Functions----------------------------------------------------- */
 
-void createTask(T_TaskControlBlock* tcb) {
+void jock_createTask(TaskControlBlock* tcb) {
     // check if task function handle is valid
-    if (!tcb->taskFunct) {
+    if (!tcb->task_handle) {
         // TODO: better error handling
-        JOCKTOS_TCBError.invalidTaskHandle++;
+        JOCKTOS_TCBError.invalid_task_handle++;
         return;
     }
-    tcb->u32TaskStackOverflow = (uintptr_t*)allocate(&allocator, tcb->u32StackSize_By * sizeof(uintptr_t));
-    if (!tcb->u32TaskStackOverflow) {
+    tcb->stack_overflow = (uintptr_t*)allocate(&allocator, tcb->stack_size_bytes);
+    if (!tcb->stack_overflow) {
         // TODO: better error handling
-        JOCKTOS_TCBError.failedToAllocate++;
+        JOCKTOS_TCBError.failed_to_allocate++;
         return;
     }
     initializeStack(tcb);
     insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
-void switchRunningTask(volatile T_TaskControlBlock** head) {
-    volatile T_TaskControlBlock* suspended = NULL;
+void switchRunningTask(volatile TaskControlBlock** head) {
+    volatile TaskControlBlock* suspended = NULL;
     if (JOCKTOSScheduler.pending) return;
     JOCKTOSScheduler.pending = true;
     if (JOCKTOSScheduler.running) {
@@ -109,29 +109,29 @@ void switchRunningTask(volatile T_TaskControlBlock** head) {
     }
     suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (currentTime() >= suspended->u32Delay) {
-            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
-            suspended->eState = eREADY;
+        if (jock_currentTime() >= suspended->delay_ms) {
+            moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
+            suspended->state = READY;
         }
-        suspended = suspended->TCBNext;
+        suspended = suspended->next;
     }
     TRIGGER_PendSV;
 }
 
-void configureJOCKTOS(T_JocktosConfig* config) {
+void jock_configure(JocktosConfig* config) {
     // Allocate memory for the allocator
-    void* memory = calloc(ALLOCATOR_SIZE, 1);
+    void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
-    initAllocator(&allocator, memory, ALLOCATOR_SIZE, config->allocatorBlockSize);
+    initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
-    if (config->enableMonitor) createTask(&stackUsageMonitor);
+    if (config->enable_monitor) jock_createTask(&stack_monitor_tcb);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
-    if (config->enableMain) insertTCB(&JOCKTOSScheduler.running, &userMainControlBlock);
+    if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
     // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
-    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) createTask(&defaultOSIdle);
+    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_createTask(&idle_tcb);
 }
 
-void runJOCKTOS(void) {
+void jock_run(void) {
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;
@@ -150,45 +150,45 @@ void runJOCKTOS(void) {
 
 /* -- Private Functions --------------------------------------------------- */
 
-void initializeStack(T_TaskControlBlock* tcb) {
-    uintptr_t* taskStack = tcb->u32TaskStackOverflow;
+void initializeStack(TaskControlBlock* tcb) {
+    uintptr_t* stack_ptr = tcb->stack_overflow;
     // set intermediate stack pointer to bottom of range
-    taskStack = (uintptr_t*)(taskStack + ((tcb->u32StackSize_By) / 8) * 8);
+    stack_ptr = (uintptr_t*)(stack_ptr + tcb->stack_size_bytes / sizeof(uintptr_t));
     // define tasks initial exception return stack
-    uintptr_t* initStackPtr;
+    uintptr_t* init_stack_ptr;
     //  - non-critical registers are initialized to their index
-    *(--taskStack) = (1U << 24);                ///<   Set thumb state bit in EPSR
-    *(--taskStack) = (uintptr_t)tcb->taskFunct; ///<   Set PC to task function handle
-    *(--taskStack) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
-    // *(--taskStack) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
-    *(--taskStack) = 0x0000000CU;               ///<   Set R12 register deafult to its index
-    *(--taskStack) = 0x00000003U;               ///<   Set R3  register deafult to its index
-    *(--taskStack) = 0x00000002U;               ///<   Set R2  register deafult to its index
-    *(--taskStack) = 0x00000001U;               ///<   Set R1  register deafult to its index
-    *(--taskStack) = (uintptr_t)tcb->taskArg;   ///<   Set R0  register to the argument for the tasks function
-    initStackPtr = taskStack - 1;               ///<   Catch top of initial post-exception stack
-    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   ISR push / pop "working stack pointer" as R7
-    *(--taskStack) = 0x0000000BU;               ///<   Set R11 register deafult to its index
-    *(--taskStack) = 0x0000000AU;               ///<   Set R10 register deafult to its index
-    *(--taskStack) = 0x00000009U;               ///<   Set R9  register deafult to its index
-    *(--taskStack) = 0x00000008U;               ///<   Set R8  register deafult to its index
-    *(--taskStack) = (uintptr_t)initStackPtr;   ///<   Set R7 to "working stack pointer"
-    *(--taskStack) = 0x00000006U;               ///<   Set R6  register deafult to its index
-    *(--taskStack) = 0x00000005U;               ///<   Set R5  register deafult to its index
-    *(--taskStack) = 0x00000004U;               ///<   Set R4  register deafult to its index
-    tcb->u32TaskStackPointer = taskStack;
+    *(--stack_ptr) = (1U << 24);                ///<   Set thumb state bit in EPSR
+    *(--stack_ptr) = (uintptr_t)tcb->task_handle; ///<   Set PC to task function handle
+    *(--stack_ptr) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
+    // *(--stack_ptr) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
+    *(--stack_ptr) = 0x0000000CU;               ///<   Set R12 register deafult to its index
+    *(--stack_ptr) = 0x00000003U;               ///<   Set R3  register deafult to its index
+    *(--stack_ptr) = 0x00000002U;               ///<   Set R2  register deafult to its index
+    *(--stack_ptr) = 0x00000001U;               ///<   Set R1  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)tcb->task_arg;   ///<   Set R0  register to the argument for the tasks function
+    init_stack_ptr = stack_ptr - 1;               ///<   Catch top of initial post-exception stack
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   ISR push / pop "working stack pointer" as R7
+    *(--stack_ptr) = 0x0000000BU;               ///<   Set R11 register deafult to its index
+    *(--stack_ptr) = 0x0000000AU;               ///<   Set R10 register deafult to its index
+    *(--stack_ptr) = 0x00000009U;               ///<   Set R9  register deafult to its index
+    *(--stack_ptr) = 0x00000008U;               ///<   Set R8  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   Set R7 to "working stack pointer"
+    *(--stack_ptr) = 0x00000006U;               ///<   Set R6  register deafult to its index
+    *(--stack_ptr) = 0x00000005U;               ///<   Set R5  register deafult to its index
+    *(--stack_ptr) = 0x00000004U;               ///<   Set R4  register deafult to its index
+    tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
-    while (taskStack > tcb->u32TaskStackOverflow + 8) {
-        *(--taskStack) = 0xBABEFACEU;
+    while (stack_ptr > tcb->stack_overflow + 8) {
+        *(--stack_ptr) = 0xBABEFACEU;
     }
-    while (taskStack > tcb->u32TaskStackOverflow) {
-        *(--taskStack) = 0xDEADBEEFU; ///< set top 8 bytes to something else
+    while (stack_ptr > tcb->stack_overflow) {
+        *(--stack_ptr) = 0xDEADBEEFU; ///< set top 8 bytes to something else
     }
 }
 
 void SysTick_Handler(void) {
     __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.tickCount++;
+    JOCKTOSScheduler.tick_count++;
     switchRunningTask(&JOCKTOSScheduler.ready);
    __asm volatile ("cpsie i" : : : "memory");
 }
@@ -201,18 +201,18 @@ void PendSV_Handler(void) {
         __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
         // __asm volatile ("mrs r0, psp");
         __asm volatile ("stmdb r0!, {r4-r11}");
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->u32TaskStackPointer) :: );
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
         // --------------------------------------------------------------------------------------
     }
     // pop off of ready task list into running
     JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->TCBNext;
-    JOCKTOSScheduler.running->TCBNext = NULL;
-    JOCKTOSScheduler.running->eState = eRUNNING;
+    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
+    JOCKTOSScheduler.running->next = NULL;
+    JOCKTOSScheduler.running->state = RUNNING;
     JOCKTOSScheduler.pending = false;
     // ------------------------------------------------------------------------------------------
     // pop additional registers from the new process stack and load new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->u32TaskStackPointer) : "r0");
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
     __asm volatile ("ldmia r0!, {r4-r11}");
     __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
     // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
@@ -222,31 +222,31 @@ void PendSV_Handler(void) {
 }
 
 
-void monitorJOCKTOS(void* arg) {
-    volatile T_TaskControlBlock* head = NULL;       // Pointer to the current task
-    E_TaskState monitorScope = eRUNNING;            // Keeps track of which list of tasks to monitor next
+void monitorTask(void* arg) {
+    volatile TaskControlBlock* head = NULL;       // Pointer to the current task
+    TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
     while(true) {                                   // Loop indefinitely
 
-        switch (monitorScope) {                     // Switch on the current list to monitor
-            case eREADY: {                          // If the ready list is being monitored
+        switch (monitor_scope) {                     // Switch on the current list to monitor
+            case READY: {                          // If the ready list is being monitored
                 head = JOCKTOSScheduler.ready;      // Set the head pointer to the ready list
-                monitorScope = eRUNNING;            // Set the monitorScope to eRUNNING
+                monitor_scope = RUNNING;            // Set the monitorScope to eRUNNING
                 break;                              // Break out of the switch statement
             }   
-            case eRUNNING: {                        // If the running list is being monitored
+            case RUNNING: {                        // If the running list is being monitored
                 head = JOCKTOSScheduler.running;    // Set the head pointer to the running list
-                monitorScope = eSUSPENDED;          // Set the monitorScope to eSUSPENDED
+                monitor_scope = SUSPENDED;          // Set the monitorScope to eSUSPENDED
                 break;                              // Break out of the switch statement
             }
-            default: {                              // If the suspended list is being monitored
-                head = JOCKTOSScheduler.suspended;  // Set the head pointer to the suspended list
-                monitorScope = eREADY;              // Set the monitorScope to eREADY
-                break;                              // Break out of the switch statement
+            default: {
+                head = JOCKTOSScheduler.suspended;
+                monitor_scope = READY;
+                break;
             }
         }
-        while(head != NULL) {                       // Loop through all tasks in the current list
-            monitorStackUsage(&head);               // Monitor the stack usage of the current task
-            head = head->TCBNext;                   // Move to the next task in the list
+        while(head != NULL) {
+            monitorStackUsage(&head);
+            head = head->next;
         }
     }
 }

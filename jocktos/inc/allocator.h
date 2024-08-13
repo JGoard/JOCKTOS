@@ -20,26 +20,26 @@
  * @brief A block of memory with a pointer to its head and its size.
  */
 typedef struct {
-    void* head;     ///< Pointer to the start of the memory block
-    size_t size;    ///< Size of the memory block
+    void* head;     ///< Pointer to the start of the memory block.
+    uint16_t size;  ///< Size of the memory block.
 } MemoryBlock;
 
 /**
  * @brief Bitmaps for tracking used and allocated memory.
  */
 typedef struct {
-    uint64_t* used;   ///< Bitmap tracking used blocks
-    uint64_t* alloc;  ///< Bitmap tracking allocated blocks
-    size_t size;      ///< Size of the bitmap
+    uint16_t* used;   ///< Bitmap tracking used blocks.
+    uint16_t* heads;  ///< Bitmap tracking allocated block heads.
+    uint16_t size;    ///< Size of the bitmap.
 } BitMaps;
 
 /**
  * @brief Represents an allocator with bitmaps and a memory block.
  */
 typedef struct {
-    BitMaps bitmaps;      ///< Bitmaps for managing memory allocation
-    MemoryBlock memory;   ///< The memory block being managed
-    size_t blockSize;     ///< Size of each memory block
+    BitMaps bitmaps;      ///< Bitmaps for managing memory allocation.
+    MemoryBlock memory;   ///< The memory block being managed.
+    uint16_t block_size;  ///< Size of each memory block.
 } Allocator;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -49,28 +49,32 @@ typedef struct {
 /**
  * @brief Initializes an allocator.
  * 
- * @param allocator The allocator to initialize
- * @param memory The memory region to manage
- * @param size The size of the memory region
- * @param blockSize The size of each block
+ * @param allocator The allocator to initialize.
+ * @param block_size The size of each block.
+ * @param memory The memory region to manage.
+ * @param size The size of the memory region.
+ * 
+ * @note
+ * The provided `memory` MUST point to a block of free, zero-initialized memory of size `size`.
  */
-void initAllocator(Allocator* allocator, void* memory, size_t size, size_t blockSize);
+void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size);
 
 /**
- * @brief Allocates a block of memory.
+ * @brief Allocates a block of memory from the allocator.
  * 
- * @param allocator The allocator to use for allocation
- * @param size The size of the memory block to allocate
- * @return A pointer to the allocated memory, or NULL if allocation fails
+ * @param allocator The allocator to use for allocation.
+ * @param size The size of the memory block to allocate in bytes.
+ * @return A pointer to the allocated memory block, or NULL if the space is unavailable.
  */
-void* allocate(Allocator* allocator, size_t size);
+void* allocate(Allocator* allocator, uint16_t size);
 
 /**
- * @brief Deallocates a previously allocated block of memory.
- * 
- * @param allocator The allocator to use for deallocation
- * @param ptr A pointer to the memory block to deallocate
- * @return True if deallocation is successful, false otherwise
+ * @brief Deallocates a previously allocated block of memory from the allocator.
+ *
+ * @param allocator The allocator to use for deallocation.
+ * @param ptr A pointer to the start of the block of memory to be deallocated.
+ *
+ * @return true if the block was successfully deallocated, false otherwise.
  */
 bool deallocate(Allocator* allocator, void* ptr);
 

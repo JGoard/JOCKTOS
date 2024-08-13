@@ -4,6 +4,7 @@
  * 
  * This header provides the following basic components:
  * 
+ * - LOG: Prints a message to the console in the specified color.
  * - TEST_EVAL: Wrapper for test function execution.
  * - TEST_CASE: Wrapper for test case separation (within a test function). This has the following companions:
  * - - CASE_COMPLETE: Indicates the end of a test case.
@@ -35,6 +36,15 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
+#define BLUE "\x1b[34m"
+#define GREEN "\x1b[32m"
+#define RED "\x1b[31m"
+#define RESET "\x1b[0m"
+#define CYAN "\x1b[36m"
+#define MAGENTA "\x1b[35m"
+#define YELLOW "\x1b[33m"
+
+#define LOG(msg, col)   printf(col "%s" RESET, msg);
 
 /**
  * @brief Evaluate a statement and print its name.
@@ -42,7 +52,7 @@
  * @param arg The test function to evaluate.
  */
 #define TEST_EVAL(arg)                      \
-    printf("\x1b[35m%s():\033[0m\n", #arg); \
+    printf(MAGENTA "%s():\n" RESET, #arg);  \
     depth++;                                \
     arg();                                  \
     depth--;
@@ -55,44 +65,45 @@
 #define TEST_CASE(name)                         \
     clear_case();                               \
     print_indent();                             \
-    printf("\x1b[34mcase: \033[0m%s\n", name);  \
+    printf(BLUE "case: " RESET "%s\n", name);   \
     inc_depth();                                \
 
 /**
  * @brief Indicate that the current test case has completed.
  */
-#define CASE_COMPLETE                           \
-    if(get_case_status()) {                     \
-        print_indent();                         \
-        printf("\x1b[32m:: passed\033[0m\n");   \
-    } dec_depth();                              \
+#define CASE_COMPLETE                       \
+    if(get_case_status()) {                 \
+        print_indent();                     \
+        printf(GREEN ":: passed\n" RESET);  \
+    } dec_depth();                          \
 
 /**
  * @brief Print a message indicating that a test case is not yet implemented.
  * 
  */
-#define CASE_NOT_IMPLEMENTED                            \
-    print_indent();                                     \
-    printf("\x1b[33mTEST NOT IMPLEMENTED\033[0m\n");    \
-    dec_depth();                                        \
+#define CASE_NOT_IMPLEMENTED                        \
+    print_indent();                                 \
+    printf(YELLOW "TEST NOT IMPLEMENTED\n" RESET);  \
+    dec_depth();                                    \
 
-#define __ASSERT_BOOL(cond, cond_str, expression, msg)                                  \
-    if (cond(expression)) {                                                             \
-        fail_case();                                                                    \
-        fail_test();                                                                    \
-        print_indent();                                                                 \
-        printf("\x1b[31mASSERT_" cond_str ": [%s] :: %s\033[0m\n", #expression, msg);   \
+#define __ASSERT_BOOL(cond, cond_str, expression, msg)                              \
+    if (cond(expression)) {                                                         \
+        fail_case();                                                                \
+        fail_test();                                                                \
+        print_indent();                                                             \
+        printf(RED "ASSERT_" cond_str ": [%s] :: %s\n" RESET, #expression, msg);    \
     }
 
 #define ASSERT_TRUE(expression, msg)  __ASSERT_BOOL(!, "TRUE",expression, msg)
 #define ASSERT_FALSE(expression, msg) __ASSERT_BOOL( , "FALSE", expression, msg)
 
-#define __ASSERT_CHECK(cond, cond_str, type, a, b, msg)                                                                             \
-    if (a cond b) {                                                                                                                 \
-        fail_case();                                                                                                                \
-        fail_test();                                                                                                                \
-        print_indent();                                                                                                             \
-        printf("\x1b[31mASSERT_" cond_str "EQUAL: %s "#cond" %s [%" type " "#cond" %" type "] :: %s\033[0m\n", #a, #b, a, b, msg);  \
+#define __ASSERT_CHECK(cond, cond_str, type, a, b, msg)                     \
+    if (a cond b) {                                                         \
+        fail_case();                                                        \
+        fail_test();                                                        \
+        print_indent();                                                     \
+        printf(RED "ASSERT_" cond_str "EQUAL: %s "#cond" %s ["              \
+        "%" type " "#cond" %" type "] :: %s\n" RESET, #a, #b, a, b, msg);   \
     }
 
 #define ASSERT_EQUAL_PTR(a, b, msg)           __ASSERT_CHECK(!=, "", "p", a, b, msg)

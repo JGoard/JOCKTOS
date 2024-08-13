@@ -19,7 +19,8 @@
           "tomoki1207.pdf",
           "dan-c-underwood.arm",
           "zixuanwang.linkerscript",
-          "trond-snekvik.gnu-mapfiles"
+          "trond-snekvik.gnu-mapfiles",
+          "CS128.cs128-clang-tidy"
         ]
       },
       "settings": {

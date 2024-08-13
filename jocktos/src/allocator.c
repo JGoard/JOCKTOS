@@ -16,13 +16,14 @@
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 /* -- Private Function Declarations --------------------------------------- */
+
 /**
  * @brief Sets the indexed bit to true.
  * 
  * @param bitmap The bitmap to be modified
  * @param index The index of the bit to be enabled
  */
-void setBit(uint64_t* bitmap, size_t index);
+void setBit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Sets the indexed bit to false.
@@ -30,7 +31,7 @@ void setBit(uint64_t* bitmap, size_t index);
  * @param bitmap The bitmap to be modified
  * @param index The index of the bit to be disabled
  */
-void clearBit(uint64_t* bitmap, size_t index);
+void clearBit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Get the value of the indexed bit.
@@ -38,86 +39,125 @@ void clearBit(uint64_t* bitmap, size_t index);
  * @param bitmap The bitmap to be sampled
  * @param index The index of the bit to be sampled
  */
-bool getBit(uint64_t* bitmap, size_t index);
+bool getBit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Finds a contiguous sequence of free blocks.
- * 
+ *
+ * @details
+ * This function takes a bitmap representing used blocks, the size of the bitmap, and the number of contiguous blocks needed.
+ * It iterates through each bit in the bitmap, keeping track of the count of consecutive free blocks.
+ * When it finds a sequence of `num_blocks` consecutive free blocks, it returns the index of the first block in the sequence.
+ * If it reaches the end of the bitmap without finding a suitable sequence, it returns SIZE_MAX.
+ *
+ * @param num_blocks The number of contiguous blocks needed
  * @param used The bitmap representing used blocks
  * @param size The size of the bitmap
- * @param numBlocks The number of contiguous blocks needed
- * @return The index of the first block in the contiguous sequence if found, or -1 if not found
+ * @return The index of the first block in the contiguous sequence if found, or UINT16_MAX if not found
  */
-size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks);
+uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t size);
 
 /* -- Public Functions----------------------------------------------------- */
 
-// Allocator functions
-void initAllocator(Allocator* allocator, void* memory, size_t size, size_t blockSize) {
-    size_t numBlocks = size / blockSize;
-    size_t bitmapSize = (numBlocks + 63) / 64 * 2 * sizeof(uint64_t);
-    allocator->bitmaps.size = (size - bitmapSize) / blockSize;
-    allocator->bitmaps.used = (uint64_t*)memory;
-    memory = (void*)((uintptr_t)memory + bitmapSize / 2);
-    allocator->bitmaps.alloc = (uint64_t*)memory;
-    memory = (void*)((uintptr_t)memory + bitmapSize / 2);
-    allocator->memory.head = memory;
-    allocator->memory.size = size - bitmapSize;
-    allocator->blockSize = blockSize;
+/**
+ * @details
+ * This function initializes an allocator with the provided parameters.
+ * The memory region pointed to by `memory` is divided into two parts:
+ * - A portion of the memory will be dedicated to the bitmaps. The size of this portion 
+ *   is calculated based on the number of blocks that can fit in the provided memory.
+ * - The other portion of the memory will be used to store the allocated blocks.
+ */
+void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size) {
+    // Calculate the number of blocks that can fit in the provided memory
+    uint16_t num_blocks = size / block_size;
+    // Calculate the size of the bitmap portion of the memory region
+    uint16_t bitmap_size = ((num_blocks + 15) / 16) * 2 * sizeof(uint16_t);
+    // Initialize the allocator with the calculated values
+    allocator->bitmaps.size = (size - bitmap_size) / block_size;  // Number of blocks in the memory region
+    allocator->bitmaps.used = (uint16_t*)memory;  // Pointer to the used bitmap
+    // Adjust the memory pointer to the start of the allocated block portion
+    memory = (void*)((uint8_t*)memory + bitmap_size / 2);
+    allocator->bitmaps.heads = (uint16_t*)memory;  // Pointer to the allocated bitmap
+    // Adjust the memory pointer to the start of the allocated block portion
+    memory = (void*)((uint8_t*)memory + bitmap_size / 2);
+    allocator->memory.head = memory;  // Pointer to the start of the allocated block portion
+    allocator->memory.size = allocator->bitmaps.size * block_size;  // Size of the allocated block portion
+    allocator->block_size = block_size;  // Size of each block
 }
 
-void* allocate(Allocator* allocator, size_t size) {
-    size_t numBlocks = (size + allocator->blockSize - 1) / allocator->blockSize;
-    size_t startIndex = findContiguousFreeBlocks(allocator->bitmaps.used, allocator->bitmaps.size, numBlocks);
-    if (startIndex == SIZE_MAX) {
+/**
+ * @details
+ * This function finds a contiguous sequence of free blocks in the allocator's bitmap and marks them as used.
+ * It then returns a pointer to the start of the allocated block.
+ * If no contiguous free blocks are available, it returns NULL.
+ */
+void* allocate(Allocator* allocator, uint16_t size) {
+    // Calculate the number of blocks needed to allocate the requested size
+    uint16_t num_blocks = (size + allocator->block_size - 1) / allocator->block_size;
+    // Find the index of the first contiguous free block in the bitmap
+    uint16_t start_index = findContiguousFreeBlocks(num_blocks, allocator->bitmaps.used, allocator->bitmaps.size);
+    // If no contiguous free blocks are available, return NULL
+    if (start_index == UINT16_MAX) {
         return NULL;
     }
-    for (size_t i = 0; i < numBlocks; i++) {
-        setBit(allocator->bitmaps.used, startIndex + i);
+    // Mark the allocated blocks as used in the bitmap
+    for (uint16_t i = 0; i < num_blocks; i++) {
+        setBit(allocator->bitmaps.used, start_index + i);
     }
-    setBit(allocator->bitmaps.alloc, startIndex);
-    return (void*)((uintptr_t)allocator->memory.head + startIndex * allocator->blockSize);
+    // Mark the allocated blocks as allocated in the bitmap
+    setBit(allocator->bitmaps.heads, start_index);
+    // Return a pointer to the head of the allocated block
+    return (void*)((uint8_t*)allocator->memory.head + start_index * allocator->block_size);
 }
 
+/**
+ * @details
+ * This function takes a pointer to the start of the block of memory to be deallocated and the allocator from which it was allocated.
+ * It calculates the index of the block in the allocator's memory and verifies that the block is currently allocated.
+ * It then clears the allocated bit for the block and all subsequent blocks in the bitmap.
+ * It returns true if the deallocation was successful, false otherwise.
+ */
 bool deallocate(Allocator* allocator, void* ptr) {
-    size_t index = ((uintptr_t)ptr - (uintptr_t)allocator->memory.head) / allocator->blockSize;
-    if (!getBit(allocator->bitmaps.alloc, index)) {
-        return false;
-    }
-    clearBit(allocator->bitmaps.alloc, index);
-    while (getBit(allocator->bitmaps.used, index) && !getBit(allocator->bitmaps.alloc, index)) {
+    // Calculate the index of the block in the allocator's memory
+    uint16_t index = ((uint8_t*)ptr - (uint8_t*)allocator->memory.head) / allocator->block_size;
+    // Check if the block is currently allocated
+    if (!getBit(allocator->bitmaps.heads, index)) return false;
+    // Clear the allocated bit for the block
+    clearBit(allocator->bitmaps.heads, index);
+    // Traverse the bitmap, clearing the used bits for all blocks in the sequence
+    while (getBit(allocator->bitmaps.used, index) && !getBit(allocator->bitmaps.heads, index)) {
         clearBit(allocator->bitmaps.used, index++);
+        // Break if we reach the end of the bitmap
         if (index >= allocator->bitmaps.size) break;
     }
     return true;
 }
 
-
 /* -- Private Functions --------------------------------------------------- */
 
-size_t findContiguousFreeBlocks(uint64_t* used, size_t size, size_t numBlocks) {
-    size_t count = 0;
-    for (size_t i = 0; i < size; i++) {
-        if (!getBit(used, i)) {
-            count++;
-            if (count == numBlocks) {
-                return i - numBlocks + 1;
+uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t size) {
+    uint16_t count = 0; // Initialize a counter to track consecutive free blocks
+    for (uint16_t i = 0; i < size; i++) { // Iterate through each bit in the bitmap
+        if (!getBit(used, i)) { // If the bit is not set (i.e., the block is free)
+            count++; // Increment the counter
+            if (count == num_blocks) { // If the counter equals the number of blocks needed
+                return i - num_blocks + 1; // Return the starting index of the sequence
             }
-        } else {
-            count = 0;
+        } else { // If the bit is set (i.e., the block is used)
+            count = 0; // Reset the counter
         }
     }
-    return SIZE_MAX;
+    return UINT16_MAX; // Return UINT16_MAX if no suitable sequence is found
 }
 
-void setBit(uint64_t* bitmap, size_t index) {
-    bitmap[index / 64] |= (1ULL << (index % 64));
+void setBit(uint16_t* bitmap, uint16_t index) {
+    bitmap[index / 16] |= (1ULL << (index % 16));
 }
 
-void clearBit(uint64_t* bitmap, size_t index) {
-    bitmap[index / 64] &= ~(1ULL << (index % 64));
+void clearBit(uint16_t* bitmap, uint16_t index) {
+    bitmap[index / 16] &= ~(1ULL << (index % 16));
 }
 
-bool getBit(uint64_t* bitmap, size_t index) {
-    return (bitmap[index / 64] & (1ULL << (index % 64))) != 0;
+bool getBit(uint16_t* bitmap, uint16_t index) {
+    return (bitmap[index / 16] & (1ULL << (index % 16))) != 0;
 }

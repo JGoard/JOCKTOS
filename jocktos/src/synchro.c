@@ -16,15 +16,15 @@
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
-extern T_Scheduler JOCKTOSScheduler;
+extern Scheduler JOCKTOSScheduler;
 
 /* -- Private Function Declarations --------------------------------------- */
 
 /* -- Public Functions----------------------------------------------------- */
-void takeSemaphore(T_Semaphore* lock) {
+void jock_takeSemaphore(Semaphore* lock) {
     __asm volatile ("cpsid i" : : : "memory");
-    if (!lock->value_) switchRunningTask(&lock->pendingTCBQueue_);
-    JOCKTOSScheduler.running->eState = eBLOCKED;
+    if (!lock->value_) switchRunningTask(&lock->pending_queue_);
+    JOCKTOSScheduler.running->state = BLOCKED;
     __asm volatile ("cpsie i" : : : "memory");
 
     __asm volatile ("cpsid i" : : : "memory");
@@ -32,23 +32,21 @@ void takeSemaphore(T_Semaphore* lock) {
     __asm volatile ("cpsie i" : : : "memory");
 }
 
-void giveSemaphore(T_Semaphore* lock) {
+void jock_giveSemaphore(Semaphore* lock) {
     __asm volatile ("cpsid i" : : : "memory");  
     lock->value_ = (lock->value_ + 1) % lock->count;
-    if (lock->pendingTCBQueue_) {
-        lock->pendingTCBQueue_->eState = eREADY;
-        moveTCB(&lock->pendingTCBQueue_,
-                &JOCKTOSScheduler.ready,
-                lock->pendingTCBQueue_);
+    if (lock->pending_queue_) {
+        lock->pending_queue_->state = READY;
+        moveTCB(&lock->pending_queue_, lock->pending_queue_, &JOCKTOSScheduler.ready);
     }
     __asm volatile ("cpsie i" : : : "memory");
     return;
 }
 
-void sleep(uint32_t delay) {
+void jock_sleep(uint32_t delay_ms) {
     __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.running->u32Delay = currentTime() + delay;
-    JOCKTOSScheduler.running->eState = eSUSPENDED;
+    JOCKTOSScheduler.running->delay_ms = jock_currentTime() + delay_ms;
+    JOCKTOSScheduler.running->state = SUSPENDED;
     switchRunningTask(&JOCKTOSScheduler.suspended);
     __asm volatile ("cpsie i" : : : "memory");
     return;
