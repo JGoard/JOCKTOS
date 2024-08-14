@@ -37,31 +37,65 @@ int main(void)
         .task_handle=testArgsTask,
         .task_arg=(void*)&test_val,
         .name="test args");
-    jock_createTask(&testTask);
+    jock_os_createTask(&testTask);
 
     /* Sample Sleep Task */
     TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512, 
         .task_handle=sleepTest,
         .name="sleep test");
-    jock_createTask(&sleepTask);
+    jock_os_createTask(&sleepTask);
 
     /* Sample Semaphore Task */
     TaskControlBlock lockTask = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512,
         .task_handle=mutexTestTask,
         .name="semaphore test");
-    jock_createTask(&lockTask);
+    jock_os_createTask(&lockTask);
 
     /* Sample Task Monitor Stack Test Task */
     TaskControlBlock stackTask = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512,
         .task_handle=stackInflationTestTask,
         .name="stack inflation");
-    jock_createTask(&stackTask);
+    jock_os_createTask(&stackTask);
 
     /* This will start the scheduler and tasking system */
     jock_run();
+    jock_os_configureJOCKTOS(&config);
+    
+    /* Sample Task Employing passing in a task argument of anytype */
+    TestArgStruct test_val = {.value = 1234, .ID = "Test Val!\n"};
+    TaskControlBlock testTask = TASKCONTROLBLOCK_DEF(
+        .u32StackSize_By=256, 
+        .taskFunct=testArgsTask,
+        .taskArg=(void*)&test_val,
+        .u8Name="test args");
+    jock_os_createTask(&testTask);
+
+    /* Sample Sleep Task */
+    TaskControlBlock sleepTask = TASKCONTROLBLOCK_DEF(
+        .u32StackSize_By=256, 
+        .taskFunct=sleepTest,
+        .u8Name="sleep test");
+    jock_os_createTask(&sleepTask);
+
+    /* Sample Semaphore Task */
+    TaskControlBlock lockTask = TASKCONTROLBLOCK_DEF(
+        .u32StackSize_By=256, 
+        .taskFunct=mutexTestTask,
+        .u8Name="semaphore test");
+    jock_os_createTask(&lockTask);
+
+    /* Sample Task Monitor Stack Test Task */
+    TaskControlBlock stackTask = TASKCONTROLBLOCK_DEF(
+        .u32StackSize_By=256, 
+        .taskFunct=stackInflationTestTask,
+        .u8Name="stack inflation");
+    jock_os_createTask(&stackTask);
+
+    /* This will start the scheduler and tasking system */
+    jock_os_runJOCKTOS();
 
     int x = 100;
     int y = 0;

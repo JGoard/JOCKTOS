@@ -83,7 +83,7 @@ TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
 
 /* -- Public Functions----------------------------------------------------- */
 
-void jock_createTask(TaskControlBlock* tcb) {
+void jock_os_createTask(T_TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->task_handle) {
         // TODO: better error handling
@@ -100,8 +100,8 @@ void jock_createTask(TaskControlBlock* tcb) {
     insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
-void switchRunningTask(volatile TaskControlBlock** head) {
-    volatile TaskControlBlock* suspended = NULL;
+void jock_os_switchRunningTask(volatile T_TaskControlBlock** head) {
+    volatile T_TaskControlBlock* suspended = NULL;
     if (JOCKTOSScheduler.pending) return;
     JOCKTOSScheduler.pending = true;
     if (JOCKTOSScheduler.running) {
@@ -109,29 +109,29 @@ void switchRunningTask(volatile TaskControlBlock** head) {
     }
     suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (jock_currentTime() >= suspended->delay_ms) {
-            moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
-            suspended->state = READY;
+        if (jock_os_currentTime() >= suspended->u32Delay) {
+            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
+            suspended->eState = eREADY;
         }
         suspended = suspended->next;
     }
     TRIGGER_PendSV;
 }
 
-void jock_configure(JocktosConfig* config) {
+void jock_os_configureJOCKTOS(T_JocktosConfig* config) {
     // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
     initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
-    if (config->enable_monitor) jock_createTask(&stack_monitor_tcb);
+    if (config->enableMonitor) jock_os_createTask(&stackUsageMonitor);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
     if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
     // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
-    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_createTask(&idle_tcb);
+    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) jock_os_createTask(&defaultOSIdle);
 }
 
-void jock_run(void) {
+void jock_os_runJOCKTOS(void) {
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;
@@ -146,6 +146,20 @@ void jock_run(void) {
     // Configure SysTick to generate an interrupt every 1 ms 
     SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
+}
+
+static inline uint32_t jock_os_enterCriticalSection(void){
+    uint32_t  primask;
+
+    asm volatile("mrs %0, primask\n" : "=r" (primask)::);
+    __disable_irq();
+    return primask;
+}
+
+static inline void jock_os_leaveCriticalSection(uint32_t primask){
+    if (primask == 0) {
+        __enable_irq();
+    }
 }
 
 /* -- Private Functions --------------------------------------------------- */
@@ -186,45 +200,82 @@ void initializeStack(TaskControlBlock* tcb) {
     }
 }
 
+/**
+ * @brief This is the SysTick Interrupt Service Routine (ISR).
+ *
+ * This function is called by the SysTick timer every millisecond. It increments
+ * the tickCount variable in the JOCKTOS scheduler, and then calls the
+ * switchRunningTask function to check if any tasks are ready to run. If there
+ * are tasks ready to run, this function will switch to the highest priority task
+ * and begin executing it.
+ *
+ * @return None
+ */
 void SysTick_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.tick_count++;
-    switchRunningTask(&JOCKTOSScheduler.ready);
-   __asm volatile ("cpsie i" : : : "memory");
+    // Disable interrupts to prevent any other interrupts from occurring
+    // while we are updating the tickCount variable and checking the task
+    // ready queue.
+    __disable_irq();
+
+    // Increment the tickCount variable in the JOCKTOS scheduler. This variable
+    // keeps track of the number of milliseconds that have passed since the
+    // scheduler was last run.
+    JOCKTOSScheduler.tickCount++;
+
+    // Call the switchRunningTask function to check if any tasks are ready to
+    // run. If there are tasks ready to run, this function will switch to the
+    // highest priority task and begin executing it.
+    jock_os_switchRunningTask(&JOCKTOSScheduler.ready);
+
+    // Re-enable interrupts to allow other interrupts to occur and be handled
+    // by the system.
+    __enable_irq();
 }
 
+/**
+ * @brief This is the PendSV Interrupt Service Routine (ISR).
+ *
+ * This function is called by the PendSV exception handler. It saves the current
+ * process's registers onto the stack and switches to the next highest priority
+ * process. It then restores the new process's registers from the stack and begins
+ * executing it.
+ *
+ * @return None
+ */
 void PendSV_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
-    if (JOCKTOSScheduler.running) {
+    __disable_irq(); // Disable interrupts to prevent any other interrupts from occurring
+    
+    if (JOCKTOSScheduler.running) { // If a process is currently running
         // --------------------------------------------------------------------------------------
-        // push additional registers onto current process stack and store process stack pointer
-        __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
-        // __asm volatile ("mrs r0, psp");
-        __asm volatile ("stmdb r0!, {r4-r11}");
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
+        // Push additional registers onto the current process's stack and store the process stack pointer
+        __asm volatile ("mrs r0, msp"); // Move the current stack pointer into register r0
+        // __asm volatile ("mrs r0, psp"); // Move the current process stack pointer into register r0
+        __asm volatile ("stmdb r0!, {r4-r11}"); // Store registers r4-r11 onto the stack pointed to by r0
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->u32TaskStackPointer) :: ); // Move the process stack pointer into the JOCKTOSScheduler.running->u32TaskStackPointer variable
         // --------------------------------------------------------------------------------------
     }
-    // pop off of ready task list into running
+    
+    // Pop off of the ready task list into running
     JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
     JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
     JOCKTOSScheduler.running->next = NULL;
     JOCKTOSScheduler.running->state = RUNNING;
     JOCKTOSScheduler.pending = false;
+    
     // ------------------------------------------------------------------------------------------
-    // pop additional registers from the new process stack and load new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
-    __asm volatile ("ldmia r0!, {r4-r11}");
-    __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
-    // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
-    __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
-    // ------------------------------------------------------------------------------------------
-    __asm volatile ("cpsie i" : : : "memory");
+    // Pop additional registers from the new process stack and load the new process stack pointer
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->u32TaskStackPointer) : "r0"); // Move the process stack pointer into register r0
+    __asm volatile ("ldmia r0!, {r4-r11}"); // Load registers r4-r11 from the stack pointed to by r0
+    __asm volatile ("msr msp, r0"); // Move the new stack pointer into the main stack pointer
+    // __asm volatile ("msr psp, r0"); // Move the new process stack pointer into the main process stack pointer
+    __asm volatile ("isb"); // Required after modifications to special register MSP (or PSP)
+    
+    __enable_irq(); // Re-enable interrupts to allow other interrupts to occur and be handled by the system
 }
 
-
-void monitorTask(void* arg) {
-    volatile TaskControlBlock* head = NULL;       // Pointer to the current task
-    TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
+void monitorJOCKTOS(void* arg) {
+    volatile T_TaskControlBlock* head = NULL;       // Pointer to the current task
+    E_TaskState monitorScope = eRUNNING;            // Keeps track of which list of tasks to monitor next
     while(true) {                                   // Loop indefinitely
 
         switch (monitor_scope) {                     // Switch on the current list to monitor
@@ -251,62 +302,62 @@ void monitorTask(void* arg) {
     }
 }
 
-volatile bool irq_flag;
 
 void idleJOCKTOS(void* arg) {
-int was_masked;
-
   /* Disable interrupts to make sure that the busy flag does not get 
      modified between the check in the while condition and the system
      sleep */
-    volatile bool irq_flag;
-  
-  while (!irq_flag)
-  {
+    uint32_t irq_flag = UINT32_MAX;
+
     while (1) {
-      // Disable interrupts to make sure that the busy flag does not get
-      // modified between the check in the while condition and the system
-      // sleep
-      __disable_irq();
+    //   /*
+    //    * Disable interrupts to make sure that the busy flag does not get
+    //    * modified between the check in the while condition and the system
+    //    * sleep.
+    //    */
+    //     irq_flag = jock_os_enterCriticalSection();
 
-      // Check if the busy flag has been set
-      bool done = irq_flag;
+    //   // Check if the busy flag has been set
 
-      // If the busy flag has been set, exit the loop
-      if (!done) {
-        // __DSB stands for Data Synchronization Barrier. It is an ARM
-        // instruction that ensures that all memory accesses before it are
-        // completed before any memory accesses after it start.
-        // Here, we use __DSB to ensure that all memory accesses before it
-        // are completed before any memory accesses after it start.
+    //   if (irq_flag == 0) {
+    //     /* 
+    //     * __DSB stands for Data Synchronization Barrier. It ensures that all memory
+    //     * accesses before it are completed before any memory accesses after it start.
+    //     * Here, we use __DSB to ensure that all memory accesses before it are
+    //     * completed before any memory accesses after it start.
+    //     */
+    //     __DSB();
 
-        __DSB();
-        /*
-        __WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
-        into a low-power state, where it waits for an interrupt to occur before waking up and
-        executing the interrupt handler. This is useful for power saving, as it consumes very
-        little power when the processor is in this state.
-        */
-        __WFI();
-      }
+    //     /*
+    //     *__WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
+    //     into a low-power state, where it waits for an interrupt to occur before waking up and
+    //     executing the interrupt handler. This is useful for power saving, as it consumes very
+    //     little power when the processor is in this state.
+    //     */
+    //     __WFI();
+    //   }
 
-      // Enable interrupts again
-      __enable_irq();
+    //     // Enable interrupts again
+    //     jock_os_leaveCriticalSection(irq_flag);
 
-      // If the busy flag has been set, exit the loop
-      if (done) {
-        break;
-      }
+    // // If the busy flag has been set, exit the loop
+    //   if (irq_flag != 0) {
+    //     break;
+    //   }
 
-    // __ISB stands for Instruction Synchronization Barrier. It is an ARM
-    // instruction that flushes the pipeline in the processor, so that all
-    // instructions before it are completed before any instructions after
-    // it are started.
-    // We use __ISB to flush the pipeline in the processor, so that all
-    // instructions before it are completed before any instructions after
-    // it are started.
-      __ISB();
+    // /*
+    //  * __ISB stands for Instruction Synchronization Barrier.
+    //  * It is an ARM instruction that flushes the pipeline in the processor,
+    //  * ensuring that all instructions before it are completed before any
+    //  * instructions after it are started.
+    //  *
+    //  * We use __ISB to flush the pipeline in the processor, so that all
+    //  * instructions before it are completed before any instructions after
+    //  * it are started.
+    //  */
+    //   __ISB();      ///<TODO: Is this necessary?
     }
     // TODO: Figure out how to low power
-    }
 }
+
+

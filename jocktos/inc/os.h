@@ -108,7 +108,7 @@ extern Scheduler JOCKTOSScheduler;
  *
  * \param tcb Pointer to the task control block representing the new task.
  */
-void jock_createTask(TaskControlBlock* tcb);
+void jock_os_createTask(T_TaskControlBlock* tcb);
 
 /**
  * \brief Switch the currently running task
@@ -117,12 +117,12 @@ void jock_createTask(TaskControlBlock* tcb);
  *
  * \param head Pointer to destination for current running task.
  */
-void switchRunningTask(volatile TaskControlBlock** head);
+void jock_os_switchRunningTask(volatile T_TaskControlBlock** head);
 
 /**
  * \brief configure / enable built in OS tasks
  */
-void jock_configure(JocktosConfig* config);
+void jock_os_configureJOCKTOS(T_JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's
@@ -130,7 +130,7 @@ void jock_configure(JocktosConfig* config);
  * Sets the priorities and enables systick and pendSV handlers
  *
  */
-void jock_run(void);
+void jock_os_runJOCKTOS(void);
 
 /**
  * \brief returns the current OS tick count
@@ -138,6 +138,32 @@ void jock_run(void);
  * unsigned 32 bit millisecond counter
  * 
  */
-static inline uint32_t jock_currentTime() { return JOCKTOSScheduler.tick_count; }
+static inline uint32_t jock_os_currentTime() { return JOCKTOSScheduler.tickCount; }
+
+/**
+ * \brief Lock interrupts to start a critical section.
+ *
+ * When used with jock_os_leaveCriticalSection() this function starts a critical section that
+ * works properly even if nested in another critical section because it reads
+ * the PRIMASK value so it can be restored.
+ *
+ * @return the priority mask (PRIMASK) register value upon entry
+ */
+static inline uint32_t jock_os_enterCriticalSection(void); ///<TODO: Maybe we can expose this
+
+/**
+ *  \brief Unlock interrupts to end a critical section.
+ *
+ * When used with jock_os_enterCriticalSection() this function ends a critical section that works
+ * properly even if nested in another critical section because it uses the
+ * previous interrupt locking state (defined by PRIMASK) to selectively unlock
+ * interrupts.
+ *
+ * @param primask   The previous priority mask (PRIMASK) register value as
+ *                  returned by jock_os_enterCriticalSection().
+ * @return none
+ */
+static inline void jock_os_leaveCriticalSection(uint32_t primask);
 
 #endif /* _OS_H_ */
+
