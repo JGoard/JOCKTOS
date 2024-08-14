@@ -59,7 +59,7 @@ void idleJOCKTOS(void* arg);
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorTask(void* arg);
+void monitorJOCKTOS(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
@@ -73,7 +73,7 @@ TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
 
 TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=1024, 
-        .task_handle=monitorTask,
+        .task_handle=monitorJOCKTOS,
         .name="stack usage monitor");
 
 TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
@@ -83,7 +83,7 @@ TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
 
 /* -- Public Functions----------------------------------------------------- */
 
-void jock_os_createTask(T_TaskControlBlock* tcb) {
+void jock_os_createTask(TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->task_handle) {
         // TODO: better error handling
@@ -100,8 +100,8 @@ void jock_os_createTask(T_TaskControlBlock* tcb) {
     insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
-void jock_os_switchRunningTask(volatile T_TaskControlBlock** head) {
-    volatile T_TaskControlBlock* suspended = NULL;
+void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
+    volatile TaskControlBlock* suspended = NULL;
     if (JOCKTOSScheduler.pending) return;
     JOCKTOSScheduler.pending = true;
     if (JOCKTOSScheduler.running) {
@@ -109,26 +109,26 @@ void jock_os_switchRunningTask(volatile T_TaskControlBlock** head) {
     }
     suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (jock_os_currentTime() >= suspended->u32Delay) {
-            moveTCB(&JOCKTOSScheduler.suspended, &JOCKTOSScheduler.ready, suspended);
-            suspended->eState = eREADY;
+        if (jock_os_currentTime() >= suspended->delay_ms) {
+            moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
+            suspended->state = READY;
         }
         suspended = suspended->next;
     }
     TRIGGER_PendSV;
 }
 
-void jock_os_configureJOCKTOS(T_JocktosConfig* config) {
+void jock_os_configureJOCKTOS(JocktosConfig* config) {
     // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
     initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
-    if (config->enableMonitor) jock_os_createTask(&stackUsageMonitor);
+    if (config->enable_monitor) jock_os_createTask(&stack_monitor_tcb);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
     if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
     // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
-    if (config->enableIdle || (!config->enableMonitor && !config->enableMain)) jock_os_createTask(&defaultOSIdle);
+    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_createTask(&idle_tcb);
 }
 
 void jock_os_runJOCKTOS(void) {
@@ -220,7 +220,7 @@ void SysTick_Handler(void) {
     // Increment the tickCount variable in the JOCKTOS scheduler. This variable
     // keeps track of the number of milliseconds that have passed since the
     // scheduler was last run.
-    JOCKTOSScheduler.tickCount++;
+    JOCKTOSScheduler.tick_count++;
 
     // Call the switchRunningTask function to check if any tasks are ready to
     // run. If there are tasks ready to run, this function will switch to the
@@ -251,7 +251,7 @@ void PendSV_Handler(void) {
         __asm volatile ("mrs r0, msp"); // Move the current stack pointer into register r0
         // __asm volatile ("mrs r0, psp"); // Move the current process stack pointer into register r0
         __asm volatile ("stmdb r0!, {r4-r11}"); // Store registers r4-r11 onto the stack pointed to by r0
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->u32TaskStackPointer) :: ); // Move the process stack pointer into the JOCKTOSScheduler.running->u32TaskStackPointer variable
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: ); // Move the process stack pointer into the JOCKTOSScheduler.running->u32TaskStackPointer variable
         // --------------------------------------------------------------------------------------
     }
     
@@ -264,7 +264,7 @@ void PendSV_Handler(void) {
     
     // ------------------------------------------------------------------------------------------
     // Pop additional registers from the new process stack and load the new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->u32TaskStackPointer) : "r0"); // Move the process stack pointer into register r0
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0"); // Move the process stack pointer into register r0
     __asm volatile ("ldmia r0!, {r4-r11}"); // Load registers r4-r11 from the stack pointed to by r0
     __asm volatile ("msr msp, r0"); // Move the new stack pointer into the main stack pointer
     // __asm volatile ("msr psp, r0"); // Move the new process stack pointer into the main process stack pointer
@@ -274,19 +274,19 @@ void PendSV_Handler(void) {
 }
 
 void monitorJOCKTOS(void* arg) {
-    volatile T_TaskControlBlock* head = NULL;       // Pointer to the current task
-    E_TaskState monitorScope = eRUNNING;            // Keeps track of which list of tasks to monitor next
+    volatile TaskControlBlock* head = NULL;       // Pointer to the current task
+    TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
     while(true) {                                   // Loop indefinitely
 
         switch (monitor_scope) {                     // Switch on the current list to monitor
             case READY: {                          // If the ready list is being monitored
                 head = JOCKTOSScheduler.ready;      // Set the head pointer to the ready list
-                monitor_scope = RUNNING;            // Set the monitorScope to eRUNNING
+                monitor_scope = RUNNING;            // Set the monitor_scope to eRUNNING
                 break;                              // Break out of the switch statement
             }   
             case RUNNING: {                        // If the running list is being monitored
                 head = JOCKTOSScheduler.running;    // Set the head pointer to the running list
-                monitor_scope = SUSPENDED;          // Set the monitorScope to eSUSPENDED
+                monitor_scope = SUSPENDED;          // Set the monitor_scope to eSUSPENDED
                 break;                              // Break out of the switch statement
             }
             default: {

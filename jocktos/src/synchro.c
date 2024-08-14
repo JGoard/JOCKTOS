@@ -24,7 +24,7 @@ extern Scheduler JOCKTOSScheduler;
 void jock_takeSemaphore(Semaphore* lock) {
     __asm volatile ("cpsid i" : : : "memory");
     if (!lock->value_) jock_os_switchRunningTask(&lock->pending_queue_);
-    JOCKTOSScheduler.running->eState = eBLOCKED;
+    JOCKTOSScheduler.running->state = BLOCKED;
     __asm volatile ("cpsie i" : : : "memory");
 
     __asm volatile ("cpsid i" : : : "memory");
@@ -45,7 +45,7 @@ void jock_giveSemaphore(Semaphore* lock) {
 
 void jock_sleep(uint32_t delay_ms) {
     __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.running->delay_ms = jock_jock_os_currentTime() + delay_ms;
+    JOCKTOSScheduler.running->delay_ms = jock_os_currentTime() + delay_ms;
     JOCKTOSScheduler.running->state = SUSPENDED;
     jock_os_switchRunningTask(&JOCKTOSScheduler.suspended);
     __asm volatile ("cpsie i" : : : "memory");

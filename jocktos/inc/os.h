@@ -108,7 +108,7 @@ extern Scheduler JOCKTOSScheduler;
  *
  * \param tcb Pointer to the task control block representing the new task.
  */
-void jock_os_createTask(T_TaskControlBlock* tcb);
+void jock_os_createTask(TaskControlBlock* tcb);
 
 /**
  * \brief Switch the currently running task
@@ -117,12 +117,12 @@ void jock_os_createTask(T_TaskControlBlock* tcb);
  *
  * \param head Pointer to destination for current running task.
  */
-void jock_os_switchRunningTask(volatile T_TaskControlBlock** head);
+void jock_os_switchRunningTask(volatile TaskControlBlock** head);
 
 /**
  * \brief configure / enable built in OS tasks
  */
-void jock_os_configureJOCKTOS(T_JocktosConfig* config);
+void jock_os_configureJOCKTOS(JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's
@@ -138,7 +138,7 @@ void jock_os_runJOCKTOS(void);
  * unsigned 32 bit millisecond counter
  * 
  */
-static inline uint32_t jock_os_currentTime() { return JOCKTOSScheduler.tickCount; }
+static inline uint32_t jock_os_currentTime() { return JOCKTOSScheduler.tick_count; }
 
 /**
  * \brief Lock interrupts to start a critical section.
