@@ -18,12 +18,10 @@
 /** 
  * @brief enable / disablt ISR wrapper
  */
-#define CRITICAL_SECTION(...)                      \
-    do {                                           \
-        __asm volatile ("cpsid i" : : : "memory"); \
-        __VA_ARGS__;                               \
-        __asm volatile ("cpsie i" : : : "memory"); \
-    } while (0)
+#define CRITICAL_SECTION(...)                  \
+    __asm volatile ("cpsid i" : : : "memory"); \
+    __VA_ARGS__                                \
+    __asm volatile ("cpsie i" : : : "memory"); \
 
 
 /** 

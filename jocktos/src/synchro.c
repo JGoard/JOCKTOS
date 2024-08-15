@@ -22,33 +22,35 @@ extern Scheduler JOCKTOSScheduler;
 
 /* -- Public Functions----------------------------------------------------- */
 void jock_takeSemaphore(Semaphore* lock) {
-    __asm volatile ("cpsid i" : : : "memory");
-    if (!lock->value_) switchRunningTask(&lock->pending_queue_);
-    JOCKTOSScheduler.running->state = BLOCKED;
-    __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION(
+        if (!lock->value_) {
+            JOCKTOSScheduler.running->state = BLOCKED;
+            switchRunningTask(&lock->pending_queue_);
+        }
+    );
 
-    __asm volatile ("cpsid i" : : : "memory");
-    lock->value_--;
-    __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION(
+        lock->value_--;
+    );
 }
 
 void jock_giveSemaphore(Semaphore* lock) {
-    __asm volatile ("cpsid i" : : : "memory");  
-    lock->value_ = (lock->value_ + 1) % lock->count;
-    if (lock->pending_queue_) {
-        lock->pending_queue_->state = READY;
-        moveTCB(&lock->pending_queue_, lock->pending_queue_, &JOCKTOSScheduler.ready);
-    }
-    __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION( 
+        lock->value_ = (lock->value_ + 1) % lock->count;
+        if (lock->pending_queue_) {
+            lock->pending_queue_->state = READY;
+            moveTCB(&lock->pending_queue_, lock->pending_queue_, &JOCKTOSScheduler.ready);
+        }
+    );
     return;
 }
 
 void jock_sleep(uint32_t delay_ms) {
-    __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.running->delay_ms = jock_currentTime() + delay_ms;
-    JOCKTOSScheduler.running->state = SUSPENDED;
-    switchRunningTask(&JOCKTOSScheduler.suspended);
-    __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION(
+        JOCKTOSScheduler.running->delay_ms = jock_currentTime() + delay_ms;
+        JOCKTOSScheduler.running->state = SUSPENDED;
+        switchRunningTask(&JOCKTOSScheduler.suspended);
+    );
     return;
 
 }

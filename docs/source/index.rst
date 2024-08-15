@@ -12,6 +12,7 @@ A journey of learning how to create an RTOS kernel from the ground up, by Nick S
    :maxdepth: 2
    :caption: Contents:
 
+   tcb.rst
    bitmap_allocator.rst
 
 Indices and tables
