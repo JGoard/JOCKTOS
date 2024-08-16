@@ -2,7 +2,8 @@
 * \brief This module contains the main function and basic tasks
 */
 #include "main.h"
-#include "stm32f303xe.h"
+#include "timers.h"
+#include "stm32m4cortex_bsp.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
 
@@ -20,8 +21,10 @@ Semaphore test_mutex = SEMAPHORE_DEF();
  */
 int main(void)
 {
-    jock_sys_LEDInit();
     /* Initialize the LED on the 'Nucleo' board*/
+    jock_sys_LEDInit();
+    /* Initialize Timer 2 on the board*/
+    Timer2Init(TIM2, 3, 1000);
 
     /* Configuration Default for the Allocator and option for kernel servicing and monitoring */
     JocktosConfig config = JOCKTOSCONFIG_DEF(
@@ -67,8 +70,6 @@ int main(void)
     /* This will start the scheduler and tasking system */
     jock_os_runJOCKTOS();
 
-    _testTimersInit();    
-
     int x = 100;
     int y = 0;
     int16_t errorVal = 0;
@@ -77,7 +78,7 @@ int main(void)
         if (x == 0) x = 100;
         y--;
         if (y == 100) y = 0;
-        jock_sys_ErrorLED(errorVal);
+        // jock_sys_ErrorLED(errorVal); ///<TODO: Pass in Error Value from JOCKTOS inits and use different conditions for cycling error states
     }
 }
 

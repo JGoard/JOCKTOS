@@ -6,6 +6,7 @@
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 // Middleware
+#include "stm32m4cortex_bsp.h"
 // Bios
 // Standard C
 #include <stdint.h>
@@ -19,6 +20,6 @@
 /* -- Function Declarations ----------------------------------------------- */
 
 void SysTick_Configuration(int freq);
-void _testTimersInit();
+void Timer2Init(TIM_TypeDef *TIMx, uint8_t irqPriority, uint16_t milliSeconds);
 
 #endif /* _TIMERS_H_ */
