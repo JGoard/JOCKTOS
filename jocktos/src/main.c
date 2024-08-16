@@ -2,6 +2,7 @@
 * \brief This module contains the main function and basic tasks
 */
 #include "main.h"
+#include "stm32f303xe.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
 
@@ -19,6 +20,9 @@ Semaphore test_mutex = SEMAPHORE_DEF();
  */
 int main(void)
 {
+    jock_sys_LEDInit();
+    /* Initialize the LED on the 'Nucleo' board*/
+
     /* Configuration Default for the Allocator and option for kernel servicing and monitoring */
     JocktosConfig config = JOCKTOSCONFIG_DEF(
         .enable_idle = true,
@@ -63,6 +67,8 @@ int main(void)
     /* This will start the scheduler and tasking system */
     jock_os_runJOCKTOS();
 
+    _testTimersInit();    
+
     int x = 100;
     int y = 0;
     while(1) {
@@ -86,10 +92,10 @@ void testArgsTask(void* arg) {
 
 void sleepTest(void* arg) {
     while (true) {
-        jock_takeSemaphore(&test_mutex);
-        jock_sleep(1000);
-        jock_giveSemaphore(&test_mutex);
-        jock_sleep(1000);
+        jock_os_takeSempahore(&test_mutex);
+        jock_os_sleep(1000);
+        jock_os_giveSempahore(&test_mutex);
+        jock_os_sleep(1000);
     }
 }
 
@@ -98,10 +104,10 @@ void mutexTestTask(void* arg) {
     while(1) {
         x--;
         if (x == 5000) {
-            jock_takeSemaphore(&test_mutex);
+            jock_os_takeSempahore(&test_mutex);
         }
         if (x == 0) {
-            jock_giveSemaphore(&test_mutex);
+            jock_os_giveSempahore(&test_mutex);
             x = 10000;
         }
     }

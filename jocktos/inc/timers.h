@@ -19,5 +19,6 @@
 /* -- Function Declarations ----------------------------------------------- */
 
 void SysTick_Configuration(int freq);
+void _testTimersInit();
 
 #endif /* _TIMERS_H_ */
