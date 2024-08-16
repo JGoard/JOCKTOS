@@ -12,7 +12,10 @@
 #include <stdint.h>
 
 /* -- Defines ------------------------------------------------------------- */
-
+    // LED Error States
+    #define NO_FAILURE 0
+    #define MILD_FAILURE 1
+    #define SEVERE_FAILURE 2
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -33,11 +36,14 @@ void jock_sys_LEDInit(void);
 void jock_sys_LEDToggle(void);
 
 /**
- * @brief Turn on the error LED on the Nucleo board
+ * @brief Toggle the error LED based on the error value.
  *
- * This function is used to indicate a system error.
+ * This function is used to toggle the error LED on the Nucleo board based on the error value.
+ *
+ * @param[in] errorValue
+ *            The error value to be indicated by the error LED.
  */
-void jock_sys_ErrorLED(void);
+void jock_sys_ErrorLED(int16_t errorValue);
 
 
 #endif /* _SYS_H_ */

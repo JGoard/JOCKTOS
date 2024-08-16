@@ -71,11 +71,13 @@ int main(void)
 
     int x = 100;
     int y = 0;
+    int16_t errorVal = 0;
     while(1) {
         x++;
         if (x == 0) x = 100;
         y--;
         if (y == 100) y = 0;
+        jock_sys_ErrorLED(errorVal);
     }
 }
 
