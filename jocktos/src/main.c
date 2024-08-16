@@ -26,8 +26,7 @@ Semaphore test_mutex = SEMAPHORE_DEF();
 
 // Task function declarations
 void sleepTest(void* arg);
-void stackInflationTestTask(void* arg);
-
+void stackInflationTest(void* arg);
 /**
  * @brief Basic main.c function that will initialize the scheduler, tasks, bitmap allocater, and 
  * deallocation of memory blocks.
@@ -47,7 +46,7 @@ int main(void)
 
     // Sample Sleep Task
     uint16_t sleep_ms = 1000;
-    TaskControlBlock lockingSleepTask = TASKCONTROLBLOCK_DEF(
+    TaskControlBlock locking_sleep_task = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512, 
         .task_handle=sleepTest,
         .task_arg=&sleep_ms,
@@ -55,14 +54,14 @@ int main(void)
     
     // Sample Stack usage Task
     TestArgStruct test_val = {.depth=10, .sleep_ms=1000};
-    TaskControlBlock stackUsageTask = TASKCONTROLBLOCK_DEF(
+    TaskControlBlock stack_usage_task = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=1024,
-        .task_handle=stackInflationTestTask,
+        .task_handle=stackInflationTest,
         .task_arg=&test_val,
         .name="stack inflation");
         
-    jock_createTask(&lockingSleepTask); // Create Sleep Task in JOCKTOS
-    jock_createTask(&stackUsageTask);   // Create Stack Usage Task in JOCKTOS
+    jock_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
+    jock_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
     jock_run();                         // Start JOCKTOS Kernel
 
     // because enable_main is configured, execution **will** return here and continue
@@ -122,7 +121,7 @@ int inflateStack(int depth, int sleep_ms) {
 *
 * @param arg Pointer to a TestArgStruct, used to specify recursion depth and cycles to burn
 */
-void stackInflationTestTask(void* arg) {
+void stackInflationTest(void* arg) {
     TestArgStruct* test_val = (TestArgStruct*)arg;
     while(1) (void)inflateStack(test_val->depth, test_val->sleep_ms);
 }
