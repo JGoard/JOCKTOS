@@ -101,20 +101,30 @@ void jock_os_createTask(TaskControlBlock* tcb) {
 }
 
 void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
-    volatile TaskControlBlock* suspended = NULL;
-    if (JOCKTOSScheduler.pending) return;
+    // If there is a pending context switch, return immediately
+    if (JOCKTOSScheduler.pending)
+        return;
+    // Set the pending flag to indicate that a context switch is pending
     JOCKTOSScheduler.pending = true;
+    // If there is a currently running task
     if (JOCKTOSScheduler.running) {
-        insertTCB(head, JOCKTOSScheduler.running);  
+        // Move the running task to the head of the ready list
+        insertTCB(head, JOCKTOSScheduler.running);
     }
-    suspended = JOCKTOSScheduler.suspended;
+    // Iterate through the suspended tasks
+    volatile TaskControlBlock* suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
+        // If the delay time for the task has been reached
         if (jock_os_currentTime() >= suspended->delay_ms) {
+            // Move the task from the suspended list to the ready list
             moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
+            // Set the state of the task to ready
             suspended->state = READY;
         }
+        // Move to the next task
         suspended = suspended->next;
     }
+    // Trigger the PendSV interrupt to cause a context switch
     TRIGGER_PendSV;
 }
 
@@ -150,8 +160,7 @@ void jock_os_runJOCKTOS(void) {
 
 static inline uint32_t jock_os_enterCriticalSection(void){
     uint32_t  primask;
-
-    asm volatile("mrs %0, primask\n" : "=r" (primask)::);
+    primask = __get_PRIMASK();
     __disable_irq();
     return primask;
 }
@@ -171,25 +180,25 @@ void initializeStack(TaskControlBlock* tcb) {
     // define tasks initial exception return stack
     uintptr_t* init_stack_ptr;
     //  - non-critical registers are initialized to their index
-    *(--stack_ptr) = (1U << 24);                ///<   Set thumb state bit in EPSR
-    *(--stack_ptr) = (uintptr_t)tcb->task_handle; ///<   Set PC to task function handle
-    *(--stack_ptr) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
-    // *(--stack_ptr) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
-    *(--stack_ptr) = 0x0000000CU;               ///<   Set R12 register deafult to its index
-    *(--stack_ptr) = 0x00000003U;               ///<   Set R3  register deafult to its index
-    *(--stack_ptr) = 0x00000002U;               ///<   Set R2  register deafult to its index
-    *(--stack_ptr) = 0x00000001U;               ///<   Set R1  register deafult to its index
-    *(--stack_ptr) = (uintptr_t)tcb->task_arg;   ///<   Set R0  register to the argument for the tasks function
-    init_stack_ptr = stack_ptr - 1;               ///<   Catch top of initial post-exception stack
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   ISR push / pop "working stack pointer" as R7
-    *(--stack_ptr) = 0x0000000BU;               ///<   Set R11 register deafult to its index
-    *(--stack_ptr) = 0x0000000AU;               ///<   Set R10 register deafult to its index
-    *(--stack_ptr) = 0x00000009U;               ///<   Set R9  register deafult to its index
-    *(--stack_ptr) = 0x00000008U;               ///<   Set R8  register deafult to its index
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   Set R7 to "working stack pointer"
-    *(--stack_ptr) = 0x00000006U;               ///<   Set R6  register deafult to its index
-    *(--stack_ptr) = 0x00000005U;               ///<   Set R5  register deafult to its index
-    *(--stack_ptr) = 0x00000004U;               ///<   Set R4  register deafult to its index
+    *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
+    *(--stack_ptr) = (uintptr_t)tcb->task_handle;   ///<   Set PC to task function handle
+    *(--stack_ptr) = 0xFFFFFFF9U;                   ///<   Set LR  register for MSP thread mode
+    // *(--stack_ptr) = 0xFFFFFFFDU;                ///<   Set LR  register for PSP thread mode
+    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register deafult to its index
+    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register deafult to its index
+    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register deafult to its index
+    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)tcb->task_arg;      ///<   Set R0  register to the argument for the tasks function
+    init_stack_ptr = stack_ptr - 1;                 ///<   Catch top of initial post-exception stack
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   ISR push / pop "working stack pointer" as R7
+    *(--stack_ptr) = 0x0000000BU;                   ///<   Set R11 register deafult to its index
+    *(--stack_ptr) = 0x0000000AU;                   ///<   Set R10 register deafult to its index
+    *(--stack_ptr) = 0x00000009U;                   ///<   Set R9  register deafult to its index
+    *(--stack_ptr) = 0x00000008U;                   ///<   Set R8  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   Set R7 to "working stack pointer"
+    *(--stack_ptr) = 0x00000006U;                   ///<   Set R6  register deafult to its index
+    *(--stack_ptr) = 0x00000005U;                   ///<   Set R5  register deafult to its index
+    *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register deafult to its index
     tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + 8) {
