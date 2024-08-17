@@ -7,6 +7,7 @@
 // Jocktos
 #include "tcb.h"
 // Middleware
+#include "cmsis_gcc.h"
 // Bios
 // Standard C
 #include <stdint.h>
@@ -18,11 +19,25 @@
 /** 
  * @brief enable / disablt ISR wrapper
  */
-#define CRITICAL_SECTION(...)                  \
-    __asm volatile ("cpsid i" : : : "memory"); \
-    __VA_ARGS__                                \
-    __asm volatile ("cpsie i" : : : "memory"); \
+// #define CRITICAL_SECTION(...)          \
+//     __disable_irq();                            \
+//     __VA_ARGS__                              \
+//     __enable_irq();                             \
+//                                              \
 
+
+/** 
+ * @brief enable / disablt ISR wrapper
+ */
+#define CRITICAL_SECTION(primask, ...)          \
+    primask = __get_PRIMASK();                  \
+    __disable_irq();                            \
+    {                                           \
+        __VA_ARGS__                             \
+    }                                           \
+    if (primask == 0) {                         \
+    __enable_irq();                             \
+    }                                           \
 
 /** 
  * @brief Default JOCKTOS configuration

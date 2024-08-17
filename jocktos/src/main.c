@@ -3,6 +3,7 @@
 */
 #include "main.h"
 #include "timers.h"
+#include "synchro.h"
 #include "stm32m4cortex_bsp.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
@@ -49,7 +50,7 @@ int main(void)
         .allocator_block_size = 256
     );
     // Apply configuration to JOCKTOS kernel
-    jock_configure(&config);
+    jock_os_configureJOCKTOS(&config);
 
     // Sample Sleep Task
     uint16_t sleep_ms = 1000;
@@ -67,9 +68,9 @@ int main(void)
         .task_arg=&test_val,
         .name="stack inflation");
         
-    jock_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
-    jock_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
-    jock_run();                         // Start JOCKTOS Kernel
+    jock_os_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
+    jock_os_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
+    jock_os_runJOCKTOS();                         // Start JOCKTOS Kernel
 
     // because enable_main is configured, execution **will** return here and continue
     int x = 100;
@@ -94,10 +95,10 @@ int main(void)
 void sleepTest(void* arg) {
     uint16_t sleep_time = *((uint16_t*)arg);
     while (true) {
-        jock_takeSemaphore(&test_mutex);
-        jock_sleep(sleep_time);
-        jock_giveSemaphore(&test_mutex);
-        jock_sleep(sleep_time);
+        jock_synchro_takeSempahore(&test_mutex);
+        jock_synchro_sleep(sleep_time);
+        jock_synchro_giveSempahore(&test_mutex);
+        jock_synchro_sleep(sleep_time);
     }
 }
 
@@ -112,10 +113,10 @@ int inflateStack(int depth, int sleep_ms) {
     int local_var = 0;  // This variable will occupy space on the stack
 
     if (depth > 0) {
-        jock_takeSemaphore(&test_mutex);
-        jock_sleep(sleep_ms);
-        jock_giveSemaphore(&test_mutex);
-        jock_sleep(sleep_ms);
+        jock_synchro_takeSempahore(&test_mutex);
+        jock_synchro_sleep(sleep_ms);
+        jock_synchro_giveSempahore(&test_mutex);
+        jock_synchro_sleep(sleep_ms);
         local_var += inflateStack(depth - 1, sleep_ms);  // Recursive call to inflate the stack further
     }
     return local_var;
