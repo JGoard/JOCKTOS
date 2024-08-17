@@ -230,8 +230,7 @@ void SysTick_Handler(void) {
 }
 
 void PendSV_Handler(void) {
-    uint32_t primask;
-    CRITICAL_SECTION(primask,{        
+    uint32_t primask = jock_os_enterCriticalSection();
         if (JOCKTOSScheduler.running) {
             // --------------------------------------------------------------------------------------
             // push additional registers onto current process stack and store process stack pointer
@@ -255,8 +254,7 @@ void PendSV_Handler(void) {
         // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
         __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
         // ------------------------------------------------------------------------------------------
-    }
-    )
+    jock_os_leaveCriticalSection(primask);    
 }
 
 void monitorJOCKTOS(void* arg) {
