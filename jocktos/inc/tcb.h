@@ -1,6 +1,22 @@
 /**
-* \brief This header is to act as companion header for tcb.c
-*/
+ * @file tcb.h
+ * 
+ * A @ref TaskControlBlock "Task Control Block" (TCB) is a data structure that stores information about an indiviual task in JOCKTOS.
+ * This information includes the task's priority, name, function to run, function argument, the tasks state, and stack management information. 
+ * The TCB is a fundamental building block of JOCKTOS and is used to manage the execution of tasks in the system. 
+ * The JOCKTOS scheduler uses the TCBs to determine which task to run next.
+ * The TCBs are created and managed by the application at runtime, allowing for a high degree of flexibility in the design of the system. 
+ * They can be added to or removed from the list of tasks at any time, allowing for dynamic changes to the system's behavior.
+ *
+ * @section structure Linked List Structure
+ * TCBs are organized in singly linked lists, sorted by their priority, with the highest priority value at the head of the list.
+ * If multiple TCBs have the same priority value, they are inserted in a First-In-First-Out ordering amoung those with equal priority values.
+ * Functions are provided to handle insertion, removal, reordering (updating a TCB's priority) and migrating between different lists while keeping the linked list sorted.
+ * These functions do not throw errors, they log errors and exit with a NOP.
+ * The errors are logged to a global error data structure @ref TCBError "TCBError"  which tracks errors as they occur.
+ * 
+ * @section methods Task Control Block Methods
+ */
 #ifndef _TCB_H_
 #define _TCB_H_
 /* -- Includes ------------------------------------------------------------ */
@@ -14,7 +30,31 @@
 /* -- Defines ------------------------------------------------------------- */
 
 /**
- * @brief default task control block
+ * @brief Default values for a task control block.
+ *
+ * @details
+ * This macro creates a TaskControlBlock with the following default values:
+ *  - priority: 0 (lowest priority)
+ *  - name: empty string
+ *  - delay_ms: 0 (no delay_ms)
+ *  - stack_size_bytes: 0 (no stack allocated)
+ *  - task_handle: NULL (no function to run)
+ *  - task_arg: NULL (no argument to pass to function)
+ *  - state: BLOCKED (task is not running and is awaiting a resource)
+ *  - stack_pointer: NULL (no stack allocated)
+ *  - next: NULL (not in any list)
+ *
+ * This macro is intended to be used for declaring a TaskControlBlock with
+ * default values, with custom the values as needed. For example:
+ *
+ * @code
+ * TaskControlBlock myTask = TASKCONTROLBLOCK_DEF(
+ *         .name = "myTask",
+ *         .task_handle = myTaskFunction,
+ *         .stack_size_bytes = 1024);
+ * @endcode
+ *
+ * @param ... varargs to override default values
  */
 #define TASKCONTROLBLOCK_DEF(...)   \
 {   /* ---- Configured ---*/        \
@@ -35,18 +75,27 @@
 
 /* -- Types --------------------------------------------------------------- */
 
-/** 
- * @brief Enumeration of possible task states (stale feature)
+/**
+ * @brief Enumeration of possible task states.
+ * 
+ * @details
+ * Defines the possible states of a task within JOCKTOS. 
+ * Each state represents a different phase in the lifecycle of a task, 
+ * providing the scheduler and other system components with essential information about the task's current status.
+ * 
  */
 typedef enum {
-    RUNNING    = 0,    /**< Currently active task. */
-    READY      = 1,    /**< In the queue and ready to run. */
-    BLOCKED    = 2,    /**< Awaiting a resource. */
-    SUSPENDED  = 3    /**< Delayed or intentionally released. */
+    RUNNING    = 0,    ///< The task is currently executing on the CPU with priority over others.
+    READY      = 1,    ///< The task is ready and waiting for execution by the scheduler.
+    BLOCKED    = 2,    ///< The task is waiting for a resource (e.g., semaphore, mutex) to become available.
+    SUSPENDED  = 3     ///< The task is temporarily inactive and can be reactivated by an event.
 } TaskState;
 
-/** 
- * @brief colelction of potential error counters
+/**
+ * @brief Collection of counters for various error conditions encountered by the Task Control Block (TCB).
+ *
+ * @details
+ * This structure contains variables that keep track of the number of times each error condition has occurred.
  */
 typedef struct {
     volatile uint16_t invalid_task_handle;   ///< TaskControlBlock initialized with a task handle
@@ -56,13 +105,15 @@ typedef struct {
     volatile uint16_t invalid_list_element;  ///< Provided a TCB that is not in the list
 } TCBError;
 
-/** 
- * @brief Task function handle
- */
-typedef void (*FunctionHandle)(void*);
-
-/** 
- * @brief Cortex-M4 Context Control Block
+/**
+ * @brief Task Control Block (TCB).
+ *
+ * @details
+ * The TaskControlBlock is a structure that represents a task in the system.
+ * It contains information about the task's priority, name, stack size, and
+ * other relevant data.
+ *
+ * See \ref  TASKCONTROLBLOCK_DEF "TASKCONTROLBLOCK_DEF(...)" for information on the default values.
  */
 typedef struct TaskControlBlock {
     volatile double  stack_usage;               ///< Percentage of stack used as of last preemption
@@ -85,8 +136,6 @@ typedef struct TaskControlBlock {
 /**
  * \brief Insert a task control block into a linked list.
  *
- * This function inserts a task control block into a linked list in descending order of priority.
- *
  * \param head Pointer to the head of the linked list.
  * \param tcb Pointer to the task control block to be inserted.
  */
@@ -95,9 +144,6 @@ void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
 /**
  * \brief Remove a task control block from a linked list.
  *
- * This function removes a task control block from a linked list. If the task control block is found,
- * it is removed from the list; otherwise, an error is logged.
- *
  * \param head Pointer to the pointer to the head of the linked list.
  * \param tcb Pointer to the task control block to be removed.
  */
@@ -105,10 +151,6 @@ void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
 
 /**
  * \brief Update the priority of a task control block in a linked list.
- *
- * This function updates the priority of a task control block in a linked list. It first removes the
- * task control block from the list, then updates its priority, and finally reinserts it into the list
- * at its new position based on the updated priority.
  *
  * \param head Pointer to the pointer to the head of the linked list.
  * \param tcb Pointer to the task control block to be updated.
@@ -119,8 +161,6 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
 /**
  * \brief Move a task control block from one linked list to another.
  *
- * This function moves a task control block from one linked list to another. It first removes the task
- * control block from the current linked list, and then inserts it into the new linked list.
  *
  * \param source Pointer to the pointer to the head of the current linked list.
  * \param tcb Pointer to the task control block to be moved.

@@ -1,6 +1,26 @@
 /**
-* \brief This header is to act as companion header for allocator.c
-*/
+ * @file allocator.h
+ *
+ * The allocator divides the memory pool into a series of fixed, equal-size blocks,
+ * which is specified by the @c block_size parameter in the @ref initAllocator function. 
+ * This block size determines the granularity of memory allocation, and all allocations 
+ * will be an integer multiple of this block size. An allocation request for a block of 
+ * size that is not a multiple of the block size will be rounded up to the next multiple.
+ * 
+ * For example, if the block size is set to 16 bytes, the allocator can only 
+ * allocate memory blocks of size 16, 32, 48, 64, etc. bytes, and a request for 18 
+ * bytes will be rounded up to 32.
+ *
+ * @section allocations Tracking Memory Allocations
+ * The allocator uses a pair of bitmaps to track the allocation status of each memory 
+ * block in the pool. One bitmap tracks the used blocks, and the other bitmap tracks 
+ * the allocated block heads. Each bitmap has an integer multiple of 16 bits, with the 
+ * total size being determined by the number of blocks in the pool at initialization. 
+ * This conditionally sized overhead allows for efficient memory usage, while maintaining
+ * byte aligment in 32bit systems.
+ * 
+ * @section methods Allocator Methods
+ */
 #ifndef _ALLOCATOR_H_
 #define _ALLOCATOR_H_
 /* -- Includes ------------------------------------------------------------ */
@@ -13,7 +33,14 @@
 #include <stdbool.h>
 
 /* -- Defines ------------------------------------------------------------- */
-#define ALLOCATOR_SIZE 8192 // TODO: redefine this to use full heap as per the linker file
+
+/**
+ * @brief Default block size for the allocator.
+ * 
+ * @details
+ * TODO: redefine this to use full heap as per the linker file
+ */
+#define ALLOCATOR_SIZE 8192
 /* -- Types --------------------------------------------------------------- */
 
 /**

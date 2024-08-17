@@ -21,6 +21,19 @@ TCBError JOCKTOS_TCBError = {0};
 /* -- Private Function Declarations --------------------------------------- */
 
 /* -- Public Functions----------------------------------------------------- */
+
+/**
+ * @details
+ * This function inserts a @ref TaskControlBlock "TaskControlBlock" into a linked list. 
+ * This linked list is sorted based on its priority value, with the highest priority Task Control Block at the head of the list. 
+ * If the linked list is empty the TaskControlBlock is inserted at the head of the list. 
+ * Otherwise, the function iterates across the linked list and inserts the TaskControlBlock in its correct position based on its priority value. 
+ * If multiple TaskControlBlocks have the same priority value they are inserted in a First-In-First-Out ordering amoung those with equal priority values.
+ *
+ * @warning 
+ *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
+ *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
+ */
 void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
     if (head == NULL) {
         JOCKTOS_TCBError.invalid_list_head++;
@@ -45,6 +58,16 @@ void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
     }
 }
 
+/**
+ * @details
+ * This function removes a @ref TaskControlBlock "TaskControlBlock" from a linked list. 
+ * If the TaskControlBlock is found, it is removed from the list; otherwise, an error is logged. 
+ * 
+ * @warning 
+ *  - If the TaskControlBlock is not found in the linked list, the function logs an invalid_list_element error and returns with no action.
+ *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
+ *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
+ */
 void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
     // catch and log invalid linked list head
     if (head == NULL || *head == NULL) {
@@ -73,6 +96,16 @@ void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
     }
 }
 
+/**
+ * @details
+ * This function updates the priority of a @ref TaskControlBlock "TaskControlBlock" in a linked list. 
+ * It first removes the TaskControlBlock from the list, then updates its priority, 
+ * and finally reinserts it into the list at its new position based on the updated priority.
+ * 
+ * @warning 
+ *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
+ *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
+ */
 void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb, uint8_t priority) {
     // catch and log invalid linked list head
     if (head == NULL ||*head == NULL) {
@@ -84,12 +117,21 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
         JOCKTOS_TCBError.invalid_tcb++;
         return;
     }
-    if (tcb->priority == priority) return; // NOP if priority doesn't change
-    removeTCB(head, tcb);          // Remove the node from the list
-    tcb->priority = priority; // Update the priority of the node
-    insertTCB(head, tcb);          // Reinsert the node into the list at its new position
+    if (tcb->priority == priority) return;
+    removeTCB(head, tcb);
+    tcb->priority = priority;
+    insertTCB(head, tcb);
 }
 
+/**
+ * @details
+ * This function moves a @ref TaskControlBlock "TaskControlBlock" from one linked list to another. 
+ * It first removes the TaskControlBlock from the current linked list, and then inserts it into the new linked list.
+ * 
+ * @warning 
+ *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
+ *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
+ */
 void moveTCB(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination) {
     // catch and log invalid linked list head
     if (source == NULL || destination == NULL) {

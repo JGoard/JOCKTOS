@@ -1,7 +1,10 @@
 /**
+ * @file test_utils.h
+ *
  * @brief This is a minimal testing utility header that provides a basic
  * framework for writing unit tests in C.
- * 
+ *
+ * @details
  * This header provides the following basic components:
  * 
  * - LOG: Prints a message to the console in the specified color.
@@ -16,10 +19,14 @@
  * - ASSERT_FALSE: Assert that a condition is false.
  * - ASSERT_EQUAL_PTR: Assert that two pointers are equal.
  * - ASSERT_EQUAL_INT: Assert that two integers are equal.
+ * - ASSERT_EQUAL_CHAR: Assert that two characters are equal.
+ * - ASSERT_EQUAL_STR: Assert that two strings are equal.
  * - ASSERT_NOT_EQUAL_PTR: Assert that two pointers are not equal.
  * - ASSERT_NOT_EQUAL_INT: Assert that two integers are not equal.
+ * - ASSERT_NOT_EQUAL_CHAR: Assert that two characters are not equal.
+ * - ASSERT_NOT_EQUAL_STR: Assert that two strings are not equal.
  * 
- * Lastly, the cummulative test status can be retrieved with the function: testGetStatus().
+ * Lastly, the cummulative test status can be retrieved with the functio @ref testGetStatus "testGetStatus()".
  * 
  * @author Nicholas Schneider
  */
@@ -36,13 +43,13 @@
 #include <stdlib.h>
 
 /* -- Defines ------------------------------------------------------------- */
-#define BLUE "\x1b[34m"
-#define GREEN "\x1b[32m"
-#define RED "\x1b[31m"
-#define RESET "\x1b[0m"
-#define CYAN "\x1b[36m"
+#define BLUE    "\x1b[34m"
+#define GREEN   "\x1b[32m"
+#define RED     "\x1b[31m"
+#define RESET   "\x1b[0m"
+#define CYAN    "\x1b[36m"
 #define MAGENTA "\x1b[35m"
-#define YELLOW "\x1b[33m"
+#define YELLOW  "\x1b[33m"
 
 #define LOG(msg, col)   printf(col "%s" RESET, msg);
 
@@ -63,60 +70,68 @@
  * @param name The name of the test case.
  */
 #define TEST_CASE(name)                         \
-    clear_case();                               \
-    print_indent();                             \
+    clearCase();                               \
+    printIndent();                             \
     printf(BLUE "case: " RESET "%s\n", name);   \
-    inc_depth();                                \
+    incDepth();                                \
 
 /**
  * @brief Indicate that the current test case has completed.
  */
 #define CASE_COMPLETE                       \
-    if(get_case_status()) {                 \
-        print_indent();                     \
+    if(caseHasFailed()) failTest();      \
+    else {                                  \
+        printIndent();                     \
         printf(GREEN ":: passed\n" RESET);  \
-    } dec_depth();                          \
+    } decDepth();                          \
 
 /**
  * @brief Print a message indicating that a test case is not yet implemented.
  * 
  */
 #define CASE_NOT_IMPLEMENTED                        \
-    print_indent();                                 \
-    printf(YELLOW "TEST NOT IMPLEMENTED\n" RESET);  \
-    dec_depth();                                    \
+    printIndent();                                 \
+    printf(YELLOW "NOT IMPLEMENTED\n" RESET);  \
+    decDepth();                                    \
 
-#define __ASSERT_BOOL(cond, cond_str, expression, msg)                              \
+#define ASSERT_BOOL__(cond, cond_str, expression, msg)                              \
     if (cond(expression)) {                                                         \
-        fail_case();                                                                \
-        fail_test();                                                                \
-        print_indent();                                                             \
+        failCase();                                                                \
+        printIndent();                                                             \
         printf(RED "ASSERT_" cond_str ": [%s] :: %s\n" RESET, #expression, msg);    \
     }
 
-#define ASSERT_TRUE(expression, msg)  __ASSERT_BOOL(!, "TRUE",expression, msg)
-#define ASSERT_FALSE(expression, msg) __ASSERT_BOOL( , "FALSE", expression, msg)
+#define ASSERT_TRUE(expression, msg)  ASSERT_BOOL__(!, "TRUE",expression, msg)
+#define ASSERT_FALSE(expression, msg) ASSERT_BOOL__( , "FALSE", expression, msg)
 
-#define __ASSERT_CHECK(cond, cond_str, type, a, b, msg)                     \
+#define ASSERT_CHECK__(cond, cond_str, type, a, b, msg)                     \
     if (a cond b) {                                                         \
-        fail_case();                                                        \
-        fail_test();                                                        \
-        print_indent();                                                     \
+        failCase();                                                        \
+        printIndent();                                                     \
         printf(RED "ASSERT_" cond_str "EQUAL: %s "#cond" %s ["              \
         "%" type " "#cond" %" type "] :: %s\n" RESET, #a, #b, a, b, msg);   \
     }
 
-#define ASSERT_EQUAL_PTR(a, b, msg)           __ASSERT_CHECK(!=, "", "p", a, b, msg)
-#define ASSERT_EQUAL_INT(a, b, msg)           __ASSERT_CHECK(!=, "", "d", a, b, msg)
-#define ASSERT_NOT_EQUAL_PTR(a, b, msg)       __ASSERT_CHECK(==, "NOT_", "p", a, b, msg)
-#define ASSERT_NOT_EQUAL_INT(a, b, msg)       __ASSERT_CHECK(==, "NOT_", "d", a, b, msg)
+#define ASSERT_EQUAL_PTR(a, b, msg)           ASSERT_CHECK__(!=, "", "p", a, b, msg)
+#define ASSERT_NOT_EQUAL_PTR(a, b, msg)       ASSERT_CHECK__(==, "NOT_", "p", a, b, msg)
+
+#define ASSERT_EQUAL_INT(a, b, msg)           ASSERT_CHECK__(!=, "", "d", a, b, msg)
+#define ASSERT_NOT_EQUAL_INT(a, b, msg)       ASSERT_CHECK__(==, "NOT_", "d", a, b, msg)
+
+#define ASSERT_EQUAL_CHAR(a, b, msg)          ASSERT_CHECK__(!=, "", "c", a, b, msg)
+#define ASSERT_NOT_EQUAL_CHAR(a, b, msg)      ASSERT_CHECK__(==, "NOT_", "c", a, b, msg)
+
+#define ASSERT_EQUAL_STR(a, b, len, msg)    \
+    for (int i = 0; i < (len); i++)  ASSERT_EQUAL_CHAR((a)[i], (b)[i], msg);  
+#define ASSERT_NOT_EQUAL_STR(a, b, len, msg)     \
+    for (int i = 0; i < (len); i++)  ASSERT_NOT_EQUAL_CHAR((a)[i], (b)[i], msg);
 
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
-bool test_failed = false; //status of the entire test suite.
-bool case_status = false; // status of the current test
+bool test_failed = false; // status of the entire test suite.
+bool case_failed = false; // status of the current test
 uint16_t depth = 0; //The indentation depth of the current test.
 
 /* -- Function Declarations ----------------------------------------------- */
@@ -131,7 +146,7 @@ bool testGetStatus() { return test_failed; }
 /**
  * @brief Print the current test indent.
  */
-static void print_indent() {
+static void printIndent() {
     for (int i = 0; i < depth; i++) {
         putchar(' ');
         putchar(' ');
@@ -141,34 +156,34 @@ static void print_indent() {
 /**
  * @brief Mark the current test case as failed.
  */
-void fail_case() { case_status = false; }
+void failCase() { case_failed = true; }
 
 /**
  * @brief Mark the current test case as passed.
  */
-void clear_case() { case_status = true; }
+void clearCase() { case_failed = false; }
 
 /**
  * @brief Mark the entire test suite as failed.
  */
-void fail_test() { test_failed = true; }
+void failTest() { test_failed = true; }
 
 
 /**
  * @brief Increment the test case indentation depth.
  */
-void inc_depth() { depth++; }
+void incDepth() { depth++; }
 
 /**
  * @brief Decrement the test case indentation depth.
  */
-void dec_depth() { depth--; }
+void decDepth() { depth--; }
 
 /**
- * @brief Get the status of the current test case.
- *
- * @return true if the test case has passed, false otherwise.
+ * @brief Retrieve the test case status.
+ * 
+ * @return true if the current test case has failed, false otherwise.
  */
-uint8_t get_case_status() { return case_status; }
+bool caseHasFailed() { return case_failed; }
 
 #endif // _TEST_UTILS_H_

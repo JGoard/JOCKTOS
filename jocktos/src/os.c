@@ -178,38 +178,38 @@ void initializeStack(TaskControlBlock* tcb) {
 }
 
 void SysTick_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
-    JOCKTOSScheduler.tick_count++;
-    switchRunningTask(&JOCKTOSScheduler.ready);
-   __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION(
+        JOCKTOSScheduler.tick_count++;
+        switchRunningTask(&JOCKTOSScheduler.ready);
+   );
 }
 
 void PendSV_Handler(void) {
-    __asm volatile ("cpsid i" : : : "memory");
-    if (JOCKTOSScheduler.running) {
-        // --------------------------------------------------------------------------------------
-        // push additional registers onto current process stack and store process stack pointer
-        __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
-        // __asm volatile ("mrs r0, psp");
-        __asm volatile ("stmdb r0!, {r4-r11}");
-        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
-        // --------------------------------------------------------------------------------------
-    }
-    // pop off of ready task list into running
-    JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
-    JOCKTOSScheduler.running->next = NULL;
-    JOCKTOSScheduler.running->state = RUNNING;
-    JOCKTOSScheduler.pending = false;
-    // ------------------------------------------------------------------------------------------
-    // pop additional registers from the new process stack and load new process stack pointer
-    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
-    __asm volatile ("ldmia r0!, {r4-r11}");
-    __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
-    // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
-    __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
-    // ------------------------------------------------------------------------------------------
-    __asm volatile ("cpsie i" : : : "memory");
+    CRITICAL_SECTION(
+        if (JOCKTOSScheduler.running) {
+            // --------------------------------------------------------------------------------------
+            // push additional registers onto current process stack and store process stack pointer
+            __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
+            // __asm volatile ("mrs r0, psp");
+            __asm volatile ("stmdb r0!, {r4-r11}");
+            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
+            // --------------------------------------------------------------------------------------
+        }
+        // pop off of ready task list into running
+        JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
+        JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
+        JOCKTOSScheduler.running->next = NULL;
+        JOCKTOSScheduler.running->state = RUNNING;
+        JOCKTOSScheduler.pending = false;
+        // ------------------------------------------------------------------------------------------
+        // pop additional registers from the new process stack and load new process stack pointer
+        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
+        __asm volatile ("ldmia r0!, {r4-r11}");
+        __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
+        // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
+        __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
+        // ------------------------------------------------------------------------------------------
+    );
 }
 
 void monitorTask(void* arg) {
