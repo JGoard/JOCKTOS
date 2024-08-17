@@ -1,7 +1,7 @@
 
 =================================================
-Bitmap Block Allocator
+Task Control Block (TCB)
 =================================================
 
-.. doxygenfile:: allocator.h
+.. doxygenfile:: tcb.h
    :project: jocktos-docs
