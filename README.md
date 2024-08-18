@@ -1,6 +1,10 @@
 # JOCKTOS: A ground-up RTOS for ARM-CortexM4 Chipsets
 Welcome to JOCKTOS! This project was created for "fun" by Joshua Goard and Nicholas Schneider, both former colleagues from the Joint NC State University - UNC Asheville Mechatronics Program. JOCKTOS is a fully functional, custom-built RTOS designed for ARM Cortex-M4 chipsets. Whether you're curious about the internals of a real-time operating system, want to make modifications, or need a solid foundation for your embedded project, JOCKTOS is here for you.
 
+Our end-goal has two objectives...
+1. By creating a simpler RTOS, this may help any end-user who would like to learn more about the intricacies of what a basic tasking system should look like.
+2. Allow users to either build the source code, or to use a pre-built library with binaries for them to use as an API within their own projects.
+
 ## How it's Made
 **Tech Used:** C, ARM Assm., Dockerfiles, VSCode, openOCD, GDB, QEMU
 
