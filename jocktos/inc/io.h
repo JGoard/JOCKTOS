@@ -33,26 +33,169 @@
 #define JOCK_IO_OTYPE_PP    0b00    // 2 MHz
 #define JOCK_IO_OTYPE_OD    0b01    // 10 MHz
 /* -- Types --------------------------------------------------------------- */
+typedef struct
+{
+    uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
+    uint8_t speed;      // speed of digital outputs set
+    uint8_t type;       // push-pull vs open-drain
+} outputParams;
+typedef struct
+{
+    uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
+    uint8_t res;        // No resistor, Pull up, or pull down resistor settings
+} inputParams;
 typedef struct 
 {
-    
-}InputMapping;
+    uint16_t inputId;
+    GPIO_TypeDef *port;
+    uint8_t pin;
+    inputParams *params;
+}InputMap;
 
 typedef struct 
 {
-    /* data */
-}OutputMapping;
+    uint16_t outputId;
+    GPIO_TypeDef *port;
+    uint8_t pin;
+    outputParams *params;
 
-DigitalInputParameters
+}OutputMap;
+
+///<TODO:   Maybe in the future we can make this a struct for easier user managerment for inits?
+//          There would be one type for each i/o type. It's a better method than just running around 
+//          Remembering ports, pins, modes, etc. Maybe there can be an I/O Master list used for initialization
+// typedef struct
+// {
+//     GPIO_TypeDef *port;
+//     uint8_t pin;
+//     uint8_t mode;
+//     uint8_t res;
+
+// } GPIO_DigIn;
+
+#define DIGITAL_INPUT_MAP_DEF(...)      \
+{                                       \
+    .inputId    = UINT16_MAX,           \
+    .port       = NULL,                 \
+    .pin        = UINT8_MAX,            \
+    .params     = NULL,                 \
+    __VA_ARGS__                         \
+                                        \
+                                        \
+}                                       \
+
+#define DIGITAL_INPUT_PARAMS_DEF(...)   \
+{                                       \
+    .mode = JOCK_IO_MODE_INPUT,         \
+    .res  = JOCK_IO_NOPUPDR,            \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+
+#define DIGITAL_OUTPUT_MAP_DEF(...)     \
+{                                       \
+    .outputId   = UINT16_MAX,           \
+    .port       = NULL,                 \
+    .pin        = UINT8_MAX,            \
+    .params     = NULL,                 \
+    __VA_ARGS__                         \
+                                        \
+                                        \
+}                                       \
+
+#define DIGITAL_OUTPUT_PARAMS_DEF(...)  \
+{                                       \
+    .mode = JOCK_IO_MODE_OUTPUT,        \
+    .speed= JOCK_IO_OSPEED_LOW,         \
+    .type = JOCK_IO_OTYPE_PP,           \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+
+
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
+/**
+ * \brief Initializes all the I/O components. This should be called right after reset
+ *        and before any other jock_io_*() functions are called.
+ *
+ * \return 0 if successful, otherwise an error code.
+ */
 
 int16_t jock_io_init();
+
+/**
+ * \brief Initializes a digital input pin.
+ *
+ * \param port The GPIO port containing the pin to initialize.
+ * \param pin  The pin number to initialize.
+ * \param res  The pull-up/pull-down resistor setting for the pin.
+ *
+ * \return 0 if successful, otherwise an error code.
+ */
 int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, uint8_t res);
-int16_t jock_io_getDigitalInput     (GPIO_TypeDef *port, uint8_t pin, uint8_t* value);
+
+
+/**
+ * \brief Gets the current value of a digital input pin.
+ *
+ * \param port The GPIO port containing the pin to check.
+ * \param pin  The pin number to check.
+ * \param value A pointer to a uint8_t variable to store the pin value.
+ *
+ * \return 0 if successful, otherwise an error code.
+ */
+int16_t jock_io_getDigitalInput     (uint16_t outputId,uint8_t* value);
+
+
+/**
+ * \brief Initializes a digital output pin.
+ *
+ * \param port The GPIO port containing the pin to initialize.
+ * \param pin  The pin number to initialize.
+ * \param speed The desired output speed for the pin.
+ * \param type The desired output type for the pin.
+ *
+ * \return 0 if successful, otherwise an error code.
+ */
 int16_t jock_io_initDigitalOutput   (GPIO_TypeDef *port, uint8_t pin, uint8_t speed, uint8_t type);
-int16_t jock_io_setDigitalOutput    (GPIO_TypeDef *port, uint8_t pin, uint8_t value);
+
+
+/**
+ * \brief Sets the value of a digital output pin.
+ *
+ * \param port The GPIO port containing the pin to set.
+ * \param pin  The pin number to set.
+ * \param value The desired output value for the pin.
+ *
+ * \return 0 if successful, otherwise an error code.
+ */
+int16_t jock_io_setDigitalOutput    (uint16_t outputId, uint8_t value);
+
+
+/**
+ * \brief Gets the index of a digital input in the input list based on its inputId.
+ *
+ * \param inputId The inputId of the digital input to find.
+ *
+ * \return The index of the digital input in the input list, or -1 if not found.
+ */
+int16_t jock_io_getInputIndex   (uint16_t inputId);
+
+
+/**
+ * \brief Gets the index of a digital output in the output list based on its outputId.
+ *
+ * \param outputId The outputId of the digital output to find.
+ *
+ * \return The index of the digital output in the output list, or -1 if not found.
+ */
+int16_t jock_io_getOutputIndex  (uint16_t outputId);
+
+
+
+
 
 
 #endif /* _IO_H_ */

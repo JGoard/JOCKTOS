@@ -6,6 +6,7 @@
 #include "os.h"
 #include "sys.h"
 #include "io.h"
+#include "io_list.h"
 #include "timers.h"
 // Middleware
 // Bios
@@ -15,14 +16,15 @@
 
 /* -- Defines ------------------------------------------------------------- */
 #define PIN_MAX 15 // 15 pins per GPIO
+#define PORT_ID(port) ((port == GPIOA) ? 0 : (port == GPIOB) ? 1 : (port == GPIOC) ? 2 : (port == GPIOD) ? 3 : (port == GPIOE) ? 4 : (port == GPIOF) ? 5 : -1)
+
 
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 /* -- Private Function Declarations --------------------------------------- */
-
-
+void _jock_io_initGPIO();
 /* -- Public Functions----------------------------------------------------- */
 
 
@@ -30,17 +32,69 @@
 // used to convert the sensor output voltage into a digital value.
 int16_t jock_io_init()
 {
+    
     /* Enable clock for GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF */
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIODEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOEEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
+    _jock_io_initGPIO();
+    /* Initialize Inputs as needed */
+    for (uint16_t i = 0; i < lengthofInputs; i++){
 
+        /* Initialize Inputs as needed*/
+        switch (inputList[i].params->mode){
+            case JOCK_IO_MODE_INPUT:
+                jock_io_initDigitalInput(inputList[i].port, inputList[i].pin, inputList[i].params->res);
+                break;
+            case JOCK_IO_MODE_ADC:
+                break;
+            case JOCK_IO_MODE_AF:
+                break;
+            
+            default:
+                ///<TODO: Set an error for invalid config. Maybe be specific with failures?
+                break;
+        }
+    }
+
+   
+        for (uint16_t i = 0; i < lengthofOutputs; i++){
+            /* Enable clock for each port if they're instantiated at least once */
+            switch (outputList[i].params->mode){
+            case JOCK_IO_MODE_OUTPUT:
+                jock_io_initDigitalOutput(outputList[i].port, outputList[i].pin, outputList[i].params->speed, outputList[i].params->type);
+                break;
+            case JOCK_IO_MODE_ADC:
+                break;
+            case JOCK_IO_MODE_AF:
+                break;
+            
+            default:
+                ///<TODO: Set an error for invalid config. Maybe be specific with failures?
+                break;
+        }
+    }
+    
 
     ///<TODO: Maybe do a mass reset/memset for all pin configurations
+return 0;
+}
 
+int16_t jock_io_getInputIndex(uint16_t inputId){
+    for (uint16_t i = 0; i < lengthofInputs; i++)
+    {
+        if(inputList[i].inputId == inputId){
+            return i;
+        }
+    }
+    return -1;
+}
+
+int16_t jock_io_getOutputIndex(uint16_t outputId){
+    for (uint16_t i = 0; i < lengthofOutputs; i++)
+    {
+        if(outputList[i].outputId == outputId){
+            return i;
+        }
+    }
+    return -1;
 }
 
 int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t res){
@@ -81,41 +135,42 @@ int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t speed
     return 0;
     }
 
-int16_t  jock_io_getDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t* value){
+int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
 
-    if (pin > PIN_MAX || pin < 0 || port == NULL || value == NULL){
-        ///<TODO: Set an error for invalid config. Maybe be specific with failures?
-        return EACCES;
-    }
+    // if (outputList[outputId].pin > PIN_MAX || pin < 0 || port == NULL || value == NULL){
+    //     ///<TODO: Set an error for invalid config. Maybe be specific with failures?
+    //     return EACCES;
+    // }
 
-    /* Error check to confirm that pin is indeed configured as a digital input */
-    if ((port->MODER & (0x3 << (pin*2))) != JOCK_IO_MODE_INPUT){
-        return ENOMSG;
-    }
-    else{
+    // /* Error check to confirm that pin is indeed configured as a digital input */
+    // if ((port->MODER & (0x3 << (pin*2))) != JOCK_IO_MODE_INPUT){
+    //     return ENOMSG;
+    // }
+    // else{
     /* Copy entire ports pin values, and then select the pin we want */
-    uint32_t digitalInVals = port->IDR;
-    *value = (port->IDR >> pin) & 0x1;
-    }
+    *value = (inputList[inputId].port->IDR >> inputList[inputId].pin) & 0x1;
+    // }
     return 0;
 }
 
-int16_t  jock_io_setDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t value){
+int16_t  jock_io_setDigitalOutput(uint16_t outputId, uint8_t value){
 
-    if (pin > PIN_MAX || pin < 0 || port == NULL || value == NULL){
-        ///<TODO: Set an error for invalid config. Maybe be specific with failures?
-        return EACCES;
-    }
+    // if (pin > PIN_MAX || pin < 0 || port == NULL || value == NULL){
+    //     ///<TODO: Set an error for invalid config. Maybe be specific with failures?
+    //     return EACCES;
+    // }
 
-    /* Error check to confirm that pin is indeed configured as a digital output */
-    if ((port->MODER & (0x3 << (pin*2))) != (JOCK_IO_MODE_OUTPUT << (pin*2))){
+    // /* Error check to confirm that pin is indeed configured as a digital output */
+    // if ((port->MODER & (0x3 << (pin*2))) != (JOCK_IO_MODE_OUTPUT << (pin*2))){
  
-        return ENOMSG;
-    }
-    else{
+    //     return ENOMSG;
+    // }
+    // else{
     /* Set the ODR bit to the value in which we wish to set from the value passed in */
-    port->ODR = (port->ODR & ~(1 << pin)) | ((value & 0x1) << pin);
-    }
+    outputList[outputId].port->ODR = (outputList[outputId].port->ODR & 
+                                    ~(1 << outputList[outputId].pin)) | 
+                                    ((value & 0x1) << outputList[outputId].pin);
+    // }
     return 0;
 }
 
@@ -128,3 +183,94 @@ int16_t  jock_io_setDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t value
     - Analog Output
     - PWM Output 
 */
+
+/*----- Private Functions -----*/
+void _jock_io_initGPIO(){
+    /* Enable clock for each port if they're instantiated at least once */
+    uint8_t enabledPorts = 0;
+    for (uint16_t j = 0; j < lengthofInputs; j++){
+        switch (PORT_ID(inputList[j].port)){
+            case 0:
+                if (!(enabledPorts & (1 << 0))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // Enable clock for GPIO Port A
+                    enabledPorts |= (1 << 0);
+                }
+                break;
+            case 1:
+                if (!(enabledPorts & (1 << 1))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // Enable clock for GPIO Port B
+                    enabledPorts |= (1 << 1);
+                }                break;
+            case 2:
+                if (!(enabledPorts & (1 << 2))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable clock for GPIO Port C
+                    enabledPorts |= (1 << 2);
+                }                break;            
+            case 3:
+                if (!(enabledPorts & (1 << 3))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIODEN; // Enable clock for GPIO Port D
+                    enabledPorts |= (1 << 3);
+                }                break;
+            case 4:
+                if (!(enabledPorts & (1 << 4))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOEEN; // Enable clock for GPIO Port E
+                    enabledPorts |= (1 << 4);
+                }                break;
+            case 5:
+                if (!(enabledPorts & (1 << 5))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOFEN; // Enable clock for GPIO Port F
+                    enabledPorts |= (1 << 5);
+                }                break;
+            default:
+                break;
+        }
+        /* If all ports are enabled, break out of the loop */
+        if(enabledPorts == 0b00111111){
+            return;
+        }
+    }
+
+    for (uint16_t j = 0; j < lengthofOutputs; j++){
+        switch (PORT_ID(outputList[j].port)){
+            case 0:
+                if (!(enabledPorts & (1 << 0))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // Enable clock for GPIO Port A
+                    enabledPorts |= (1 << 0);
+                }
+                break;
+            case 1:
+                if (!(enabledPorts & (1 << 1))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // Enable clock for GPIO Port B
+                    enabledPorts |= (1 << 1);
+                }                break;
+            case 2:
+                if (!(enabledPorts & (1 << 2))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable clock for GPIO Port C
+                    enabledPorts |= (1 << 2);
+                }                break;            
+            case 3:
+                if (!(enabledPorts & (1 << 3))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIODEN; // Enable clock for GPIO Port D
+                    enabledPorts |= (1 << 3);
+                }                break;
+            case 4:
+                if (!(enabledPorts & (1 << 4))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOEEN; // Enable clock for GPIO Port E
+                    enabledPorts |= (1 << 4);
+                }                break;
+            case 5:
+                if (!(enabledPorts & (1 << 5))){
+                    RCC->AHBENR |= RCC_AHBENR_GPIOFEN; // Enable clock for GPIO Port F
+                    enabledPorts |= (1 << 5);
+                }                break;
+            default:
+                break;
+        }
+        /* If all ports are enabled, break out of the loop */
+        if(enabledPorts == 0b00111111){
+            return;
+        }
+    }
+return;
+}
+
