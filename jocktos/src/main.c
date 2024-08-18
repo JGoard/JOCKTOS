@@ -73,8 +73,8 @@ int main(void)
     jock_os_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
     jock_os_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
     jock_os_runJOCKTOS();                         // Start JOCKTOS Kernel
-    jock_io_initDigitalOutput(GPIOB, 3, 0b11, 01);
-    jock_io_initDigitalInput(GPIOA,6, 0b10);
+    jock_io_initDigitalOutput(GPIOB, 3, JOCK_IO_OSPEED_HIGH, JOCK_IO_OTYPE_PP); // Initializes a High speed Digital Output of type Push-Pull
+    jock_io_initDigitalInput(GPIOA,6, JOCK_IO_PDR);                             // Initializes a Digital Input wuth Pull-Down resistor
     // because enable_main is configured, execution **will** return here and continue
     int x = 100;
     int y = 0;

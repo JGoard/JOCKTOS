@@ -5,6 +5,7 @@
 // Jocktos
 #include "os.h"
 #include "sys.h"
+#include "io.h"
 #include "timers.h"
 // Middleware
 // Bios
@@ -68,8 +69,8 @@ int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t res){
         But when an option has more than one bit, it is good practice to reset the whole option 
         before setting the bits you want.
     */
-    port->MODER = (port->MODER & ~(0x3 << (pin*2))) | (0 << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
-    port->PUPDR = (port->PUPDR & ~(0x3 << (pin*2))) | (res << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
+    port->MODER = (port->MODER & ~(0x3 << (pin*2))) | (JOCK_IO_MODE_INPUT   << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
+    port->PUPDR = (port->PUPDR & ~(0x3 << (pin*2))) | (res                  << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
 
     return 0;
     }
@@ -87,8 +88,8 @@ int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t speed
     But when an option has more than one bit, it is good practice to reset the whole option 
     before setting the bits you want.
     */
-    port->MODER = (port->MODER & ~(0x3 << (pin*2))) | (0x1 << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
-    port->OTYPER= (port->OTYPER & ~(0x1 << (pin*2))) | (type  << (pin));     // OTYPER only has 2 settings total (1 bit)
+    port->MODER = (port->MODER  & ~(0x3 << (pin*2))) | (JOCK_IO_MODE_OUTPUT << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
+    port->OTYPER= (port->OTYPER & ~(0x1 << (pin*2))) | (type                << (pin));     // OTYPER only has 2 settings total (1 bit)
 
     return 0;
     }
@@ -101,7 +102,7 @@ int16_t  jock_io_getDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t* value
     }
 
     /* Error check to confirm that pin is indeed configured as a digital input */
-    if ((port->MODER & (0x3 << (pin*2))) != 0b00){
+    if ((port->MODER & (0x3 << (pin*2))) != JOCK_IO_MODE_INPUT){
         return ENOMSG;
     }
     else{
@@ -120,7 +121,7 @@ int16_t  jock_io_setDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t value
     }
 
     /* Error check to confirm that pin is indeed configured as a digital output */
-    if ((port->MODER & (0x3 << (pin*2))) != (0x1 << (pin*2))){
+    if ((port->MODER & (0x3 << (pin*2))) != (JOCK_IO_MODE_OUTPUT << (pin*2))){
  
         return ENOMSG;
     }
