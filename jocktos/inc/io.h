@@ -33,7 +33,17 @@
 #define JOCK_IO_OTYPE_PP    0b00    // 2 MHz
 #define JOCK_IO_OTYPE_OD    0b01    // 10 MHz
 /* -- Types --------------------------------------------------------------- */
+typedef struct 
+{
+    
+}InputMapping;
 
+typedef struct 
+{
+    /* data */
+}OutputMapping;
+
+DigitalInputParameters
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */

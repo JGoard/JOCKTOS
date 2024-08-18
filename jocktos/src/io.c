@@ -18,19 +18,6 @@
 
 /* -- Types --------------------------------------------------------------- */
 
-///<TODO:   Maybe in the future we can make this a struct for easier user managerment for inits?
-//          There would be one type for each i/o type. It's a better method than just running around 
-//          Remembering ports, pins, modes, etc. Maybe there can be an I/O Master list used for initialization
-// typedef struct
-// {
-//     GPIO_TypeDef *port;
-//     uint8_t pin;
-//     uint8_t mode;
-//     uint8_t res;
-
-// } GPIO_DigIn;
-
-
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 /* -- Private Function Declarations --------------------------------------- */
