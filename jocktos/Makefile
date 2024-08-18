@@ -14,6 +14,7 @@ src/allocator.c \
 src/timers.c \
 src/tcb.c \
 src/synchro.c \
+src/io.c \
 src/sys.c
 
 C_INCLUDES = \

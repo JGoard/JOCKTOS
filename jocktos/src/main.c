@@ -3,6 +3,7 @@
 */
 #include "main.h"
 #include "timers.h"
+#include "io.h"
 #include "synchro.h"
 #include "stm32m4cortex_bsp.h"
 #include <stdint.h>
@@ -37,6 +38,7 @@ void stackInflationTest(void* arg);
  */
 int main(void)
 {
+    jock_io_init();
     /* Initialize the LED on the 'Nucleo' board*/
     jock_sys_LEDInit();
     /* Initialize Timer 2 on the board*/
@@ -71,16 +73,22 @@ int main(void)
     jock_os_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
     jock_os_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
     jock_os_runJOCKTOS();                         // Start JOCKTOS Kernel
-
+    jock_io_initDigitalOutput(GPIOB, 3, 0b11, 01);
+    jock_io_initDigitalInput(GPIOA,6, 0b10);
     // because enable_main is configured, execution **will** return here and continue
     int x = 100;
     int y = 0;
+    uint8_t value = 1;
+    uint8_t DigInvalue = 0;
     // Infinite Loop with palce holder calculations for debugging
     while(1) {
         x++;
         if (x == 0) x = 100;
         y--;
         if (y == 100) y = 0;
+        jock_io_setDigitalOutput(GPIOB, 3, value);
+        jock_io_getDigitalInput(GPIOA, 6, &DigInvalue);
+
     }
 }
 
