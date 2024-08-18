@@ -19,25 +19,26 @@
 /** 
  * @brief enable / disablt ISR wrapper
  */
-// #define CRITICAL_SECTION(...)          \
-//     __disable_irq();                            \
-//     __VA_ARGS__                              \
-//     __enable_irq();                             \
-//                                              \
-
-
-/** 
- * @brief enable / disablt ISR wrapper
- */
 #define CRITICAL_SECTION(primask, ...)          \
-    primask = __get_PRIMASK();                  \
     __disable_irq();                            \
-    {                                           \
         __VA_ARGS__                             \
-    }                                           \
-    if (primask == 0) {                         \
     __enable_irq();                             \
-    }                                           \
+
+
+///<TODO:Need to figure out why __get__PRIMASK crashes PENDSV Handler
+// /** 
+//  * @brief enable / disable ISR wrapper   
+//  */
+// #define CRITICAL_SECTION(primask, ...)          \
+//     primask = __get_PRIMASK();                  \
+//     __disable_irq();                            \
+//     do{                                         \   
+//         __VA_ARGS__                             \
+//     }                                           \
+//     while(0);                                   \
+//     if (primask == 0) {                         \
+//     __enable_irq();                             \
+//     }                                           \
 
 /** 
  * @brief Default JOCKTOS configuration
@@ -162,7 +163,7 @@ static inline uint32_t jock_os_currentTime() { return JOCKTOSScheduler.tick_coun
  *
  * @return the priority mask (PRIMASK) register value upon entry
  */
-static inline uint32_t jock_os_enterCriticalSection(void); ///<TODO: Maybe we can expose this
+uint32_t jock_os_enterCriticalSection(void); ///<TODO: Maybe we can expose this
 
 /**
  *  \brief Unlock interrupts to end a critical section.
@@ -176,7 +177,7 @@ static inline uint32_t jock_os_enterCriticalSection(void); ///<TODO: Maybe we ca
  *                  returned by jock_os_enterCriticalSection().
  * @return none
  */
-static inline void jock_os_leaveCriticalSection(uint32_t primask);
+void jock_os_leaveCriticalSection(uint32_t primask);
 
 #endif /* _OS_H_ */
 

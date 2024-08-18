@@ -23,40 +23,40 @@ extern Scheduler JOCKTOSScheduler;
 /* -- Public Functions----------------------------------------------------- */
 void jock_synchro_takeSempahore(Semaphore* lock) {
     uint32_t primask = 0;
-    CRITICAL_SECTION(primask,{
+    primask = jock_os_enterCriticalSection();
         if (!lock->value_) {
             JOCKTOSScheduler.running->state = BLOCKED;
             jock_os_switchRunningTask(&lock->pending_queue_);
         }
-    }
-    );
-
-    CRITICAL_SECTION(primask,{
+    jock_os_leaveCriticalSection(primask);
+    
+    primask = jock_os_enterCriticalSection();
         lock->value_--;
-    }
-    );
+    jock_os_leaveCriticalSection(primask);
+    return;
+
 }
 
 void jock_synchro_giveSempahore(Semaphore* lock) {
     uint32_t primask = 0;
-    CRITICAL_SECTION(primask,{
+    primask = jock_os_enterCriticalSection();
         lock->value_ = (lock->value_ + 1) % lock->count;
         if (lock->pending_queue_) {
             lock->pending_queue_->state = READY;
             moveTCB(&lock->pending_queue_, lock->pending_queue_, &JOCKTOSScheduler.ready);
         }
-    }
-    );
+    jock_os_leaveCriticalSection(primask);
     return;
 }
 
 void jock_synchro_sleep(uint32_t delay_ms) {
     uint32_t primask = 0;
-    CRITICAL_SECTION(primask,
+    primask = jock_os_enterCriticalSection();
         JOCKTOSScheduler.running->delay_ms = jock_os_currentTime() + delay_ms;
         JOCKTOSScheduler.running->state = SUSPENDED;
         jock_os_switchRunningTask(&JOCKTOSScheduler.suspended);
-    );
+    jock_os_leaveCriticalSection(primask);
+
     return;
 
 }

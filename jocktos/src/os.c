@@ -72,7 +72,7 @@ TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
         .name="user space `main`");
 
 TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=1024, 
+        .stack_size_bytes=512, 
         .task_handle=monitorJOCKTOS,
         .name="stack usage monitor");
 
@@ -157,15 +157,15 @@ void jock_os_runJOCKTOS(void) {
     SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }
-
-static inline uint32_t jock_os_enterCriticalSection(void){
-    uint32_t  primask;
-    primask = __get_PRIMASK();
+uint32_t jock_os_enterCriticalSection(void){
+    uint32_t  primask = 0;
+    ///<TODO:Need to figure out why __get__PRIMASK crashes PENDSV Handler
+    primask = __get_PRIMASK(); 
     __disable_irq();
     return primask;
 }
 
-static inline void jock_os_leaveCriticalSection(uint32_t primask){
+void jock_os_leaveCriticalSection(uint32_t primask){
     if (primask == 0) {
         __enable_irq();
     }
@@ -222,15 +222,17 @@ void initializeStack(TaskControlBlock* tcb) {
  */
 void SysTick_Handler(void) {
     uint32_t primask;
-    CRITICAL_SECTION(primask,{
-        JOCKTOSScheduler.tick_count++;
-        jock_os_switchRunningTask(&JOCKTOSScheduler.ready);
-    }
-    )
+    primask = jock_os_enterCriticalSection();
+    JOCKTOSScheduler.tick_count++;
+    jock_os_switchRunningTask(&JOCKTOSScheduler.ready);
+    jock_os_leaveCriticalSection(primask);
+    
 }
 
 void PendSV_Handler(void) {
-    uint32_t primask = jock_os_enterCriticalSection();
+    uint32_t primask;
+    // primask = __get_PRIMASK();
+    __disable_irq();
         if (JOCKTOSScheduler.running) {
             // --------------------------------------------------------------------------------------
             // push additional registers onto current process stack and store process stack pointer
@@ -240,6 +242,7 @@ void PendSV_Handler(void) {
             __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
             // --------------------------------------------------------------------------------------
         }
+
         // pop off of ready task list into running
         JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
         JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
@@ -254,8 +257,11 @@ void PendSV_Handler(void) {
         // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
         __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
         // ------------------------------------------------------------------------------------------
-    jock_os_leaveCriticalSection(primask);    
-}
+
+    // if(primask == 0) {
+        __enable_irq();
+    // }
+    }
 
 void monitorJOCKTOS(void* arg) {
     volatile TaskControlBlock* head = NULL;       // Pointer to the current task
@@ -299,18 +305,18 @@ void idleJOCKTOS(void* arg) {
     //    * modified between the check in the while condition and the system
     //    * sleep.
     //    */
-    //     irq_flag = jock_os_enterCriticalSection();
+        irq_flag = jock_os_enterCriticalSection();
 
     //   // Check if the busy flag has been set
 
-    //   if (irq_flag == 0) {
+      if (irq_flag == 0) {
     //     /* 
     //     * __DSB stands for Data Synchronization Barrier. It ensures that all memory
     //     * accesses before it are completed before any memory accesses after it start.
     //     * Here, we use __DSB to ensure that all memory accesses before it are
     //     * completed before any memory accesses after it start.
     //     */
-    //     __DSB();
+        // __DSB();
 
     //     /*
     //     *__WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
@@ -318,16 +324,16 @@ void idleJOCKTOS(void* arg) {
     //     executing the interrupt handler. This is useful for power saving, as it consumes very
     //     little power when the processor is in this state.
     //     */
-    //     __WFI();
-    //   }
+        __WFI();
+      }
 
     //     // Enable interrupts again
-    //     jock_os_leaveCriticalSection(irq_flag);
+        jock_os_leaveCriticalSection(irq_flag);
 
     // // If the busy flag has been set, exit the loop
-    //   if (irq_flag != 0) {
-    //     break;
-    //   }
+      if (irq_flag != 0) {
+        break;
+      }
 
     // /*
     //  * __ISB stands for Instruction Synchronization Barrier.
@@ -339,7 +345,7 @@ void idleJOCKTOS(void* arg) {
     //  * instructions before it are completed before any instructions after
     //  * it are started.
     //  */
-    //   __ISB();      ///<TODO: Is this necessary?
+      __ISB();      ///<TODO: Is this necessary?
     }
     // TODO: Figure out how to low power
 }
