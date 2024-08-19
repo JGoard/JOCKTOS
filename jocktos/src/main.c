@@ -108,6 +108,8 @@ int main(void)
     int y = 0;
     uint8_t value = 1;
     uint8_t DigInvalue = 0;
+    char rxb = 'a';
+
     // Infinite Loop with palce holder calculations for debugging
     while(1) {
         x++;
@@ -116,6 +118,13 @@ int main(void)
         if (y == 100) y = 0;
         jock_io_setDigitalOutput(digB3Index, value);
         jock_io_getDigitalInput(digA6Index, &DigInvalue);
+
+    // Wait for a byte of data to arrive.
+    // while( !( USART2->ISR & USART_ISR_RXNE ) ) {};
+    // rxb = USART2->RDR;
+    // // Re-transmit the received byte.
+    // while( !( USART2->ISR & USART_ISR_TXE ) ) {};
+    USART2->TDR = rxb;     
 
     }
 }

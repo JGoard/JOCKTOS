@@ -6,6 +6,7 @@
 #include "os.h"
 #include "sys.h"
 #include "io.h"
+#include "comm.h"
 #include "io_list.h"
 #include "timers.h"
 // Middleware
@@ -46,6 +47,21 @@ int16_t jock_io_init()
             case JOCK_IO_MODE_ADC:
                 break;
             case JOCK_IO_MODE_AF:
+                switch (inputList[i].params->perph)
+                {
+                case JOCK_IO_PERPH_USART2:
+                    jock_comm_uartInit( outputList[i].port, 
+                        inputList[i].pin, 
+                        0,
+                        0,
+                        inputList[i].params->altf);
+
+                    break;
+                
+                default:
+                    break;
+                }
+                break;
                 break;
             
             default:
@@ -55,20 +71,32 @@ int16_t jock_io_init()
     }
 
    
-        for (uint16_t i = 0; i < lengthofOutputs; i++){
-            /* Enable clock for each port if they're instantiated at least once */
-            switch (outputList[i].params->mode){
-            case JOCK_IO_MODE_OUTPUT:
-                jock_io_initDigitalOutput(outputList[i].port, outputList[i].pin, outputList[i].params->speed, outputList[i].params->type);
-                break;
-            case JOCK_IO_MODE_ADC:
-                break;
-            case JOCK_IO_MODE_AF:
+    for (uint16_t i = 0; i < lengthofOutputs; i++){
+        /* Enable clock for each port if they're instantiated at least once */
+        switch (outputList[i].params->mode){
+        case JOCK_IO_MODE_OUTPUT:
+            jock_io_initDigitalOutput(outputList[i].port, outputList[i].pin, outputList[i].params->speed, outputList[i].params->type);
+            break;
+        case JOCK_IO_MODE_ADC:
+            break;
+        case JOCK_IO_MODE_AF:
+            switch (outputList[i].params->perph){
+            case JOCK_IO_PERPH_USART2:
+                jock_comm_uartInit( outputList[i].port, 
+                                    outputList[i].pin, 
+                                    outputList[i].params->type,
+                                    outputList[i].params->speed,
+                                    outputList[i].params->altf);
                 break;
             
             default:
-                ///<TODO: Set an error for invalid config. Maybe be specific with failures?
                 break;
+            }     
+            break;
+        
+        default:
+            ///<TODO: Set an error for invalid config. Maybe be specific with failures?
+            break;
         }
     }
     
@@ -129,8 +157,9 @@ int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t speed
     But when an option has more than one bit, it is good practice to reset the whole option 
     before setting the bits you want.
     */
-    port->MODER = (port->MODER  & ~(0x3 << (pin*2))) | (JOCK_IO_MODE_OUTPUT << (pin*2));  // Each pin occupies two bits for settings (4 settings total)
-    port->OTYPER= (port->OTYPER & ~(0x1 << (pin*2))) | (type                << (pin));     // OTYPER only has 2 settings total (1 bit)
+    port->MODER     = (port->MODER  & ~(0x3 << (pin*2))) | (JOCK_IO_MODE_OUTPUT << (pin*2));// Each pin occupies two bits for settings (4 settings total)
+    port->OSPEEDR   = (port->OSPEEDR& ~(0x3 << (pin*2))) | (speed               << (pin*2));  
+    port->OTYPER    = (port->OTYPER & ~(0x1 << (pin*2))) | (type                << (pin));  // OTYPER only has 2 settings total (1 bit)
 
     return 0;
     }

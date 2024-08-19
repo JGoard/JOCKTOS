@@ -12,6 +12,74 @@
 #include <stdint.h>
 
 /* -- Defines ------------------------------------------------------------- */
+
+/*--- GPIO Input Defs ---------------------------------------*/
+#define INPUT_MAP_DEF(...)              \
+{                                       \
+    .inputId    = UINT16_MAX,           \
+    .port       = NULL,                 \
+    .pin        = UINT8_MAX,            \
+    .params     = NULL,                 \
+    __VA_ARGS__                         \
+                                        \
+                                        \
+}                                       \
+/*--- GPIO Digital Input Defs ---*/
+#define DIGITAL_INPUT_PARAMS_DEF(...)   \
+{                                       \
+    .mode = JOCK_IO_MODE_INPUT,         \
+    .res  = JOCK_IO_NOPUPDR,            \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+/*--- GPIO Altf Input Defs ---*/
+#define ALTF_INPUT_PARAMS_DEF(...)      \
+{                                       \
+    .mode = JOCK_IO_MODE_AF,            \
+    .res  = JOCK_IO_PUR,                \
+    .altf = JOCK_IO_ALTF0,              \
+    .perph = JOCK_IO_PERPH_USART2,     \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+/*--- GPIO ADC Defs ---*/
+///<TODO: implement adc
+
+/*--- GPIO Output Defs ---------------------------------------*/
+#define OUTPUT_MAP_DEF(...)             \
+{                                       \
+    .outputId   = UINT16_MAX,           \
+    .port       = NULL,                 \
+    .pin        = UINT8_MAX,            \
+    .params     = NULL,                 \
+    __VA_ARGS__                         \
+                                        \
+                                        \
+}                                       \
+/*--- GPIO Digital Output Defs ---*/
+#define DIGITAL_OUTPUT_PARAMS_DEF(...)  \
+{                                       \
+    .mode = JOCK_IO_MODE_OUTPUT,        \
+    .speed= JOCK_IO_OSPEED_LOW,         \
+    .type = JOCK_IO_OTYPE_PP,           \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+/*--- GPIO DAC Defs ---*/
+///<TODO: implement dac
+/*--- GPIO Altf Output Defs ---*/
+#define ALTF_OUTPUT_PARAMS_DEF(...)     \
+{                                       \
+    .mode = JOCK_IO_MODE_AF,            \
+    .speed= JOCK_IO_OSPEED_LOW,         \
+    .type = JOCK_IO_OTYPE_PP,           \
+    .altf = JOCK_IO_ALTF0,              \
+    __VA_ARGS__                         \
+                                        \
+}                                       \
+
+
+/*---- GPIO Input Configurations -----------------------------*/
 /* Pull-up or pull-down resistor configurations */
 #define JOCK_IO_NOPUPDR     0b00    // No pull up or pull down
 #define JOCK_IO_PUR         0b01    // Pull up res
@@ -23,6 +91,7 @@
 #define JOCK_IO_MODE_AF     0b10    // Alternate Function
 #define JOCK_IO_MODE_ADC    0b11    // Analog Mode
 
+/*---- GPIO Output Configurations ----------------------------*/
 /* GPIO output speed configurations */
 #define JOCK_IO_OSPEED_LOW  0b00    // 2 MHz
 #define JOCK_IO_OSPEED_MID  0b01    // 10 MHz
@@ -32,17 +101,45 @@
 /* GPIO output type configurations */
 #define JOCK_IO_OTYPE_PP    0b00    // 2 MHz
 #define JOCK_IO_OTYPE_OD    0b01    // 10 MHz
+
+/*---- Alternate Function Types ------------------------------*/
+#define JOCK_IO_ALTF0       0b0000
+#define JOCK_IO_ALTF1       0b0001
+#define JOCK_IO_ALTF2       0b0010
+#define JOCK_IO_ALTF3       0b0011
+#define JOCK_IO_ALTF4       0b0100
+#define JOCK_IO_ALTF5       0b0101
+#define JOCK_IO_ALTF6       0b0110
+#define JOCK_IO_ALTF7       0b0111
+#define JOCK_IO_ALTF8       0b1000
+#define JOCK_IO_ALTF9       0b1001
+#define JOCK_IO_ALTF10      0b1010
+#define JOCK_IO_ALTF11      0b1011
+#define JOCK_IO_ALTF12      0b1100
+#define JOCK_IO_ALTF13      0b1101
+#define JOCK_IO_ALTF14      0b1110
+#define JOCK_IO_ALTF15      0b1111
+
+/*---- Peripheral AltF T    ypes -----------*/
+#define JOCK_IO_PERPH_NONE     0b0000
+#define JOCK_IO_PERPH_USART2   0b0001
+
+
 /* -- Types --------------------------------------------------------------- */
 typedef struct
 {
     uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
     uint8_t speed;      // speed of digital outputs set
     uint8_t type;       // push-pull vs open-drain
+    uint8_t altf;       // Alternate function   
+    uint8_t perph;      // Peripheral to use
 } outputParams;
 typedef struct
 {
     uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
     uint8_t res;        // No resistor, Pull up, or pull down resistor settings
+    uint8_t altf;       // Alternate function   
+    uint8_t perph;      // Peripheral to use
 } inputParams;
 typedef struct 
 {
@@ -60,57 +157,6 @@ typedef struct
     outputParams *params;
 
 }OutputMap;
-
-///<TODO:   Maybe in the future we can make this a struct for easier user managerment for inits?
-//          There would be one type for each i/o type. It's a better method than just running around 
-//          Remembering ports, pins, modes, etc. Maybe there can be an I/O Master list used for initialization
-// typedef struct
-// {
-//     GPIO_TypeDef *port;
-//     uint8_t pin;
-//     uint8_t mode;
-//     uint8_t res;
-
-// } GPIO_DigIn;
-
-#define DIGITAL_INPUT_MAP_DEF(...)      \
-{                                       \
-    .inputId    = UINT16_MAX,           \
-    .port       = NULL,                 \
-    .pin        = UINT8_MAX,            \
-    .params     = NULL,                 \
-    __VA_ARGS__                         \
-                                        \
-                                        \
-}                                       \
-
-#define DIGITAL_INPUT_PARAMS_DEF(...)   \
-{                                       \
-    .mode = JOCK_IO_MODE_INPUT,         \
-    .res  = JOCK_IO_NOPUPDR,            \
-    __VA_ARGS__                         \
-                                        \
-}                                       \
-
-#define DIGITAL_OUTPUT_MAP_DEF(...)     \
-{                                       \
-    .outputId   = UINT16_MAX,           \
-    .port       = NULL,                 \
-    .pin        = UINT8_MAX,            \
-    .params     = NULL,                 \
-    __VA_ARGS__                         \
-                                        \
-                                        \
-}                                       \
-
-#define DIGITAL_OUTPUT_PARAMS_DEF(...)  \
-{                                       \
-    .mode = JOCK_IO_MODE_OUTPUT,        \
-    .speed= JOCK_IO_OSPEED_LOW,         \
-    .type = JOCK_IO_OTYPE_PP,           \
-    __VA_ARGS__                         \
-                                        \
-}                                       \
 
 
 /* -- Externs (avoid these for library functions) ------------------------- */
