@@ -120,7 +120,7 @@
 #define JOCK_IO_ALTF14      0b1110
 #define JOCK_IO_ALTF15      0b1111
 
-/*---- Peripheral AltF T    ypes -----------*/
+/*---- Peripheral AltF T    ypes -----------*/  // Will need to heavily expand on these and do run time checking to see if ports match required functions
 #define JOCK_IO_PERPH_NONE     0b0000
 #define JOCK_IO_PERPH_USART2   0b0001
 
@@ -168,7 +168,6 @@ typedef struct
  *
  * \return 0 if successful, otherwise an error code.
  */
-
 int16_t jock_io_init();
 
 /**
@@ -182,43 +181,47 @@ int16_t jock_io_init();
  */
 int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, uint8_t res);
 
-
 /**
  * \brief Gets the current value of a digital input pin.
  *
- * \param port The GPIO port containing the pin to check.
- * \param pin  The pin number to check.
+ * This function retrieves the current value of a digital input pin specified by its inputId.
+ * It performs error checking to ensure that the inputId is valid and that the pin is configured as a digital input.
+ *
+ * \param inputId The inputId of the digital input pin to retrieve the value for.
  * \param value A pointer to a uint8_t variable to store the pin value.
  *
- * \return 0 if successful, otherwise an error code.
+ * \return 0 if successful, EACCES if the inputId is invalid, or ENOMSG if the pin is not configured as a digital input.
  */
 int16_t jock_io_getDigitalInput     (uint16_t outputId,uint8_t* value);
 
-
 /**
- * \brief Initializes a digital output pin.
+ * \brief Initializes a digital output pin on the specified port.
  *
- * \param port The GPIO port containing the pin to initialize.
- * \param pin  The pin number to initialize.
- * \param speed The desired output speed for the pin.
- * \param type The desired output type for the pin.
+ * This function sets up a digital output pin on the specified port by configuring
+ * the MODER, OSPEEDR, and OTYPER registers. It also performs error checking on the input
+ * parameters to ensure that they are valid.
  *
- * \return 0 if successful, otherwise an error code.
+ * \param port The port on which to initialize the digital output pin.
+ * \param pin The pin number to initialize as a digital output.
+ * \param speed The speed configuration for the pin.
+ * \param type The type configuration for the pin.
+ *
+ * \return 0 on success, EACCES on error.
  */
 int16_t jock_io_initDigitalOutput   (GPIO_TypeDef *port, uint8_t pin, uint8_t speed, uint8_t type);
 
-
 /**
- * \brief Sets the value of a digital output pin.
+ * \brief Sets the value of a digital output pin specified by its outputId.
  *
- * \param port The GPIO port containing the pin to set.
- * \param pin  The pin number to set.
- * \param value The desired output value for the pin.
+ * This function sets the value of a digital output pin to the specified value.
+ * It performs error checking to ensure that the outputId is valid and that the pin is configured as a digital output.
  *
- * \return 0 if successful, otherwise an error code.
+ * \param outputId The outputId of the digital output pin to set the value for.
+ * \param value The value to set the digital output pin to.
+ *
+ * \return 0 on success, EACCES if the outputId is invalid, or ENOMSG if the pin is not configured as a digital output.
  */
 int16_t jock_io_setDigitalOutput    (uint16_t outputId, uint8_t value);
-
 
 /**
  * \brief Gets the index of a digital input in the input list based on its inputId.
@@ -227,8 +230,7 @@ int16_t jock_io_setDigitalOutput    (uint16_t outputId, uint8_t value);
  *
  * \return The index of the digital input in the input list, or -1 if not found.
  */
-int16_t jock_io_getInputIndex   (uint16_t inputId);
-
+uint16_t jock_io_getInputIndex   (uint16_t inputId);
 
 /**
  * \brief Gets the index of a digital output in the output list based on its outputId.
@@ -237,7 +239,7 @@ int16_t jock_io_getInputIndex   (uint16_t inputId);
  *
  * \return The index of the digital output in the output list, or -1 if not found.
  */
-int16_t jock_io_getOutputIndex  (uint16_t outputId);
+uint16_t jock_io_getOutputIndex  (uint16_t outputId);
 
 
 

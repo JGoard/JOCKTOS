@@ -60,7 +60,8 @@ void stackInflationTest(void* arg);
  */
 int main(void)
 {
-    jock_io_init();
+    int16_t errorStatus = 0;
+    errorStatus = jock_io_init();
     /* Initialize the LED on the 'Nucleo' board*/
     jock_sys_LEDInit();
     /* Initialize Timer 2 on the board*/
@@ -116,8 +117,8 @@ int main(void)
         if (x == 0) x = 100;
         y--;
         if (y == 100) y = 0;
-        jock_io_setDigitalOutput(digB3Index, value);
-        jock_io_getDigitalInput(digA6Index, &DigInvalue);
+        errorStatus = jock_io_setDigitalOutput(digB3Index, value);
+        errorStatus = jock_io_getDigitalInput(digA6Index, &DigInvalue);
 
     // Wait for a byte of data to arrive.
     // while( !( USART2->ISR & USART_ISR_RXNE ) ) {};
