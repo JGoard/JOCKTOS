@@ -96,21 +96,15 @@
     {
       "label": "Flash Device Docker",
       "type": "shell",
-      "command": "docker",
+      "command": "bash",
       "args": [
-        "run",
-        "-i",
-        "--rm",
-        "--privileged",
-        "-v",
-        "${workspaceFolder}/jocktos/build/debug/firmware.elf:/usr/firmware.elf", 
-        "jocktos:latest",
-        "openocd",
-        "-f", "board/st_nucleo_f3.cfg",
+        "-c",
+        "cd ${workspaceFolder}/jocktos && openocd",
+        "-f", "/usr/local/share/openocd/scripts/board/st_nucleo_f3.cfg",
         "-s", "/usr/local/share/openocd/scripts",
         "-c", "init",
         "-c", "reset init",
-        "-c", "flash write_image erase /usr/firmware.elf",
+        "-c", "flash write_image erase build/debug/firmware.elf",
         "-c", "shutdown"
       ],
       "icon": {

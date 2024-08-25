@@ -28,7 +28,8 @@
 				"ms-vscode.makefile-tools",
 				"ms-vscode.vscode-serial-monitor",
 				"bmd.stm32-for-vscode",
-				"actboy168.tasks"
+				"actboy168.tasks",
+				"webfreak.debug"
 			]
 			
 		}

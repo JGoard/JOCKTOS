@@ -3,6 +3,6 @@
         "main.h": "c",
         "stdint.h": "c"
     },
-    "stm32-for-vscode.openOCDPath": false,
-    "stm32-for-vscode.makePath": false
+    "stm32-for-vscode.openOCDPath": "/usr/bin/openocd",
+    "stm32-for-vscode.makePath": "/usr/bin/make"
 }
