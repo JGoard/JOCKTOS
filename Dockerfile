@@ -18,6 +18,9 @@ RUN apt-get update && \
     expect \
     git 
 
+#Copy current git repo into project directory
+RUN git clone https://github.com/JGoard/jocktos.git && cd ..
+
 # install emulator and C build tools
 RUN apt-get install -y \
     qemu-system \
@@ -90,8 +93,7 @@ RUN cd ..
 COPY openocd.cfg /usr/local/share/openocd/openocd.cfg  
 RUN /lib/systemd/systemd-udevd --daemon && udevadm control --reload-rules
 
-
-    #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
+#OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
 EXPOSE 3333
 EXPOSE 4444
 EXPOSE 6666

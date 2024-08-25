@@ -34,7 +34,7 @@
 			
 		}
 	},
-	"runArgs": ["-i --privileged, -v"]
+	// "runArgs": ["--privileged","-v"]
 
 	
 

@@ -99,7 +99,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && openocd",
+        "openocd",
         "-f", "/usr/share/openocd/scripts/board/st_nucleo_f3.cfg",
         "-s", "/usr/local/share/openocd/scripts",
         "-c", "init",
