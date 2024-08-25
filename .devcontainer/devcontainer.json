@@ -32,7 +32,9 @@
 			]
 			
 		}
-	}
+	},
+	"runArgs": ["-i --privileged, -v"]
+
 	
 
 
