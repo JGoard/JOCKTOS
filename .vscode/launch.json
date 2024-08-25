@@ -30,6 +30,7 @@
       "name": "Attach OpenOCD",
       "type": "cortex-debug",
       "servertype": "openocd",
+      "serverpath": null,
       "request": "attach",
       "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
       "configFiles": [
@@ -47,9 +48,9 @@
       "servertype": "openocd",
       "interface": "swd",
       "runToEntryPoint": "main",
+      "gdbTarget": "host.docker.internal:50000",
       "showDevDebugOutput": "parsed",
       "svdFile": "${workspaceFolder}/jocktos/STM32F303.svd",
-      "gdbPath": "$/usr/bin/gdb-multiarch",
       "configFiles": [
         "board/st_nucleo_f3.cfg"
       ],
