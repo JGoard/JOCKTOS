@@ -4,18 +4,10 @@
     {
       "label": "Compile Debug",
       "type": "shell",
-      "command": "docker",
+      "command": "bash",
       "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
         "-c",
-        "cd /JOCKTOS/jocktos/ && make clean debug && make debug",
-      ],
+        "cd ${workspaceFolder}/jocktos && make clean && make debug"],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
@@ -30,21 +22,14 @@
         "isDefault": true
       }
     },
+
     {
       "label": "Compile Release",
       "type": "shell",
-      "command": "docker",
+      "command": "bash",
       "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
         "-c",
-        "cd /JOCKTOS/jocktos/ && make clean release && make release",
-      ],
+        "cd ${workspaceFolder}/jocktos && make clean && make debug"],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
@@ -139,33 +124,33 @@
       },
       
     },
-    {
-      "label": "Flash Device Local",
-      "type": "shell",
-      "command": "openocd",
-      "args": [
-        "-f",
-        "board/st_nucleo_f3.cfg",
-        "-c",
-        "init",
-        "-c",
-        "reset init",
-        "-c",
-        "flash write_image erase ./jocktos/build/debug/firmware.elf",
-        "-c",
-        "shutdown"
-      ],
-      "icon": {
-        "id": "export",
-        "color": "terminal.ansiMagenta"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#ffa9f8"
-        }
-      },
-      "problemMatcher": []
-    },
+    // {
+    //   "label": "Flash Device Local",
+    //   "type": "shell",
+    //   "command": "openocd",
+    //   "args": [
+    //     "-f",
+    //     "board/st_nucleo_f3.cfg",
+    //     "-c",
+    //     "init",
+    //     "-c",
+    //     "reset init",
+    //     "-c",
+    //     "flash write_image erase ./jocktos/build/debug/firmware.elf",
+    //     "-c",
+    //     "shutdown"
+    //   ],
+    //   "icon": {
+    //     "id": "export",
+    //     "color": "terminal.ansiMagenta"
+    //   },
+    //   "options": {
+    //     "statusbar": {
+    //       "color": "#ffa9f8"
+    //     }
+    //   },
+    //   "problemMatcher": []
+    // },
     {
       "label": "Run Unit Tests",
       "type": "shell",
@@ -249,21 +234,10 @@
     {
       "label": "run-qemu-emulator",
       "type": "shell",
-      "command": "docker",
+      "command": "bash",
       "args": [
-        "run",
-        "-d",
-        "--name",
-        "my_qemu_emulator",
-        "--privileged",
-        "-p",
-        "1234:1234",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
         "-c",
-        "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/firmware.elf -monitor none -nographic -serial stdio -s -S"
+        "qemu-system-arm -machine olimex-stm32-h405 -kernel jocktos/build/debug/firmware.elf -monitor none -nographic -serial stdio -s -S"
       ],
       "options": {
         "statusbar": {
@@ -271,22 +245,23 @@
         }
       },
       "problemMatcher": {
-        "owner": "docker",
-        "fileLocation": [
-          "relative",
-          "${workspaceFolder}"
-        ],
         "pattern": {
-          "regexp": "^(.*)$",
-          "message": 1
+            "regexp": "^(qemu-system-arm)",
+            "line": 1,
+        },
+        "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^(qemu-system-arm)",
+            "endsPattern": "^(qemu-system-arm)"
         }
       }
     },
     {
       "label": "stop-qemu-emulator",
       "type": "shell",
-      "command": "docker",
+      "command": "bash",
       "args": [
+        "-c",
         "rm",
         "-f",
         "my_qemu_emulator"
@@ -295,18 +270,18 @@
         "statusbar": {
           "hide" : true
         }
-      },
-      "problemMatcher": {
-        "owner": "docker",
-        "fileLocation": [
-          "relative",
-          "${workspaceFolder}"
-        ],
-        "pattern": {
-          "regexp": "^(.*)$",
-          "message": 1
-        }
       }
+      // "problemMatcher": {
+      //   "owner": "docker",
+      //   "fileLocation": [
+      //     "relative",
+      //     "${workspaceFolder}"
+      //   ],
+      //   "pattern": {
+      //     "regexp": "^(.*)$",
+      //     "message": 1
+      //   }
+      // }
     },
     {
       "label": "build current unit test",
@@ -316,286 +291,281 @@
         "statusbar": {
           "hide" : true
         }
-      },
+      }
     }
   ]
 }
 
-{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Compile Debug",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
-        "-c",
-        "cd /JOCKTOS/jocktos/ && make clean debug && make debug"
-      ],
-      "icon": {
-        "id": "tools",
-        "color": "terminal.ansiGreen"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#a8fdbb"
-        }
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "Compile Release",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
-        "-c",
-        "cd /JOCKTOS/jocktos/ && make clean release && make release"
-      ],
-      "icon": {
-        "id": "tools",
-        "color": "terminal.ansiGreen"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#f6fa05"
-        }
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
+// {
+//   "version": "2.0.0",
+//   "tasks": [
+//     {
+//       "label": "Compile Debug",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "run",
+//         "-it",
+//         "--rm",
+//         "-v",
+//         "${workspaceFolder}:/JOCKTOS",
+//         "jocktos:latest",
+//         "/bin/sh",
+//         "-c",
+//         "cd /JOCKTOS/jocktos/ && make clean debug && make debug"
+//       ],
+//       "icon": {
+//         "id": "tools",
+//         "color": "terminal.ansiGreen"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#a8fdbb"
+//         }
+//       },
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       }
+//     },
+//     {
+//       "label": "Compile Release",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "run",
+//         "-it",
+//         "--rm",
+//         "-v",
+//         "${workspaceFolder}:/JOCKTOS",
+//         "jocktos:latest",
+//         "/bin/sh",
+//         "-c",
+//         "cd /JOCKTOS/jocktos/ && make clean release && make release"
+//       ],
+//       "icon": {
+//         "id": "tools",
+//         "color": "terminal.ansiGreen"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#f6fa05"
+//         }
+//       },
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       }
+//     },
 
-    {
-      "label": "Dock OpenOCD",
-      "type": "shell",
-      "command": "usbipd",
-      "args": [
-        "attach",    
-        "--wsl",
-        "--hardware-id",
-        "0483:374b",
+//     {
+//       "label": "Dock OpenOCD",
+//       "type": "shell",
+//       "command": "usbipd",
+//       "args": [
+//         "attach",    
+//         "--wsl",
+//         "--hardware-id",
+//         "0483:374b",
       
-      ],
-      "icon": {
-        "id": "bug",
-        "color": "terminal.ansiGreen"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#f6fa05"
-        }
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "Flash Device",
-      "type": "shell",
-      "command": "openocd",
-      "args": [
-        "-f",
-        "board/st_nucleo_f3.cfg",
-        "-c",
-        "init",
-        "-c",
-        "reset init",
-        "-c",
-        "flash write_image erase ./jocktos/build/debug/firmware.elf",
-        "-c",
-        "shutdown"
-      ],
-      "icon": {
-        "id": "export",
-        "color": "terminal.ansiMagenta"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#ffa9f8"
-        }
-      },
-      "problemMatcher": []
-    },
+//       ],
+//       "icon": {
+//         "id": "bug",
+//         "color": "terminal.ansiGreen"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#f6fa05"
+//         }
+//       },
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       }
+//     },
+//     {
+//       "label": "Flash Device",
+//       "type": "shell",
+//       "command": "openocd",
+//       "args": [
+//         "-f",
+//         "board/st_nucleo_f3.cfg",
+//         "-c",
+//         "init",
+//         "-c",
+//         "reset init",
+//         "-c",
+//         "flash write_image erase ./jocktos/build/debug/firmware.elf",
+//         "-c",
+//         "shutdown"
+//       ],
+//       "icon": {
+//         "id": "export",
+//         "color": "terminal.ansiMagenta"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#ffa9f8"
+//         }
+//       },
+//       "problemMatcher": []
+//     },
     
-    {
-      "label": "Flash Device",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "/dev:/dev",
-        "--privileged",
-        "jocktos:latest",
-        "/bin/sh",
-        "-c",
-        "openocd",
-        "-f", "/usr/local/share/openocd/scripts/interface/stlink.cfg",
-        "-f", "/usr/local/share/openocd/scripts/board/st_nucleo_f3.cfg",
-        "-c", "init",
-        "-c", "reset init",
-        "-c", "flash write_image erase ./jocktos/build/debug/firmware.elf",
-        "-c", "shutdown"
-      ],
-      "icon": {
-        "id": "export",
-        "color": "terminal.ansiMagenta"
-      },
-      "options": {
-        "statusbar": {
-          "color" : "#9b7e98"
-        }
-      },
-    },
+//     {
+//       "label": "Flash Device",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "run",
+//         "-it",
+//         "--rm",
+//         "-v",
+//         "/dev:/dev",
+//         "--privileged",
+//         "jocktos:latest",
+//         "/bin/sh",
+//         "-c",
+//         "openocd",
+//         "-f", "/usr/local/share/openocd/scripts/interface/stlink.cfg",
+//         "-f", "/usr/local/share/openocd/scripts/board/st_nucleo_f3.cfg",
+//         "-c", "init",
+//         "-c", "reset init",
+//         "-c", "flash write_image erase ./jocktos/build/debug/firmware.elf",
+//         "-c", "shutdown"
+//       ],
+//       "icon": {
+//         "id": "export",
+//         "color": "terminal.ansiMagenta"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color" : "#9b7e98"
+//         }
+//       },
+//     },
 
-    {
-      "label": "Build Docs",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
-        "-c",
-        "cd docs && make html && make latexpdf"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "icon": {
-        "id": "file-pdf",
-        "color": "terminal.ansiCyan"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#a2beee"
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Open Dev Shell",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/bash"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "icon": {
-        "id": "terminal-ubuntu",
-        "color": "terminal.ansiRed"
-      },
-      "options": {
-        "statusbar": {
-          "color": "#fab1b1"
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "run-qemu-emulator",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "run",
-        "-d",
-        "--name",
-        "my_qemu_emulator",
-        "--privileged",
-        "-p",
-        "1234:1234",
-        "-v",
-        "${workspaceFolder}:/JOCKTOS",
-        "jocktos:latest",
-        "/bin/sh",
-        "-c",
-        "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/firmware.elf -monitor none -nographic -serial stdio -s -S"
-      ],
-      "options": {
-        "statusbar": {
-          "hide": true
-        }
-      },
-      "problemMatcher": {
-        "owner": "docker",
-        "fileLocation": [
-          "relative",
-          "${workspaceFolder}"
-        ],
-        "pattern": {
-          "regexp": "^(.*)$",
-          "message": 1
-        }
-      }
-    },
-    {
-      "label": "stop-qemu-emulator",
-      "type": "shell",
-      "command": "docker",
-      "args": [
-        "rm",
-        "-f",
-        "my_qemu_emulator"
-      ],
-      "options": {
-        "statusbar": {
-          "hide": true
-        }
-      },
-      "problemMatcher": {
-        "owner": "docker",
-        "fileLocation": [
-          "relative",
-          "${workspaceFolder}"
-        ],
-        "pattern": {
-          "regexp": "^(.*)$",
-          "message": 1
-        }
-      }
-    }
-  ]
-}
+//     {
+//       "label": "Build Docs",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "run",
+//         "-it",
+//         "--rm",
+//         "-v",
+//         "${workspaceFolder}:/JOCKTOS",
+//         "jocktos:latest",
+//         "/bin/sh",
+//         "-c",
+//         "cd docs && make html && make latexpdf"
+//       ],
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       },
+//       "presentation": {
+//         "reveal": "always",
+//         "panel": "dedicated"
+//       },
+//       "icon": {
+//         "id": "file-pdf",
+//         "color": "terminal.ansiCyan"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#a2beee"
+//         }
+//       },
+//       "problemMatcher": []
+//     },
+//     {
+//       "label": "Open Dev Shell",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "run",
+//         "-it",
+//         "--rm",
+//         "-v",
+//         "${workspaceFolder}:/JOCKTOS",
+//         "jocktos:latest",
+//         "/bin/bash"
+//       ],
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       },
+//       "presentation": {
+//         "reveal": "always",
+//         "panel": "dedicated"
+//       },
+//       "icon": {
+//         "id": "terminal-ubuntu",
+//         "color": "terminal.ansiRed"
+//       },
+//       "options": {
+//         "statusbar": {
+//           "color": "#fab1b1"
+//         }
+//       },
+//       "problemMatcher": []
+//     },
+//     {
+//       "label": "run-qemu-emulator",
+//       "type": "shell",
+//       "command": "bash",
+//       "args": [
+//         "-c",
+//         "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/firmware.elf -monitor none -nographic -serial stdio -s -S"
+//       ],
+
+
+//       "args": [
+//         "/bin/sh",
+//         "-c",
+//         "qemu-system-arm -machine olimex-stm32-h405 -kernel /JOCKTOS/jocktos/build/firmware.elf -monitor none -nographic -serial stdio -s -S"],
+//       "options": {
+//         "statusbar": {
+//           "hide": true
+//         }
+//       },
+//       "problemMatcher": {
+//         "owner": "docker",
+//         "fileLocation": [
+//           "relative",
+//           "${workspaceFolder}"
+//         ],
+//         "pattern": {
+//           "regexp": "^(.*)$",
+//           "message": 1
+//         }
+//       }
+//     },
+//     {
+//       "label": "stop-qemu-emulator",
+//       "type": "shell",
+//       "command": "docker",
+//       "args": [
+//         "rm",
+//         "-f",
+//         "my_qemu_emulator"
+//       ],
+//       "options": {
+//         "statusbar": {
+//           "hide": true
+//         }
+//       },
+//       "problemMatcher": {
+//         "owner": "docker",
+//         "fileLocation": [
+//           "relative",
+//           "${workspaceFolder}"
+//         ],
+//         "pattern": {
+//           "regexp": "^(.*)$",
+//           "message": 1
+//         }
+//       }
+//     }
+//   ]
+// }

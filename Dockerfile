@@ -25,6 +25,8 @@ RUN apt-get install -y \
     gdb-arm-none-eabi \
     libnewlib-arm-none-eabi
 
+
+
 # install documentation tools   
 RUN apt-get install -y \
     python3-sphinx \
@@ -57,7 +59,8 @@ automake \
 pkg-config \
 autoconf \
 texinfo \
-openocd 
+openocd \
+qemu-system
 #build and install OPENOCD from repository
 # RUN cd /usr/src/ 
 # && git clone https://github.com/texane/stlink.git stlink \
