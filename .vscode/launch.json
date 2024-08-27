@@ -1,96 +1,101 @@
 {
-    "version": "0.2.0",
-    "configurations": [
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "gdb",
+      "request": "attach",
+      "name": "Attach to gdbserver",
+      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "target": "localhost:1234",
+      "remote": true,
+      "cwd": "${workspaceFolder}/jocktos", 
+      "gdbpath": "/usr/bin/gdb-multiarch",
+      "autorun": [
+          ],
+  },
+    {
+      "name": "QEMU debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "cwd": "${workspaceFolder}/jocktos",
+      "externalConsole": false,
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "miDebuggerServerAddress": "localhost:1234",
+      "stopAtEntry": true,
+      "preLaunchTask": "run-qemu-emulator",
+      "postDebugTask": "stop-qemu-emulator"
+    },
+    {
+      "name": "Attach OpenOCD",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "serverpath": null,
+      "request": "attach",
+      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "configFiles": [
+        "board/st_nucleo_f3.cfg"
+      ],
+      "showDevDebugOutput": "raw",
+      "cwd": "${workspaceFolder}/jocktos"
+    },
+    {
+      "name": "Launch OpenOCD",
+      "cwd": "${workspaceFolder}/jocktos",
+      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "gdbTarget": "host.docker.internal:50000",
+      "showDevDebugOutput": "parsed",
+      "svdFile": "${workspaceFolder}/jocktos/STM32F303.svd",
+      "configFiles": [
+        "board/st_nucleo_f3.cfg"
+      ],
+      "preLaunchCommands": [
+        "monitor reset"
+      ],
+      "postLaunchCommands": [
+        "monitor reset init"
+      ],
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 4
+      }
+    },
+    {
+      "name": "Debug Current Unit Test",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/jocktos/test/build/${fileBasenameNoExtension}.test",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "preLaunchTask": "build current unit test"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "c:/JOCKTOS/JOCKTOS",
+      "program": "c:/JOCKTOS/JOCKTOS/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
         {
-            "name": "QEMU debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
-            "cwd": "${workspaceFolder}/jocktos",
-            "externalConsole": false,
-            "miDebuggerPath": "${env:ARMGCC_DIR}/arm-none-eabi-gdb.exe",
-            "miDebuggerServerAddress": "localhost:1234",
-            "stopAtEntry": true,
-            "preLaunchTask": "run-qemu-emulator",
-            "postDebugTask": "stop-qemu-emulator",
-        },
-        {
-            "name": "Attach OpenOCD",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "request": "attach",
-            "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
-            "configFiles": [
-                "board/st_nucleo_f3.cfg",
-            ],
-            "showDevDebugOutput": "raw",
-            "cwd": "${workspaceFolder}/jocktos"
-            
-        },
-        {
-            "name": "Launch OpenOCD",
-            "cwd": "${workspaceFolder}/jocktos",
-            "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
-            "request": "launch",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "interface": "swd",
-            "runToEntryPoint": "main",
-            "showDevDebugOutput": "parsed",
-            "svdFile": "${workspaceFolder}/jocktos/STM32F303.svd",
-            "gdbPath": "${env:ARMGCC_DIR}/arm-none-eabi-gdb.exe",
-            "configFiles": [
-                "board/st_nucleo_f3.cfg",
-            ],
-            "preLaunchCommands": [
-                "monitor reset",
-            ],
-            "postLaunchCommands": [
-                "monitor reset init",
-            ],
-            "liveWatch": {
-                "enabled": true,
-                "samplesPerSecond": 4
-            }
-        },
-        {
-            "name": "Attach OpenOCD",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "request": "attach",
-            "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
-            "configFiles": [
-                "board/st_nucleo_f3.cfg",
-            ],
-            "showDevDebugOutput": "raw",
-            "cwd": "${workspaceFolder}/jocktos"
-            
-        },
-        {
-            "name": "Debug Current Unit Test",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/jocktos/test/build/${fileBasenameNoExtension}.test",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "preLaunchTask": "build current unit test"
-        },
-        {
-            "name": "QEMU debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/jocktos/build/firmware.elf",
-            "cwd": "${workspaceFolder}/jocktos",
-            "externalConsole": false,
-            "miDebuggerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gdb.exe",
-            "miDebuggerServerAddress": "localhost:1234",
-            "stopAtEntry": true,
-            "preLaunchTask": "run-qemu-emulator",
-            "postDebugTask": "stop-qemu-emulator",
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
         }
-    ]
+      ]
+    }
+  ]
 }

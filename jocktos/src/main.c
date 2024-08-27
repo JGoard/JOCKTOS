@@ -4,10 +4,32 @@
 #include "main.h"
 #include "timers.h"
 #include "io.h"
+#include "io_list.h"
 #include "synchro.h"
 #include "stm32m4cortex_bsp.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
+/**
+ * @def FIRST_RUN
+ * @brief Runs code once, only on first entry to the scope
+ *
+ * This macro is useful for initializing variables once, only on the first
+ * entry to a scope. It has the same syntax as a normal function call, but
+ * it only calls the code once, and is a no-op after the first time.
+ *
+ * @code
+ * FIRST_RUN({
+ *     // This code will only run once
+ * });
+ * @endcode
+ */
+#define FIRST_RUN(...)          \
+    static int _first_run = 1;  \
+    if (_first_run) {           \
+        _first_run = 0;         \
+        __VA_ARGS__             \
+    }
+
 
 /* -- Types --------------------------------------------------------------- */
 /**
@@ -38,7 +60,8 @@ void stackInflationTest(void* arg);
  */
 int main(void)
 {
-    jock_io_init();
+    int16_t errorStatus = 0;
+    errorStatus = jock_io_init();
     /* Initialize the LED on the 'Nucleo' board*/
     jock_sys_LEDInit();
     /* Initialize Timer 2 on the board*/
@@ -73,21 +96,36 @@ int main(void)
     jock_os_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
     jock_os_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
     jock_os_runJOCKTOS();                         // Start JOCKTOS Kernel
-    jock_io_initDigitalOutput(GPIOB, 3, JOCK_IO_OSPEED_HIGH, JOCK_IO_OTYPE_PP); // Initializes a High speed Digital Output of type Push-Pull
-    jock_io_initDigitalInput(GPIOA,6, JOCK_IO_PDR);                             // Initializes a Digital Input wuth Pull-Down resistor
+
+    uint16_t digA6Index;
+    uint16_t digB3Index;
+    FIRST_RUN(
+        digA6Index = jock_io_getInputIndex(DIG_IN_A6);
+        digB3Index = jock_io_getOutputIndex(DIG_OUT_B3);
+    )
+
     // because enable_main is configured, execution **will** return here and continue
     int x = 100;
     int y = 0;
     uint8_t value = 1;
     uint8_t DigInvalue = 0;
+    char rxb = 'a';
+
     // Infinite Loop with palce holder calculations for debugging
     while(1) {
         x++;
         if (x == 0) x = 100;
         y--;
         if (y == 100) y = 0;
-        jock_io_setDigitalOutput(GPIOB, 3, value);
-        jock_io_getDigitalInput(GPIOA, 6, &DigInvalue);
+        errorStatus = jock_io_setDigitalOutput(digB3Index, value);
+        errorStatus = jock_io_getDigitalInput(digA6Index, &DigInvalue);
+
+    // Wait for a byte of data to arrive.
+    // while( !( USART2->ISR & USART_ISR_RXNE ) ) {};
+    // rxb = USART2->RDR;
+    // // Re-transmit the received byte.
+    // while( !( USART2->ISR & USART_ISR_TXE ) ) {};
+    USART2->TDR = rxb;     
 
     }
 }
