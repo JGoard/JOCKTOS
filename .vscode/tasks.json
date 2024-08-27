@@ -60,7 +60,7 @@
       }
     },
     {
-      "label": "Bind OpenOCD",
+      "label": "Bind USB Device",
       "type": "shell",
       "command": "usbipd",
       "args": [
@@ -89,9 +89,38 @@
       "command": "usbipd",
       "args": [
         "attach",    
-        "--wsl","Ubuntu",
+        "--wsl",
         "--hardware-id",
         "0483:374b",
+      
+      ],
+      "icon": {
+        "id": "bug",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color": "#f6fa05"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker Instance",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",    
+        "-i",
+        "--expose=3333",
+        "--expose=4444",
+        "--expose=6666",
+        "--privileged",
+        "jocktos:latest",
+        "sh"
       
       ],
       "icon": {
@@ -114,7 +143,7 @@
       "command": "docker",
       "args": [
         "run",
-        "-i",
+        "-it",
         "--rm",
         "--privileged",
         "-v",
