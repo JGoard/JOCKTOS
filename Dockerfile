@@ -10,8 +10,7 @@ RUN apt-get update && \
     build-essential \
     symlinks \
     expect \
-    git \
-
+    git 
 #Copy current git repo into project directory
 RUN git clone https://github.com/JGoard/jocktos.git && cd ..
 
