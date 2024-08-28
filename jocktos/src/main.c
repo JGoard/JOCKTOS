@@ -2,6 +2,7 @@
 * \brief This module contains the main function and basic tasks
 */
 #include "main.h"
+#include "sys.h"
 #include "timers.h"
 #include "io.h"
 #include "io_list.h"
