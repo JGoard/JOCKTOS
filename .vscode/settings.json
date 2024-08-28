@@ -3,7 +3,7 @@
         "main.h": "c",
         "stdint.h": "c"
     },
-    "stm32-for-vscode.openOCDPath": "E:\\EMBEDDEDTOOLCHAINS\\OPENOCD\\BIN\\OPENOCD.EXE",
-    "stm32-for-vscode.makePath": "C:\\USERS\\JOSHGOARD\\EMBEDDED_TOOLCHAINS\\MAKE\\BIN\\MAKE.EXE",
-    "cortex-debug.armToolchainPath": "D:\\GNU ARM EMBEDDED TOOLCHAIN10 2021.10BINARM-NONE-EABI-GDB.EXE\\BIN"
+    "stm32-for-vscode.openOCDPath": "/usr/bin/openocd",
+    "stm32-for-vscode.makePath": "/usr/bin/make",
+    "cortex-debug.armToolchainPath": "/usr/bin"
 }
