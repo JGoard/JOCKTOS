@@ -29,6 +29,16 @@
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 /* -- Private Function Declarations --------------------------------------- */
+/**
+ * \brief Initializes the GPIO ports by enabling their clocks.
+ * 
+ * This function iterates over the input and output lists, and for each port, 
+ * it checks if the clock is already enabled. If not, it enables the clock for 
+ * the corresponding GPIO port.
+ * 
+ * \param None
+ * \return None
+ */
 void _jock_io_initGPIO();
 /* -- Public Functions----------------------------------------------------- */
 
@@ -43,20 +53,20 @@ int16_t jock_io_init()
 
         /* Initialize Inputs as needed*/
         switch (inputList[i].params->mode){
-            case JOCK_IO_MODE_INPUT:
+            case jockIoModeInput:
                     error |= jock_io_initDigitalInput(  inputList[i].port, 
                                                         inputList[i].pin, 
                                                         inputList[i].params->res);
                 break;
-            case JOCK_IO_MODE_ADC:
+            case jockIoModeAnalog:
                     // jock_adc_initAnalogInput(  inputList[i].port);
 
                 break;
-            case JOCK_IO_MODE_AF:
+            case jockIoModeAlternate:
                 ///<TODO: insert function for this as there are many alternate functions
                 switch (inputList[i].params->perph)
                 {
-                case JOCK_IO_PERPH_USART2:
+                case jockIoPerphUSART2:
                     jock_comm_uartInit( outputList[i].port, ///<TODO: Add error checking if possible
                                         inputList[i].pin, 
                                         0,
@@ -79,18 +89,18 @@ int16_t jock_io_init()
     for (uint16_t i = 0; i < lengthofOutputs; i++){
         /* Enable clock for each port if they're instantiated at least once */
         switch (outputList[i].params->mode){
-        case JOCK_IO_MODE_OUTPUT:
+        case jockIoModeOutput:
             error |=jock_io_initDigitalOutput(  outputList[i].port, 
                                                 outputList[i].pin, 
                                                 outputList[i].params->speed, 
                                                 outputList[i].params->type);
             break;
-        case JOCK_IO_MODE_ADC:
+        case jockIoModeAnalog:
             break;
-        case JOCK_IO_MODE_AF:
+        case jockIoModeAlternate:
             ///<TODO: insert function for this
             switch (outputList[i].params->perph){
-            case JOCK_IO_PERPH_USART2: 
+            case jockIoPerphUSART2: 
                 jock_comm_uartInit( outputList[i].port,     ///<TODO: Add error checking if possible
                                     outputList[i].pin, 
                                     outputList[i].params->type,
@@ -112,7 +122,7 @@ int16_t jock_io_init()
     return 0;
 }
 
-int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t res){
+int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res){
 
     /* General Error Handling for unexpected inputs*/
     if (pin > PIN_MAX || port == NULL || res > 3)       
@@ -125,7 +135,7 @@ int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, uint8_t res){
         But when an option has more than one bit, it is good practice to reset the whole option 
         before setting the bits you want.
     */
-    port->MODER     = (port->MODER  &~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(JOCK_IO_MODE_INPUT,  pin, 2);// Each pin occupies two bits for settings (4 settings total)
+    port->MODER     = (port->MODER  &~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(jockIoModeInput,  pin, 2);// Each pin occupies two bits for settings (4 settings total)
     port->PUPDR     = (port->PUPDR  &~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(res,                 pin, 2);
     return 0;
 }
@@ -139,7 +149,7 @@ int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
     }
 
     /* Error check to confirm that pin is indeed configured as a digital input */
-    else if ((inputList[inputId].port->MODER & SHIFTED_BITMASK(0x3, inputList[inputId].pin, 2)) != JOCK_IO_MODE_INPUT){
+    else if ((inputList[inputId].port->MODER & SHIFTED_BITMASK(0x3, inputList[inputId].pin, 2)) != jockIoModeInput){
         return ENOMSG;
     }
     else{
@@ -149,10 +159,10 @@ int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
     return 0;
 }
 
-int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t speed, uint8_t type){
+int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type){
     
     /* General Error Handling for unexpected inputs*/
-    if (pin > PIN_MAX || port == NULL || speed > 3 || type > 1){
+    if (pin > PIN_MAX || port == NULL || type != jockIoModeOutput){
         ///<TODO: Set an error for invalid config. Maybe be specific with failures?
         return EACCES;
     }
@@ -160,9 +170,9 @@ int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, uint8_t speed
     But when an option has more than one bit, it is good practice to reset the whole option 
     before setting the bits you want.
     */
-    port->MODER     = (port->MODER  &~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(JOCK_IO_MODE_OUTPUT,  pin, 2);// Each pin occupies two bits for settings (4 settings total)
-    port->OSPEEDR   = (port->OSPEEDR&~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(speed,                pin, 2);  
-    port->OTYPER    = (port->OTYPER &~ SHIFTED_BITMASK(0x1, pin, 2)) | SHIFTED_BITMASK(type,                 pin, 1);  // OTYPER only has 2 settings total (1 bit)
+    port->MODER     = (port->MODER  &~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(jockIoModeOutput,    pin, 2);// Each pin occupies two bits for settings (4 settings total)
+    port->OSPEEDR   = (port->OSPEEDR&~ SHIFTED_BITMASK(0x3, pin, 2)) | SHIFTED_BITMASK(speed,               pin, 2);  
+    port->OTYPER    = (port->OTYPER &~ SHIFTED_BITMASK(0x1, pin, 2)) | SHIFTED_BITMASK(type,                pin, 1);  // OTYPER only has 2 settings total (1 bit)
 
     return 0;
     }
@@ -175,7 +185,7 @@ int16_t  jock_io_setDigitalOutput(uint16_t outputId, uint8_t value){
     }
 
     /* Error check to confirm that pin is indeed configured as a digital output */
-    if ((outputList[outputId].port->MODER & SHIFTED_BITMASK(0x3, outputList[outputId].pin, 2)) == JOCK_IO_MODE_OUTPUT){ 
+    if ((outputList[outputId].port->MODER & SHIFTED_BITMASK(0x3, outputList[outputId].pin, 2)) == jockIoModeOutput){ 
         return ENOMSG;
     }
     else{
@@ -218,51 +228,41 @@ uint16_t jock_io_getOutputIndex(uint16_t outputId){
 
 /*----- Private Functions -----*/
 
-/**
- * \brief Initializes the GPIO ports by enabling their clocks.
- * 
- * This function iterates over the input and output lists, and for each port, 
- * it checks if the clock is already enabled. If not, it enables the clock for 
- * the corresponding GPIO port.
- * 
- * \param None
- * \return None
- */
 void _jock_io_initGPIO(){
     /* Enable clock for each port if they're instantiated at least once */
     uint8_t enabledPorts = 0;
     for (uint16_t j = 0; j < lengthofInputs; j++){
         switch (PORT_ID(inputList[j].port)){
             case 0:
-                if (!(enabledPorts & (1 << 0))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 0, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // Enable clock for GPIO Port A
-                    enabledPorts |= (1 << 0);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 0, 0);
                 }
                 break;
             case 1:
-                if (!(enabledPorts & (1 << 1))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 1, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // Enable clock for GPIO Port B
                     enabledPorts |= (1 << 1);
                 }                break;
             case 2:
-                if (!(enabledPorts & (1 << 2))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 2, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable clock for GPIO Port C
-                    enabledPorts |= (1 << 2);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 2, 1);
                 }                break;            
             case 3:
-                if (!(enabledPorts & (1 << 3))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 3, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIODEN; // Enable clock for GPIO Port D
-                    enabledPorts |= (1 << 3);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 3, 1);
                 }                break;
             case 4:
-                if (!(enabledPorts & (1 << 4))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 4, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOEEN; // Enable clock for GPIO Port E
-                    enabledPorts |= (1 << 4);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 4, 1);
                 }                break;
             case 5:
-                if (!(enabledPorts & (1 << 5))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 5, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOFEN; // Enable clock for GPIO Port F
-                    enabledPorts |= (1 << 5);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 5, 1);
                 }                break;
             default:
                 break;
@@ -276,35 +276,35 @@ void _jock_io_initGPIO(){
     for (uint16_t j = 0; j < lengthofOutputs; j++){
         switch (PORT_ID(outputList[j].port)){
             case 0:
-                if (!(enabledPorts & (1 << 0))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 0, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // Enable clock for GPIO Port A
-                    enabledPorts |= (1 << 0);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 0, 1);
                 }
                 break;
             case 1:
-                if (!(enabledPorts & (1 << 1))){
+                if (!(enabledPorts &  SHIFTED_BITMASK(0x1, 1, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // Enable clock for GPIO Port B
-                    enabledPorts |= (1 << 1);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 1, 1);
                 }                break;
             case 2:
-                if (!(enabledPorts & (1 << 2))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 2, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable clock for GPIO Port C
-                    enabledPorts |= (1 << 2);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 2, 1);
                 }                break;            
             case 3:
-                if (!(enabledPorts & (1 << 3))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 3, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIODEN; // Enable clock for GPIO Port D
-                    enabledPorts |= (1 << 3);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 3, 1);
                 }                break;
             case 4:
-                if (!(enabledPorts & (1 << 4))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 4, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOEEN; // Enable clock for GPIO Port E
-                    enabledPorts |= (1 << 4);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 4, 1);
                 }                break;
             case 5:
-                if (!(enabledPorts & (1 << 5))){
+                if (!(enabledPorts & SHIFTED_BITMASK(0x1, 5, 1))){
                     RCC->AHBENR |= RCC_AHBENR_GPIOFEN; // Enable clock for GPIO Port F
-                    enabledPorts |= (1 << 5);
+                    enabledPorts |= SHIFTED_BITMASK(0x1, 5, 1);
                 }                break;
             default:
                 break;

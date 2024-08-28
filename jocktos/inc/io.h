@@ -27,18 +27,18 @@
 /*--- GPIO Digital Input Defs ---*/
 #define DIGITAL_INPUT_PARAMS_DEF(...)   \
 {                                       \
-    .mode = JOCK_IO_MODE_INPUT,         \
-    .res  = JOCK_IO_NOPUPDR,            \
+    .mode = jockIoModeInput,            \
+    .res  = jockIoInputResNone,         \
     __VA_ARGS__                         \
                                         \
 }                                       \
 /*--- GPIO Altf Input Defs ---*/
 #define ALTF_INPUT_PARAMS_DEF(...)      \
 {                                       \
-    .mode = JOCK_IO_MODE_AF,            \
-    .res  = JOCK_IO_PUR,                \
-    .altf = JOCK_IO_ALTF0,              \
-    .perph = JOCK_IO_PERPH_USART2,     \
+    .mode = jockIoModeAlternate,        \
+    .res  = jockIoInputResPullUp,       \
+    .altf = jockIoAltf0,                \
+    .perph = jockIoPerphUSART2,         \
     __VA_ARGS__                         \
                                         \
 }                                       \
@@ -59,9 +59,9 @@
 /*--- GPIO Digital Output Defs ---*/
 #define DIGITAL_OUTPUT_PARAMS_DEF(...)  \
 {                                       \
-    .mode = JOCK_IO_MODE_OUTPUT,        \
-    .speed= JOCK_IO_OSPEED_LOW,         \
-    .type = JOCK_IO_OTYPE_PP,           \
+    .mode = jockIoModeOutput,           \
+    .speed= jockIoOutputSpeedLow,       \
+    .type = jockIoOutputTypePP,         \
     __VA_ARGS__                         \
                                         \
 }                                       \
@@ -70,76 +70,84 @@
 /*--- GPIO Altf Output Defs ---*/
 #define ALTF_OUTPUT_PARAMS_DEF(...)     \
 {                                       \
-    .mode = JOCK_IO_MODE_AF,            \
-    .speed= JOCK_IO_OSPEED_LOW,         \
-    .type = JOCK_IO_OTYPE_PP,           \
-    .altf = JOCK_IO_ALTF0,              \
+    .mode = jockIoModeAlternate,        \
+    .speed= jockIoOutputSpeedLow,       \
+    .type = jockIoOutputTypePP,         \
+    .altf = jockIoAltf0,                \
     __VA_ARGS__                         \
                                         \
 }                                       \
 
-
 /*---- GPIO Input Configurations -----------------------------*/
-/* Pull-up or pull-down resistor configurations */
-#define JOCK_IO_NOPUPDR     0b00    // No pull up or pull down
-#define JOCK_IO_PUR         0b01    // Pull up res
-#define JOCK_IO_PDR         0b10    // Pull down res
+typedef enum {
+    jockIoInputResNone      = 0b00,    // No pull up or pull down
+    jockIoInputResPullUp    = 0b01,    // Pull up res
+    jockIoInputResPullDown  = 0b10,    // Pull down res
+} jockIoInputRes;
 
 /* GPIO mode configurations */
-#define JOCK_IO_MODE_INPUT  0b00    // Input Mode
-#define JOCK_IO_MODE_OUTPUT 0b01    // Output Mode
-#define JOCK_IO_MODE_AF     0b10    // Alternate Function
-#define JOCK_IO_MODE_ADC    0b11    // Analog Mode
+typedef enum {
+    jockIoModeInput         = 0b00,    // Input Mode
+    jockIoModeOutput        = 0b01,    // Output Mode
+    jockIoModeAlternate     = 0b10,    // Alternate Function
+    jockIoModeAnalog        = 0b11,    // Analog Mode
+} jockIoMode;
 
 /*---- GPIO Output Configurations ----------------------------*/
-/* GPIO output speed configurations */
-#define JOCK_IO_OSPEED_LOW  0b00    // 2 MHz
-#define JOCK_IO_OSPEED_MID  0b01    // 10 MHz
-#define JOCK_IO_OSPEED_LOW2 0b10    // 2 MHz
-#define JOCK_IO_OSPEED_HIGH 0b11    // 50 MHz
+typedef enum {
+    jockIoOutputSpeedLow    = 0b00,    // 2 MHz
+    jockIoOutputSpeedMid    = 0b01,    // 10 MHz
+    jockIoOutputSpeedLow2   = 0b10,    // 2 MHz
+    jockIoOutputSpeedHigh   = 0b11,    // 50 MHz
+} jockIoOutputSpeed;
 
 /* GPIO output type configurations */
-#define JOCK_IO_OTYPE_PP    0b00    // 2 MHz
-#define JOCK_IO_OTYPE_OD    0b01    // 10 MHz
+typedef enum {
+    jockIoOutputTypePP      = 0b00,    // 2 MHz
+    jockIoOutputTypeOD      = 0b01,    // 10 MHz
+} jockIoOutputType;
 
 /*---- Alternate Function Types ------------------------------*/
-#define JOCK_IO_ALTF0       0b0000
-#define JOCK_IO_ALTF1       0b0001
-#define JOCK_IO_ALTF2       0b0010
-#define JOCK_IO_ALTF3       0b0011
-#define JOCK_IO_ALTF4       0b0100
-#define JOCK_IO_ALTF5       0b0101
-#define JOCK_IO_ALTF6       0b0110
-#define JOCK_IO_ALTF7       0b0111
-#define JOCK_IO_ALTF8       0b1000
-#define JOCK_IO_ALTF9       0b1001
-#define JOCK_IO_ALTF10      0b1010
-#define JOCK_IO_ALTF11      0b1011
-#define JOCK_IO_ALTF12      0b1100
-#define JOCK_IO_ALTF13      0b1101
-#define JOCK_IO_ALTF14      0b1110
-#define JOCK_IO_ALTF15      0b1111
+typedef enum {
+    jockIoAltf0             = 0b0000,
+    jockIoAltf1             = 0b0001,
+    jockIoAltf2             = 0b0010,
+    jockIoAltf3             = 0b0011,
+    jockIoAltf4             = 0b0100,
+    jockIoAltf5             = 0b0101,
+    jockIoAltf6             = 0b0110,
+    jockIoAltf7             = 0b0111,
+    jockIoAltf8             = 0b1000,
+    jockIoAltf9             = 0b1001,
+    jockIoAltf10            = 0b1010,
+    jockIoAltf11            = 0b1011,
+    jockIoAltf12            = 0b1100,
+    jockIoAltf13            = 0b1101,
+    jockIoAltf14            = 0b1110,
+    jockIoAltf15            = 0b1111,
+} jockIoAltf;
 
-/*---- Peripheral AltF T    ypes -----------*/  // Will need to heavily expand on these and do run time checking to see if ports match required functions
-#define JOCK_IO_PERPH_NONE     0b0000
-#define JOCK_IO_PERPH_USART2   0b0001
-
+/*---- Peripheral AltF Types -----------*/  // Will need to heavily expand on these and do run time checking to see if ports match required functions
+typedef enum {
+    jockIoPerphNone         = 0b0000,
+    jockIoPerphUSART2       = 0b0001,
+} jockIoPerph_t;
 
 /* -- Types --------------------------------------------------------------- */
 typedef struct
 {
-    uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
-    uint8_t speed;      // speed of digital outputs set
-    uint8_t type;       // push-pull vs open-drain
-    uint8_t altf;       // Alternate function   
-    uint8_t perph;      // Peripheral to use
+    jockIoMode          mode;       // Different Input Params from Input, Alternate function, or Analog Mode
+    jockIoOutputSpeed   speed;      // speed of digital outputs set
+    jockIoOutputType    type;       // push-pull vs open-drain
+    jockIoAltf          altf;       // Alternate function   
+    jockIoPerph_t       perph;      // Peripheral to use
 } outputParams;
 typedef struct
 {
-    uint8_t mode;       // Different Input Params from Input, Alternate function, or Analog Mode
-    uint8_t res;        // No resistor, Pull up, or pull down resistor settings
-    uint8_t altf;       // Alternate function   
-    uint8_t perph;      // Peripheral to use
+    jockIoMode      mode;       // Different Input Params from Input, Alternate function, or Analog Mode
+    jockIoInputRes  res;        // No resistor, Pull up, or pull down resistor settings
+    jockIoAltf      altf;       // Alternate function   
+    jockIoPerph_t   perph;      // Peripheral to use
 } inputParams;
 typedef struct 
 {
@@ -179,7 +187,7 @@ int16_t jock_io_init();
  *
  * \return 0 if successful, otherwise an error code.
  */
-int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, uint8_t res);
+int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res);
 
 /**
  * \brief Gets the current value of a digital input pin.
@@ -208,7 +216,7 @@ int16_t jock_io_getDigitalInput     (uint16_t outputId,uint8_t* value);
  *
  * \return 0 on success, EACCES on error.
  */
-int16_t jock_io_initDigitalOutput   (GPIO_TypeDef *port, uint8_t pin, uint8_t speed, uint8_t type);
+int16_t jock_io_initDigitalOutput   (GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type);
 
 /**
  * \brief Sets the value of a digital output pin specified by its outputId.

@@ -19,11 +19,11 @@
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
-const inputParams   digInputPullupParams= DIGITAL_INPUT_PARAMS_DEF(.res = JOCK_IO_PUR); // Pull-up input
-const inputParams   digInputPulldnParams= DIGITAL_INPUT_PARAMS_DEF(.res = JOCK_IO_PDR); // Pull-down input
+const inputParams   digInputPullupParams= DIGITAL_INPUT_PARAMS_DEF(.res = jockIoInputResPullUp); // Pull-up input
+const inputParams   digInputPulldnParams= DIGITAL_INPUT_PARAMS_DEF(.res = jockIoInputResPullDown); // Pull-down input
 const outputParams  digOutputParams     = DIGITAL_OUTPUT_PARAMS_DEF();
-const outputParams  uart2OutputParams    = ALTF_OUTPUT_PARAMS_DEF(.perph = JOCK_IO_PERPH_USART2, .altf = JOCK_IO_ALTF7);
-const inputParams   uart2InputParams     = ALTF_INPUT_PARAMS_DEF( .perph = JOCK_IO_PERPH_USART2, .altf = JOCK_IO_ALTF7);
+const outputParams  uart2OutputParams    = ALTF_OUTPUT_PARAMS_DEF(.perph = jockIoPerphUSART2, .altf = jockIoAltf7);
+const inputParams   uart2InputParams     = ALTF_INPUT_PARAMS_DEF( .perph = jockIoPerphUSART2, .altf = jockIoAltf7);
 
 InputMap inputList[] = {
 
