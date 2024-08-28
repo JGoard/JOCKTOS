@@ -162,7 +162,7 @@ int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
 int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type){
     
     /* General Error Handling for unexpected inputs*/
-    if (pin > PIN_MAX || port == NULL || type != jockIoModeOutput){
+    if (pin > PIN_MAX || port == NULL){
         ///<TODO: Set an error for invalid config. Maybe be specific with failures?
         return EACCES;
     }
