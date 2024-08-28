@@ -75,7 +75,7 @@ int main(void)
         .allocator_block_size = 256
     );
     // Apply configuration to JOCKTOS kernel
-    jock_os_configureJOCKTOS(&config);
+    jock_os_configure(&config);
 
     // Sample Sleep Task
     uint16_t sleep_ms = 1000;
@@ -93,9 +93,9 @@ int main(void)
         .task_arg=&test_val,
         .name="stack inflation");
         
-    jock_os_createTask(&locking_sleep_task); // Create Sleep Task in JOCKTOS
-    jock_os_createTask(&stack_usage_task);   // Create Stack Usage Task in JOCKTOS
-    jock_os_runJOCKTOS();                         // Start JOCKTOS Kernel
+    jock_os_createTask(&locking_sleep_task);// Create Sleep Task in JOCKTOS
+    jock_os_createTask(&stack_usage_task);  // Create Stack Usage Task in JOCKTOS
+    jock_os_run();                          // Start JOCKTOS Kernel
 
     uint16_t digA6Index;
     uint16_t digB3Index;

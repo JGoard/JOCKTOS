@@ -136,7 +136,7 @@ void jock_os_switchRunningTask(volatile TaskControlBlock** head);
 /**
  * \brief configure / enable built in OS tasks
  */
-void jock_os_configureJOCKTOS(JocktosConfig* config);
+void jock_os_configure(JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's
@@ -144,7 +144,7 @@ void jock_os_configureJOCKTOS(JocktosConfig* config);
  * Sets the priorities and enables systick and pendSV handlers
  *
  */
-void jock_os_runJOCKTOS(void);
+void jock_os_run(void);
 
 /**
  * \brief returns the current OS tick count

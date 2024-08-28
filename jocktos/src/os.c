@@ -128,7 +128,7 @@ void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
     TRIGGER_PendSV;
 }
 
-void jock_os_configureJOCKTOS(JocktosConfig* config) {
+void jock_os_configure(JocktosConfig* config) {
     // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
@@ -141,7 +141,7 @@ void jock_os_configureJOCKTOS(JocktosConfig* config) {
     if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_createTask(&idle_tcb);
 }
 
-void jock_os_runJOCKTOS(void) {
+void jock_os_run(void) {
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;
