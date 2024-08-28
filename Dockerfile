@@ -5,18 +5,12 @@ RUN apt-get update && \
     apt-get install -y \
     curl \
     udev \
-    udev \
     wget \
     nano \
     build-essential \
     symlinks \
     expect \
     git \
-    nano \
-    build-essential \
-    symlinks \
-    expect \
-    git 
 
 #Copy current git repo into project directory
 RUN git clone https://github.com/JGoard/jocktos.git && cd ..
@@ -55,38 +49,16 @@ libusb-dev \
 libftdi-dev \
 libtool \
 usbutils \
+openocd \
+qemu-system \
+# install make tools
 make \
-# libstlink-dev \
 cmake \
 automake \
 pkg-config \
 autoconf \
-texinfo \
-openocd \
-qemu-system
-#build and install OPENOCD from repository
-# RUN cd /usr/src/ 
-# && git clone https://github.com/texane/stlink.git stlink \
-# && cd stlink && make clean && make release && make install DESTDIR=$HOME && ldconfig \
-# && cp config/udev/rules.d/49-stlinkv2-1.rules /etc/udev/rules.d/49-stlinkv2-1.rules \
-# && cd /usr/src && git clone --depth 1 https://github.com/ntfreak/openocd.git && cd openocd\
-# && git submodule update --init --recursive \
-# build jaylink dependency
-# && cd src/jtag/drivers/libjaylink \
-# && ./autogen.sh \
-# && ./configure \
-# && make \
-# && make install \
-# && ldconfig \
-#build openocd
-# && cd /usr/src/openocd \
-# && ./bootstrap \
-# && ./configure --enable-stlink --enable-jlink --enable-ftdi --enable-cmsis-dap \
-# && make -j"$(nproc)" \
-# && make install \
-# && ldconfig 
-
-#remove unneeded directories
+texinfo 
+# TODO: remove unneeded directories from installing in src if needed for other packages
 RUN cd ..
 #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
 # RUN cp /usr/local/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d/60-openocd.rules 
@@ -98,10 +70,3 @@ EXPOSE 3333
 EXPOSE 4444
 EXPOSE 6666
 CMD ["tail", "-f", "/dev/null"]
-
-
-# $ openocd 
-# -s "/usr/local/share/openocd/scripts" 
-# -f "interface/stlink-v2.cfg" 
-# -f "target/stm32f4x.cfg" 
-# -c "program blinky.elf verify reset exit")
