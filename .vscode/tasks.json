@@ -99,7 +99,7 @@
       "command": "usbipd",
       "args": [
         "attach",    
-        "--wsl","Ubuntu",
+        "--wsl",
         "--hardware-id",
         "0483:374b",
       ],
