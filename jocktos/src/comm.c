@@ -24,7 +24,7 @@
 
 
 /* -- Public Functions----------------------------------------------------- */
-void jock_comm_uartInit(GPIO_TypeDef *port, uint8_t pin, jockIoOutputType type, jockIoOutputSpeed speed, jockIoModeAlternate altf){
+void jock_comm_uartInit(GPIO_TypeDef *port, uint8_t pin, jockIoOutputType type, jockIoOutputSpeed speed, jockIoAltf altf){
 
 uint16_t uartdiv = SystemCoreClock / 9600; // Division factor for baud rate;
 /*--- UART is only capable on these three sets of pins ---*/
