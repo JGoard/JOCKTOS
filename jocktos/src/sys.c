@@ -16,7 +16,6 @@
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
-    static uint32_t currentTime = 0;
     static uint32_t previousTime= 0;
 
 /* -- Private Function Declarations --------------------------------------- */

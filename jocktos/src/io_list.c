@@ -27,30 +27,36 @@ const inputParams   uart2InputParams     = ALTF_INPUT_PARAMS_DEF( .perph = jockI
 
 InputMap inputList[] = {
 
-    INPUT_MAP_DEF(.inputId = 0, .port = GPIOA, .pin = 0,    .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 1, .port = GPIOA, .pin = 1,    .params = &digInputPullupParams),
-    // INPUT_MAP_DEF(.inputId = 2, .port = GPIOA, .pin = 2,    .params = &digInputPullupParams),    // Used for UART Tx below
-    INPUT_MAP_DEF(.inputId = 3, .port = GPIOA, .pin = 3,    .params = &uart2InputParams    ),       // Used for UART Rx
-    INPUT_MAP_DEF(.inputId = 4, .port = GPIOA, .pin = 4,    .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 5, .port = GPIOA, .pin = 5,    .params = &digInputPullupParams),
+/*--- Port A GPIO Initializations ---*/
+    INPUT_MAP_DEF(.inputId = 0,         .port = GPIOA, .pin = 0,    .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 1,         .port = GPIOA, .pin = 1,    .params = &digInputPullupParams),
+    // INPUT_MAP_DEF(.inputId = 2,      .port = GPIOA, .pin = 2,    .params = &digInputPullupParams),       // Used for UART Tx below in outputList
+    INPUT_MAP_DEF(.inputId = 3,         .port = GPIOA, .pin = 3,    .params = &uart2InputParams    ),       // Used for UART Rx
+    INPUT_MAP_DEF(.inputId = 4,         .port = GPIOA, .pin = 4,    .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 5,         .port = GPIOA, .pin = 5,    .params = &digInputPullupParams),
     INPUT_MAP_DEF(.inputId = DIG_IN_A6, .port = GPIOA, .pin = 6,    .params = &digInputPulldnParams),
-    INPUT_MAP_DEF(.inputId = 7, .port = GPIOA, .pin = 7,    .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 8, .port = GPIOA, .pin = 8,    .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 9, .port = GPIOA, .pin = 9,    .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 10,.port = GPIOA, .pin = 10,   .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 11,.port = GPIOA, .pin = 11,   .params = &digInputPullupParams),
-    INPUT_MAP_DEF(.inputId = 12,.port = GPIOA, .pin = 12,   .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 7,         .port = GPIOA, .pin = 7,    .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 8,         .port = GPIOA, .pin = 8,    .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 9,         .port = GPIOA, .pin = 9,    .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 10,        .port = GPIOA, .pin = 10,   .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 11,        .port = GPIOA, .pin = 11,   .params = &digInputPullupParams),
+    INPUT_MAP_DEF(.inputId = 12,        .port = GPIOA, .pin = 12,   .params = &digInputPullupParams),
     // INPUT_MAP_DEF(.inputId = 13,.port = GPIOA, .pin = 13,   .params = &digInputPullupParams), /* UNUSABLE: THESE ARE DEBUGGING PINS AND WILL BRICK YOUR MCU */
     // INPUT_MAP_DEF(.inputId = 14,.port = GPIOA, .pin = 14,   .params = &digInputPullupParams),
     INPUT_MAP_DEF(.inputId = 13,.port = GPIOA, .pin = 15,   .params = &digInputPullupParams),
+/*--- Port B GPIO Initializations ---*/
+/*--- Port C GPIO Initializations ---*/
+/*--- Port D GPIO Initializations ---*/
+/*--- Port E GPIO Initializations ---*/
 
 
 
 };
 
 OutputMap outputList[] = {
+/*--- Port A GPIO Initializations ---*/
     OUTPUT_MAP_DEF(.outputId = 16, .port = GPIOA, .pin = 2,    .params = &uart2OutputParams),         // Used for UART Tx
-
+/*--- Port B GPIO Initializations ---*/
     OUTPUT_MAP_DEF(.outputId = 0, .port = GPIOB, .pin = 0,    .params = &digOutputParams),
     OUTPUT_MAP_DEF(.outputId = 1, .port = GPIOB, .pin = 1,    .params = &digOutputParams),
     OUTPUT_MAP_DEF(.outputId = 2, .port = GPIOB, .pin = 2,    .params = &digOutputParams),
@@ -67,6 +73,9 @@ OutputMap outputList[] = {
     OUTPUT_MAP_DEF(.outputId = 13,.port = GPIOB, .pin = 13,   .params = &digOutputParams),
     OUTPUT_MAP_DEF(.outputId = 14,.port = GPIOB, .pin = 14,   .params = &digOutputParams),
     OUTPUT_MAP_DEF(.outputId = 15,.port = GPIOB, .pin = 15,   .params = &digOutputParams),
+/*--- Port C GPIO Initializations ---*/
+/*--- Port D GPIO Initializations ---*/
+/*--- Port E GPIO Initializations ---*/
 
 
 

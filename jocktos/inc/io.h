@@ -131,7 +131,7 @@ typedef enum {
 typedef enum {
     jockIoPerphNone         = 0b0000,
     jockIoPerphUSART2       = 0b0001,
-} jockIoPerph_t;
+} jockIoPerph;
 
 /* -- Types --------------------------------------------------------------- */
 typedef struct
@@ -140,21 +140,21 @@ typedef struct
     jockIoOutputSpeed   speed;      // speed of digital outputs set
     jockIoOutputType    type;       // push-pull vs open-drain
     jockIoAltf          altf;       // Alternate function   
-    jockIoPerph_t       perph;      // Peripheral to use
+    jockIoPerph         perph;      // Peripheral to use
 } outputParams;
 typedef struct
 {
     jockIoMode      mode;       // Different Input Params from Input, Alternate function, or Analog Mode
     jockIoInputRes  res;        // No resistor, Pull up, or pull down resistor settings
     jockIoAltf      altf;       // Alternate function   
-    jockIoPerph_t   perph;      // Peripheral to use
+    jockIoPerph     perph;      // Peripheral to use
 } inputParams;
 typedef struct 
 {
     uint16_t inputId;
     GPIO_TypeDef *port;
     uint8_t pin;
-    inputParams *params;
+    const inputParams *params;
 }InputMap;
 
 typedef struct 
@@ -162,7 +162,7 @@ typedef struct
     uint16_t outputId;
     GPIO_TypeDef *port;
     uint8_t pin;
-    outputParams *params;
+    const outputParams *params;
 
 }OutputMap;
 
