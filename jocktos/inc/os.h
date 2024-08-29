@@ -29,17 +29,19 @@
 // /** 
 //  * @brief enable / disable ISR wrapper   
 //  */
-// #define CRITICAL_SECTION(primask, ...)          \
-//     primask = __get_PRIMASK();                  \
-//     __disable_irq();                            \
-//     do{                                         \   
-//         __VA_ARGS__                             \
-//     }                                           \
-//     while(0);                                   \
-//     if (primask == 0) {                         \
-//     __enable_irq();                             \
-//     }                                           \
-
+// Below is commented out, even though it seems like its not. I swear
+/*
+ #define CRITICAL_SECTION(primask, ...)          \
+     primask = __get_PRIMASK();                  \
+     __disable_irq();                            \
+     do{                                         \   
+         __VA_ARGS__                             \
+     }                                           \
+     while(0);                                   \
+     if (primask == 0) {                         \
+     __enable_irq();                             \
+     }                                           \
+*/
 /** 
  * @brief Default JOCKTOS configuration
  */
