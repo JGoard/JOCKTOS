@@ -116,7 +116,7 @@
       "args": [
         // "-d",    //Used for Verbose debugging of openocd. Not mandatory
         "-f", 
-        "st_nucleo_f3.cfg",
+        "board/st_nucleo_f3.cfg",
         "-c", 
         "init",
         "-c", 
