@@ -30,8 +30,8 @@
  * \param tcb Pointer to task control block to be monitored.
  */
 static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
-    (*tcb)->stack_usage = 100.0 * (1.0 - ((double)((*tcb)->stack_pointer \
-    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes * sizeof(uintptr_t)));
+    (*tcb)->stack_usage = 100.0 * (1.0 - (sizeof(uintptr_t) * (double)((*tcb)->stack_pointer \
+    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes));
 }
 
 /**
