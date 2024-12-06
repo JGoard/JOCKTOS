@@ -1,4 +1,17 @@
 # JOCKTOS: A ground-up RTOS for ARM-CortexM4 Chipsets
+<div align="center">
+<img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome Badge"/>
+<a href="https://saythanks.io/to/erwin.lejeune15%40gmail.com?style=flat-square"><img src="https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg?style=flat-square" alt="Thx Badge"/></a>
+<img src="https://img.shields.io/static/v1?label=%F0%9F%8C%9F&message=If%20Useful&style=style=flat&color=BC4E99" alt="Star Badge"/></a><br>
+
+<a href="https://github.com/JGoard/JOCKTOS/stargazers"><img src="https://img.shields.io/github/stars/JGoard/JOCKTOS" alt="Stars Badge"/></a>
+<a href="https://github.com/JGoard/JOCKTOS/members"><img src="https://img.shields.io/github/forks/JGoard/JOCKTOS" alt="Forks Badge"/></a>
+<a href="https://github.com/JGoard/JOCKTOS/pulls"><img src="https://img.shields.io/github/issues-pr/JGoard/JOCKTOS" alt="Pull Requests Badge"/></a>
+<a href="https://github.com/JGoard/JOCKTOS/issues"><img src="https://img.shields.io/github/issues/JGoard/JOCKTOS" alt="Issues Badge"/></a>
+<a href="https://github.com/JGoard/JOCKTOS/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/JGoard/JOCKTOS"></a>
+<a href="https://github.com/JGoard/JOCKTOS/blob/master/LICENSE"><img src="https://img.shields.io/github/license/JGoard/JOCKTOS" alt="License Badge"/></a>
+<div align="left">
+
 Welcome to JOCKTOS! This project was created for "fun" by Joshua Goard and Nicholas Schneider, both former colleagues from the Joint NC State University - UNC Asheville Mechatronics Program. JOCKTOS is a fully functional, custom-built RTOS designed for ARM Cortex-M4 chipsets. Whether you're curious about the internals of a real-time operating system, want to make modifications, or need a solid foundation for your embedded project, JOCKTOS is here for you.
 
 Our end-goal has two objectives...
@@ -33,13 +46,38 @@ To get started with JOCKTOS, check out the 'c_based_scheduler branch' and clone 
 With Docker, running a basic emulation of the board we are using should be seamless.
 
 ## Installation & Setup
-To get started with JOCKTOS, follow these steps:
+To get started with JOCKTOS, follow this procedure:
 
+### Tool Installation
+* If using a Windows Host...
+     * Ensure that you have [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) downloaded and enabled for use with docker
+     * [Docker](https://www.docker.com/)
+     * [Visual Studio Code](https://code.visualstudio.com/)
+     * [usbipd](https://github.com/dorssel/usbipd-win) is needed in order to bind usb devices to be used through WSL.
+        * Follow these instructions or else debugging through the docker container will not work as intended. You will still be able to compile software, and use QEMU for container emulation 
+* If using a Linux Host...
+     * [Docker](https://www.docker.com/)
+     * [Visual Studio Code](https://code.visualstudio.com/)
+    
+### Steps for Cloning and Compiling Software
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/JGoard/jocktos.git
    cd jocktos
    docker build -t jocktos:latest .
+This will build you the latest jocktos image located in the root directory of the docker file.
+
+2. **Open Project in VSCode**:
+   * Open the project within VSCode, and install all recommended extensions for use with this project.
+
+3. **Create Docker Instance, and attach VSCode**
+   * Use the VSCode Task *Docker Instance* to create a new docker container.
+   * Now, in the docker extension tab, right-click on the new container and *Attach Visual Studio Code.*
+4. **Compile and Debug SW within docker container**
+   * Wait a few minutes after attaching VSCode to the docker container for proper extension initializations
+   * Reload the window when all extensions are installed.
+5. **Now you are ready to go!**
+   * Run the compile debug task to ensure that your enviroment is indeed setup correctly
 
 ## License
 JOCKTOS is licensed under the MIT License.  See the [LICENSE](https://opensource.org/license/mit) for more information
