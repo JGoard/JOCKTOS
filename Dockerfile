@@ -56,8 +56,8 @@ autoconf \
 texinfo 
 # TODO: remove unneeded directories from installing in src if needed for other packages
 RUN cd ..
+
 #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
-# RUN cp /usr/local/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d/60-openocd.rules 
 RUN /lib/systemd/systemd-udevd --daemon && udevadm control --reload-rules
 
 #OpenOCD talks to the chip through USB, so we need to grant our account access to the FTDI.
