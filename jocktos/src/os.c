@@ -10,6 +10,7 @@
 // Middleware
 #include "stm32f303xe.h"
 #include "core_cm4.h"
+#include "cmsis_gcc.h"
 // Bios
 // Standard C
 #include <stdbool.h>
@@ -47,15 +48,18 @@ void initializeStack(TaskControlBlock* tcb);
 /**
 * \brief pre defined OS task for idle.
 *
-* Infinite while loop.
-* TODO: Figure out how to low power sleep without disabling ISR's
+* This function, idleJOCKTOS, enters an infinite loop where it continuously executes the __WFI instruction, 
+* which puts the CPU into a low-power wait state, waiting for an interrupt to occur. 
+* This function is used as the default idle task for the JOCKTOS kernel.
+* //TODO: Figure out in the future a more aggressive power saving feature
+* \param arg Unused
 */
-void idleTask(void* arg);
+void idleJOCKTOS(void* arg);
 
 /**
  * \brief pre defined OS task to monitor stack usage
  */
-void monitorTask(void* arg);
+void monitorJOCKTOS(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
@@ -68,18 +72,18 @@ TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
         .name="user space `main`");
 
 TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=1024, 
-        .task_handle=monitorTask,
+        .stack_size_bytes=512, 
+        .task_handle=monitorJOCKTOS,
         .name="stack usage monitor");
 
 TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=512,
-        .task_handle=idleTask,
+        .task_handle=idleJOCKTOS,
         .name="default OS idle task");
 
 /* -- Public Functions----------------------------------------------------- */
 
-void jock_createTask(TaskControlBlock* tcb) {
+void jock_os_createTask(TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->task_handle) {
         // TODO: better error handling
@@ -96,33 +100,48 @@ void jock_createTask(TaskControlBlock* tcb) {
     insertTCB(&JOCKTOSScheduler.ready, tcb);
 }
 
-void switchRunningTask(volatile TaskControlBlock** head) {
-    volatile TaskControlBlock* suspended = NULL;
-    if (JOCKTOSScheduler.pending) return;
+void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
+    // If there is a pending context switch, return immediately
+    if (JOCKTOSScheduler.pending)
+        return;
+    // Set the pending flag to indicate that a context switch is pending
     JOCKTOSScheduler.pending = true;
+    // If there is a currently running task
     if (JOCKTOSScheduler.running) {
-        insertTCB(head, JOCKTOSScheduler.running);  
+        // Move the running task to the head of the ready list
+        insertTCB(head, JOCKTOSScheduler.running);
     }
-    suspended = JOCKTOSScheduler.suspended;
+    // Iterate through the suspended tasks
+    volatile TaskControlBlock* suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
-        if (jock_currentTime() >= suspended->delay_ms) {
+        // If the delay time for the task has been reached
+        if (jock_os_currentTime() >= suspended->delay_ms) {
+            // Move the task from the suspended list to the ready list
             moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
+            // Set the state of the task to ready
             suspended->state = READY;
         }
+        // Move to the next task
         suspended = suspended->next;
     }
+    // Trigger the PendSV interrupt to cause a context switch
     TRIGGER_PendSV;
 }
 
-void jock_configure(JocktosConfig* config) {
+void jock_os_configure(JocktosConfig* config) {
+    // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
+    // Initialize the allocator with the allocated memory and the block size specified in the config
     initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
-    if (config->enable_monitor) jock_createTask(&stack_monitor_tcb);
+    // If the monitor is enabled, create a task for the stack usage monitor
+    if (config->enable_monitor) jock_os_createTask(&stack_monitor_tcb);
+    // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
     if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
-    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_createTask(&idle_tcb);
+    // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
+    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_createTask(&idle_tcb);
 }
 
-void jock_run(void) {
+void jock_os_run(void) {
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     /** failed attempt to utilize PSP Thread Mode
     uint32_t initPSP;
@@ -135,8 +154,21 @@ void jock_run(void) {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     NVIC_SetPriority(PendSV_IRQn, 0xFFU);
     // Configure SysTick to generate an interrupt every 1 ms 
-    sysTickConfiguration(127); // TODO: where tf does 127 come from...
+    SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
+}
+uint32_t jock_os_enterCriticalSection(void){
+    uint32_t  primask = 0;
+    ///<TODO:Need to figure out why __get__PRIMASK crashes PENDSV Handler
+    primask = __get_PRIMASK(); 
+    __disable_irq();
+    return primask;
+}
+
+void jock_os_leaveCriticalSection(uint32_t primask){
+    if (primask == 0) {
+        __enable_irq();
+    }
 }
 
 /* -- Private Functions --------------------------------------------------- */
@@ -148,25 +180,25 @@ void initializeStack(TaskControlBlock* tcb) {
     // define tasks initial exception return stack
     uintptr_t* init_stack_ptr;
     //  - non-critical registers are initialized to their index
-    *(--stack_ptr) = (1U << 24);                ///<   Set thumb state bit in EPSR
-    *(--stack_ptr) = (uintptr_t)tcb->task_handle; ///<   Set PC to task function handle
-    *(--stack_ptr) = 0xFFFFFFF9U;               ///<   Set LR  register for MSP thread mode
-    // *(--stack_ptr) = 0xFFFFFFFDU;               ///<   Set LR  register for PSP thread mode
-    *(--stack_ptr) = 0x0000000CU;               ///<   Set R12 register deafult to its index
-    *(--stack_ptr) = 0x00000003U;               ///<   Set R3  register deafult to its index
-    *(--stack_ptr) = 0x00000002U;               ///<   Set R2  register deafult to its index
-    *(--stack_ptr) = 0x00000001U;               ///<   Set R1  register deafult to its index
-    *(--stack_ptr) = (uintptr_t)tcb->task_arg;   ///<   Set R0  register to the argument for the tasks function
-    init_stack_ptr = stack_ptr - 1;               ///<   Catch top of initial post-exception stack
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   ISR push / pop "working stack pointer" as R7
-    *(--stack_ptr) = 0x0000000BU;               ///<   Set R11 register deafult to its index
-    *(--stack_ptr) = 0x0000000AU;               ///<   Set R10 register deafult to its index
-    *(--stack_ptr) = 0x00000009U;               ///<   Set R9  register deafult to its index
-    *(--stack_ptr) = 0x00000008U;               ///<   Set R8  register deafult to its index
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;   ///<   Set R7 to "working stack pointer"
-    *(--stack_ptr) = 0x00000006U;               ///<   Set R6  register deafult to its index
-    *(--stack_ptr) = 0x00000005U;               ///<   Set R5  register deafult to its index
-    *(--stack_ptr) = 0x00000004U;               ///<   Set R4  register deafult to its index
+    *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
+    *(--stack_ptr) = (uintptr_t)tcb->task_handle;   ///<   Set PC to task function handle
+    *(--stack_ptr) = 0xFFFFFFF9U;                   ///<   Set LR  register for MSP thread mode
+    // *(--stack_ptr) = 0xFFFFFFFDU;                ///<   Set LR  register for PSP thread mode
+    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register deafult to its index
+    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register deafult to its index
+    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register deafult to its index
+    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)tcb->task_arg;      ///<   Set R0  register to the argument for the tasks function
+    init_stack_ptr = stack_ptr - 1;                 ///<   Catch top of initial post-exception stack
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   ISR push / pop "working stack pointer" as R7
+    *(--stack_ptr) = 0x0000000BU;                   ///<   Set R11 register deafult to its index
+    *(--stack_ptr) = 0x0000000AU;                   ///<   Set R10 register deafult to its index
+    *(--stack_ptr) = 0x00000009U;                   ///<   Set R9  register deafult to its index
+    *(--stack_ptr) = 0x00000008U;                   ///<   Set R8  register deafult to its index
+    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   Set R7 to "working stack pointer"
+    *(--stack_ptr) = 0x00000006U;                   ///<   Set R6  register deafult to its index
+    *(--stack_ptr) = 0x00000005U;                   ///<   Set R5  register deafult to its index
+    *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register deafult to its index
     tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + 8) {
@@ -177,15 +209,30 @@ void initializeStack(TaskControlBlock* tcb) {
     }
 }
 
+/**
+ * @brief This is the SysTick Interrupt Service Routine (ISR).
+ *
+ * This function is called by the SysTick timer every millisecond. It increments
+ * the tickCount variable in the JOCKTOS scheduler, and then calls the
+ * switchRunningTask function to check if any tasks are ready to run. If there
+ * are tasks ready to run, this function will switch to the highest priority task
+ * and begin executing it.
+ *
+ * @return None
+ */
 void SysTick_Handler(void) {
-    CRITICAL_SECTION(
-        JOCKTOSScheduler.tick_count++;
-        switchRunningTask(&JOCKTOSScheduler.ready);
-   );
+    uint32_t primask;
+    primask = jock_os_enterCriticalSection();
+    JOCKTOSScheduler.tick_count++;
+    jock_os_switchRunningTask(&JOCKTOSScheduler.ready);
+    jock_os_leaveCriticalSection(primask);
+    
 }
 
 void PendSV_Handler(void) {
-    CRITICAL_SECTION(
+    uint32_t primask;
+    // primask = __get_PRIMASK();
+    __disable_irq();
         if (JOCKTOSScheduler.running) {
             // --------------------------------------------------------------------------------------
             // push additional registers onto current process stack and store process stack pointer
@@ -195,6 +242,7 @@ void PendSV_Handler(void) {
             __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
             // --------------------------------------------------------------------------------------
         }
+
         // pop off of ready task list into running
         JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
         JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
@@ -209,23 +257,27 @@ void PendSV_Handler(void) {
         // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
         __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
         // ------------------------------------------------------------------------------------------
-    );
-}
 
-void monitorTask(void* arg) {
-    volatile TaskControlBlock* head = NULL;
-    TaskState monitor_scope = RUNNING;
-    while(true) {
-        switch (monitor_scope) {
-            case READY: {
-                head = JOCKTOSScheduler.ready;
-                monitor_scope = RUNNING;
-                break;
-            }
-            case RUNNING: {
-                head = JOCKTOSScheduler.running;
-                monitor_scope = SUSPENDED;
-                break;
+    // if(primask == 0) {
+        __enable_irq();
+    // }
+    }
+
+void monitorJOCKTOS(void* arg) {
+    volatile TaskControlBlock* head = NULL;       // Pointer to the current task
+    TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
+    while(true) {                                   // Loop indefinitely
+
+        switch (monitor_scope) {                     // Switch on the current list to monitor
+            case READY: {                          // If the ready list is being monitored
+                head = JOCKTOSScheduler.ready;      // Set the head pointer to the ready list
+                monitor_scope = RUNNING;            // Set the monitor_scope to eRUNNING
+                break;                              // Break out of the switch statement
+            }   
+            case RUNNING: {                        // If the running list is being monitored
+                head = JOCKTOSScheduler.running;    // Set the head pointer to the running list
+                monitor_scope = SUSPENDED;          // Set the monitor_scope to eSUSPENDED
+                break;                              // Break out of the switch statement
             }
             default: {
                 head = JOCKTOSScheduler.suspended;
@@ -240,7 +292,62 @@ void monitorTask(void* arg) {
     }
 }
 
-void idleTask(void* arg) {
-    while(true) {}
+
+void idleJOCKTOS(void* arg) {
+  /* Disable interrupts to make sure that the busy flag does not get 
+     modified between the check in the while condition and the system
+     sleep */
+    uint32_t irq_flag = UINT32_MAX;
+
+    while (1) {
+    //   /*
+    //    * Disable interrupts to make sure that the busy flag does not get
+    //    * modified between the check in the while condition and the system
+    //    * sleep.
+    //    */
+        irq_flag = jock_os_enterCriticalSection();
+
+    //   // Check if the busy flag has been set
+
+      if (irq_flag == 0) {
+    //     /* 
+    //     * __DSB stands for Data Synchronization Barrier. It ensures that all memory
+    //     * accesses before it are completed before any memory accesses after it start.
+    //     * Here, we use __DSB to ensure that all memory accesses before it are
+    //     * completed before any memory accesses after it start.
+    //     */
+        // __DSB();
+
+    //     /*
+    //     *__WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
+    //     into a low-power state, where it waits for an interrupt to occur before waking up and
+    //     executing the interrupt handler. This is useful for power saving, as it consumes very
+    //     little power when the processor is in this state.
+    //     */
+        __WFI();
+      }
+
+    //     // Enable interrupts again
+        jock_os_leaveCriticalSection(irq_flag);
+
+    // // If the busy flag has been set, exit the loop
+      if (irq_flag != 0) {
+        break;
+      }
+
+    // /*
+    //  * __ISB stands for Instruction Synchronization Barrier.
+    //  * It is an ARM instruction that flushes the pipeline in the processor,
+    //  * ensuring that all instructions before it are completed before any
+    //  * instructions after it are started.
+    //  *
+    //  * We use __ISB to flush the pipeline in the processor, so that all
+    //  * instructions before it are completed before any instructions after
+    //  * it are started.
+    //  */
+      __ISB();      ///<TODO: Is this necessary?
+    }
     // TODO: Figure out how to low power
 }
+
+

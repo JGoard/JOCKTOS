@@ -7,6 +7,7 @@
 // Jocktos
 #include "tcb.h"
 // Middleware
+#include "cmsis_gcc.h"
 // Bios
 // Standard C
 #include <stdint.h>
@@ -18,12 +19,29 @@
 /** 
  * @brief enable / disablt ISR wrapper
  */
-#define CRITICAL_SECTION(...)                  \
-    __asm volatile ("cpsid i" : : : "memory"); \
-    __VA_ARGS__                                \
-    __asm volatile ("cpsie i" : : : "memory"); \
+#define CRITICAL_SECTION(primask, ...)          \
+    __disable_irq();                            \
+        __VA_ARGS__                             \
+    __enable_irq();                             \
 
 
+///<TODO:Need to figure out why __get__PRIMASK crashes PENDSV Handler
+// /** 
+//  * @brief enable / disable ISR wrapper   
+//  */
+// Below is commented out, even though it seems like its not. I swear
+/*
+ #define CRITICAL_SECTION(primask, ...)          \
+     primask = __get_PRIMASK();                  \
+     __disable_irq();                            \
+     do{                                         \   
+         __VA_ARGS__                             \
+     }                                           \
+     while(0);                                   \
+     if (primask == 0) {                         \
+     __enable_irq();                             \
+     }                                           \
+*/
 /** 
  * @brief Default JOCKTOS configuration
  */
@@ -37,9 +55,31 @@
 }
 /* -- Types --------------------------------------------------------------- */
 
-/** 
+/**
  * @brief Cortex-M4 Context Control Block
+ *
+ * The T_Scheduler struct is used to maintain the state of the scheduler.
+ * It contains pointers to the currently running task, a singly linked list
+ * of tasks ready to run, and a singly linked list of suspended tasks. The
+ * tickCount member is used to keep track of the number of ticks since the
+ * scheduler was last run.
+ *
+ * The pending member is used to signal that a context switch is pending.
+ * This allows the scheduler to be called from interrupt handlers.
+ *
+ * The running member is a pointer to the T_TaskControlBlock that is
+ * currently running. It is used to modify the state of the current task,
+ * such as changing its priority or suspending it.
+ *
+ * The ready and suspended members are pointers to the head of the singly
+ * linked lists of tasks ready to run and suspended, respectively. These
+ * are used to modify the state of these tasks.
+ *
+ * The T_Scheduler struct is defined as a volatile, as it is used in ISRs
+ * to signal that a context switch is pending. This ensures that the
+ * compiler does not optimize away reads and writes to this struct.
  */
+
 typedef struct {
     volatile bool pending;
     volatile uint32_t tick_count;
@@ -49,7 +89,19 @@ typedef struct {
 } Scheduler;
 
 /**
- * @brief Configuration settings for JOCKTOS allocator and built in tasks
+ * @brief This structure is used to configure the JOCKTOS library.  It is passed to the
+ *        `Jocktos_Init` function and is used to configure how the library operates.
+ * 
+ * @details This structure is used to configure the JOCKTOS library.  It is passed to
+ *          the `Jocktos_Init` function and is used to configure how the library operates.
+ *          The configuration options include enabling or disabling the JOCKTOS
+ *          monitoring task, enabling or disabling the idle task, and enabling or
+ *          disabling the main task.  The `allocatorBlockSize` option is used to
+ *          configure the size of the memory blocks that are allocated for the
+ *          tasks' stacks.  If this size is too small then the tasks will not be
+ *          able to run and the library will not work properly.  This value should
+ *          be set to a reasonable value based on the size of the tasks and the
+ *          amount of memory available on the system.
  */
 typedef struct {
     bool enable_monitor;         ///< Enable or disable monitoring
@@ -72,7 +124,7 @@ extern Scheduler JOCKTOSScheduler;
  *
  * \param tcb Pointer to the task control block representing the new task.
  */
-void jock_createTask(TaskControlBlock* tcb);
+void jock_os_createTask(TaskControlBlock* tcb);
 
 /**
  * \brief Switch the currently running task
@@ -81,12 +133,12 @@ void jock_createTask(TaskControlBlock* tcb);
  *
  * \param head Pointer to destination for current running task.
  */
-void switchRunningTask(volatile TaskControlBlock** head);
+void jock_os_switchRunningTask(volatile TaskControlBlock** head);
 
 /**
  * \brief configure / enable built in OS tasks
  */
-void jock_configure(JocktosConfig* config);
+void jock_os_configure(JocktosConfig* config);
 
 /**
  * \brief Enable scheduler and context switching ISR's
@@ -94,7 +146,7 @@ void jock_configure(JocktosConfig* config);
  * Sets the priorities and enables systick and pendSV handlers
  *
  */
-void jock_run(void);
+void jock_os_run(void);
 
 /**
  * \brief returns the current OS tick count
@@ -102,6 +154,32 @@ void jock_run(void);
  * unsigned 32 bit millisecond counter
  * 
  */
-static inline uint32_t jock_currentTime() { return JOCKTOSScheduler.tick_count; }
+static inline uint32_t jock_os_currentTime() { return JOCKTOSScheduler.tick_count; }
+
+/**
+ * \brief Lock interrupts to start a critical section.
+ *
+ * When used with jock_os_leaveCriticalSection() this function starts a critical section that
+ * works properly even if nested in another critical section because it reads
+ * the PRIMASK value so it can be restored.
+ *
+ * @return the priority mask (PRIMASK) register value upon entry
+ */
+uint32_t jock_os_enterCriticalSection(void); ///<TODO: Maybe we can expose this
+
+/**
+ *  \brief Unlock interrupts to end a critical section.
+ *
+ * When used with jock_os_enterCriticalSection() this function ends a critical section that works
+ * properly even if nested in another critical section because it uses the
+ * previous interrupt locking state (defined by PRIMASK) to selectively unlock
+ * interrupts.
+ *
+ * @param primask   The previous priority mask (PRIMASK) register value as
+ *                  returned by jock_os_enterCriticalSection().
+ * @return none
+ */
+void jock_os_leaveCriticalSection(uint32_t primask);
 
 #endif /* _OS_H_ */
+

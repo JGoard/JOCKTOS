@@ -31,7 +31,7 @@
                 "__CC_ARM"
 			],
 			"intelliSenseMode": "gcc-x64",
-			"compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc",
+            "compilerPath": "${env:ARMGCC_DIR}/arm-none-eabi-gcc",
 			"compilerArgs": [
 				"-mcpu=cortex-m4",
 				"-mthumb",

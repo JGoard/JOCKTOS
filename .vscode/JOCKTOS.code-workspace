@@ -26,7 +26,13 @@
       "settings": {
         "files.associations": {
           "*.html": "html",
-          "*.eol": "json"
-        }
+          "*.eol": "json",
+          "core_cm4.h": "c",
+          "cmsis_gcc.h": "c",
+          "stdlib.h": "c",
+          "errno.h": "c"
+        },
+        "stm32-for-vscode.openOCDPath": "E:\\EMBEDDEDTOOLCHAINS\\OPENOCD\\BIN\\OPENOCD.EXE",
+        "stm32-for-vscode.armToolchainPath": "D:\\GNU ARM EMBEDDED TOOLCHAIN10 2021.10BINARM-NONE-EABI-GDB.EXE\\BIN"
       }
 }

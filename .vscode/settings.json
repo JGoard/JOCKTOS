@@ -2,5 +2,8 @@
     "files.associations": {
         "main.h": "c",
         "stdint.h": "c"
-    }
+    },
+    "stm32-for-vscode.openOCDPath": "/usr/bin/openocd",
+    "stm32-for-vscode.makePath": "/usr/bin/make",
+    "cortex-debug.armToolchainPath": "/usr/bin"
 }

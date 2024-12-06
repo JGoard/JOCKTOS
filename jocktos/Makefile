@@ -13,7 +13,11 @@ src/os.c \
 src/allocator.c \
 src/timers.c \
 src/tcb.c \
-src/synchro.c
+src/synchro.c \
+src/io.c \
+src/io_list.c \
+src/comm.c \
+src/sys.c
 
 C_INCLUDES = \
 -ICubeMX/ \
