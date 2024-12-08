@@ -1,5 +1,7 @@
-FROM ubuntu:23.10
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND noninteractive
 
+# place timezone data /etc/timezone
 # update and install basic tools
 RUN apt-get update && \
     apt-get install -y \

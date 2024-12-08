@@ -2,6 +2,26 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Attach USB Nucleo",
+      "type": "shell",
+      "command": "usbipd",
+      "args": [
+        "attach",    
+        "--wsl",
+        "--hardware-id",
+        "0483:374b",
+      ],
+      "dependsOn":[
+        "Bind USB Device"
+      ],
+      "options": {
+        "statusbar": {
+        "id": "gear",
+        "color": "terminal.ansiGreen"
+        }      
+      }
+    },
+    {
       "label": "Docker Instance",
       "type": "shell",
       "command": "docker",
@@ -14,7 +34,6 @@
         "--privileged",
         "jocktos:latest",
         "sh"
-      
       ],
       "dependsOn":[
         "Bind USB Device",
@@ -26,7 +45,8 @@
       },
       "options": {
         "statusbar": {
-          "color": "#09fa05"
+          "color": "#09fa05",
+          "hide": true,
         }
       },
       "group": {
@@ -63,7 +83,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && make clean && make debug"],
+        "cd ${workspaceFolder}/jocktos && make clean && make release"],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
@@ -94,27 +114,11 @@
       }
     },
     {
-      "label": "Attach USB Device",
-      "type": "shell",
-      "command": "usbipd",
-      "args": [
-        "attach",    
-        "--wsl",
-        "--hardware-id",
-        "0483:374b",
-      ],
-      "options": {
-        "statusbar": {
-          "hide" : true
-        }      
-      }
-    },
-    {
       "label": "Flash Device Docker",
       "type": "shell",
       "command": "openocd",
       "args": [
-        // "-d",    //Used for Verbose debugging of openocd. Not mandatory
+        "-d",    //Used for Verbose debugging of openocd. Not mandatory
         "-f", 
         "board/st_nucleo_f3.cfg",
         "-c", 
@@ -122,7 +126,7 @@
         "-c", 
         "reset init",
         "-c", 
-        "flash write_image erase /jocktos/jocktos/build/debug/firmware.elf",
+        "flash write_image erase jocktos/build/debug/firmware.elf",
         "-c", 
         "shutdown"
       ],
