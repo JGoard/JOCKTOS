@@ -67,17 +67,20 @@ To get started with JOCKTOS, follow this procedure:
    docker build -t jocktos:latest .
 This will build you the latest jocktos image located in the root directory of the docker file.
 
-2. **Open Project in VSCode**:
-   * Open the project within VSCode, and install all recommended extensions for use with this project.
+2. **Open Project in VSCode and Configure USB Device**:
+   * Open the project within VSCode, and install all recommended extensions.
+   * If using a Windows Host: Use the 'Attach USB Nucleo' task to have usbipd bind to your usb device for use with a container/wsl. The VID:PID combo may differ depending on your Cortex-M4 device.
 
-3. **Create Docker Instance, and attach VSCode**
-   * Use the VSCode Task *Docker Instance* to create a new docker container.
-   * Now, in the docker extension tab, right-click on the new container and *Attach Visual Studio Code.*
+3. **Use Devcontainers to launch new Container**
+   * Select the bottom left remote window button.
+   * Select 'Reopen in Container' from the drop down menu
+   * The window should reload and the container should not be launching/
 4. **Compile and Debug SW within docker container**
-   * Wait a few minutes after attaching VSCode to the docker container for proper extension initializations
-   * Reload the window when all extensions are installed.
+   * Wait a few minutes after attaching VSCode to the docker container for proper extension initializations, reload the window if prompted for the cortex debugger.
 5. **Now you are ready to go!**
    * Run the compile debug task to ensure that your enviroment is indeed setup correctly
+
+Please Note: USBIPD and WSL are still very finicky. If you disconnect the USB device, you will need to relaunch your container, and rebind on the host enviroment if you are using windows.
 
 ## License
 JOCKTOS is licensed under the MIT License.  See the [LICENSE](https://opensource.org/license/mit) for more information
