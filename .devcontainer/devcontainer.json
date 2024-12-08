@@ -31,12 +31,14 @@
 				"actboy168.tasks",
 				"webfreak.debug"
 			]
-			
 		}
 	},
-	"runArgs": ["--privileged","-v", "-i",         "--expose=3333",
-	"--expose=4444",
-	"--expose=6666"]
+	"runArgs": ["--privileged",
+				"-v", 
+				"-i", 
+				"--expose=3333",
+				"--expose=4444",
+				"--expose=6666"]
 
 	
 

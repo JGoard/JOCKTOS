@@ -14,7 +14,6 @@
         "--privileged",
         "jocktos:latest",
         "sh"
-      
       ],
       "dependsOn":[
         "Bind USB Device",
@@ -114,7 +113,7 @@
       "type": "shell",
       "command": "openocd",
       "args": [
-        // "-d",    //Used for Verbose debugging of openocd. Not mandatory
+        "-d",    //Used for Verbose debugging of openocd. Not mandatory
         "-f", 
         "board/st_nucleo_f3.cfg",
         "-c", 
