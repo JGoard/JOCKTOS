@@ -34,7 +34,9 @@
 			
 		}
 	},
-	// "runArgs": ["--privileged","-v"]
+	"runArgs": ["--privileged","-v", "-i",         "--expose=3333",
+	"--expose=4444",
+	"--expose=6666"]
 
 	
 
