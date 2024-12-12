@@ -55,7 +55,7 @@ void testInsertTCB() {
         volatile TaskControlBlock* head = NULL;
         volatile TaskControlBlock tcb = TASKCONTROLBLOCK_DEF();
 
-        insertTCB(&head, &tcb);
+        _insert_tcb(&head, &tcb);
         ASSERT_EQUAL_PTR(head, &tcb, "insertion at head of empty list failed");
         ASSERT_EQUAL_PTR(head->next, NULL, "tail of list was modified");
 
@@ -70,7 +70,7 @@ void testInsertTCB() {
         volatile TaskControlBlock* head = &tcb1;
         tcb1.next = &tcb0;
         
-        insertTCB(&head, &tcb2);
+        _insert_tcb(&head, &tcb2);
         ASSERT_EQUAL_PTR(head, &tcb2, "higher priority TCB not assigned to head");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "previous head not assigned to next");
         ASSERT_EQUAL_PTR(head->next->next, &tcb0, "order of TCBs not preserved");
@@ -87,7 +87,7 @@ void testInsertTCB() {
         volatile TaskControlBlock* head = &tcb2;
         tcb2.next = &tcb0;
 
-        insertTCB(&head, &tcb1);
+        _insert_tcb(&head, &tcb1);
         ASSERT_EQUAL_PTR(head, &tcb2, "higher priority TCB not assigned to head");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "previous head not assigned to next");
         ASSERT_EQUAL_PTR(head->next->next, &tcb0, "order of TCBs not preserved");
@@ -105,7 +105,7 @@ void testInsertTCB() {
         head = &tcb2;
         tcb2.next = &tcb1;
 
-        insertTCB(&head, &tcb0);
+        _insert_tcb(&head, &tcb0);
         ASSERT_EQUAL_PTR(head, &tcb2, "higher priority TCB not assigned to head");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "order of TCBs not preserved");
         ASSERT_EQUAL_PTR(head->next->next, &tcb0, "lower priority TCB not assigned to tail");
@@ -124,7 +124,7 @@ void testInsertTCB() {
         tcb2.next = &tcb1;
         tcb1.next = &tcb0;
 
-        insertTCB(&head, &tcb3);
+        _insert_tcb(&head, &tcb3);
         ASSERT_EQUAL_PTR(head, &tcb2, "head modified by insertion of duplicate TCB priority");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "order modified by insertion of duplicate TCB priority");
         ASSERT_EQUAL_PTR(head->next->next, &tcb3, "duplicate TCB placement does not match FIFO rule");
@@ -138,7 +138,7 @@ void testInsertTCB() {
         volatile TaskControlBlock tcb0 = TASKCONTROLBLOCK_DEF();
         volatile TaskControlBlock* head = &tcb0;
 
-        insertTCB(&head, NULL);
+        _insert_tcb(&head, NULL);
         ASSERT_EQUAL_PTR(head, &tcb0, "NULL TCB not assigned to head");
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_tcb, 1, "invalid TCB error not logged");
         JOCKTOS_TCBError.invalid_tcb = 0;
@@ -150,7 +150,7 @@ void testInsertTCB() {
         volatile TaskControlBlock** head_ref = NULL;
         volatile TaskControlBlock tcb = TASKCONTROLBLOCK_DEF();
 
-        insertTCB(head_ref, &tcb);
+        _insert_tcb(head_ref, &tcb);
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_list_head, 1, "invalid list head error not logged");
         JOCKTOS_TCBError.invalid_list_head = 0;
 
@@ -164,8 +164,8 @@ void testInsertTCB() {
         volatile TaskControlBlock* head = NULL;
         volatile TaskControlBlock tcb = TASKCONTROLBLOCK_DEF();
 
-        insertTCB(&head, &tcb);
-        insertTCB(&head, &tcb);
+        _insert_tcb(&head, &tcb);
+        _insert_tcb(&head, &tcb);
 
         while (head != NULL) {
             if (++overflow_guard > 100) {
@@ -183,7 +183,7 @@ void testInsertTCB() {
     } CASE_NOT_IMPLEMENTED;
 }
 
-void testRemoveTCB() {
+void testRe_move_tcb() {
 
     TEST_CASE("removal of head of list") {
 
@@ -195,7 +195,7 @@ void testRemoveTCB() {
         tcb2.next = &tcb1;
         tcb1.next = &tcb0;
 
-        removeTCB(&head, &tcb2);
+        _remove_tcb(&head, &tcb2);
         ASSERT_EQUAL_PTR(head, &tcb1, "TCB not removed from head");
         ASSERT_EQUAL_PTR(head->next, &tcb0, "TCB order not preserved");
         ASSERT_EQUAL_PTR(head->next->next, NULL, "TCB tail modified");
@@ -212,7 +212,7 @@ void testRemoveTCB() {
         tcb2.next = &tcb1;
         tcb1.next = &tcb0;
 
-        removeTCB(&head, &tcb1);
+        _remove_tcb(&head, &tcb1);
         ASSERT_EQUAL_PTR(head, &tcb2, "TCB not removed from head");
         ASSERT_EQUAL_PTR(head->next, &tcb0, "TCB order not preserved");
         ASSERT_EQUAL_PTR(head->next->next, NULL, "TCB tail modified");
@@ -229,7 +229,7 @@ void testRemoveTCB() {
         tcb2.next = &tcb1;
         tcb1.next = &tcb0;
 
-        removeTCB(&head, &tcb0);
+        _remove_tcb(&head, &tcb0);
         ASSERT_EQUAL_PTR(head, &tcb2, "head modified when tail removed");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "TCB order not preserved");
         ASSERT_EQUAL_PTR(head->next->next, NULL, "TCB tail modified");
@@ -245,7 +245,7 @@ void testRemoveTCB() {
         volatile TaskControlBlock* head = &tcb2;
         tcb2.next = &tcb1;
 
-        removeTCB(&head, &tcb0);
+        _remove_tcb(&head, &tcb0);
         ASSERT_EQUAL_PTR(head, &tcb2, "head modified when removing non-existent TCB");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "TCB order not preserved");
         ASSERT_EQUAL_PTR(head->next->next, NULL, "TCB tail modified");
@@ -265,7 +265,7 @@ void testRemoveTCB() {
         tcb2.next = &tcb1;
         tcb1.next = &tcb0;
 
-        removeTCB(&head, NULL);
+        _remove_tcb(&head, NULL);
         ASSERT_EQUAL_PTR(head, &tcb2, "head modified when removing NULL TCB");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "TCB order not preserved");
         ASSERT_EQUAL_PTR(head->next->next, &tcb0, "TCB order not preserved");
@@ -281,7 +281,7 @@ void testRemoveTCB() {
         volatile TaskControlBlock tcb0 = TASKCONTROLBLOCK_DEF(.priority = 0);
         volatile TaskControlBlock* head = NULL;
 
-        removeTCB(&head, &tcb0);
+        _remove_tcb(&head, &tcb0);
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_list_head, 1, "invalid list head error not logged");
         JOCKTOS_TCBError.invalid_list_head = 0;
 
@@ -298,7 +298,7 @@ void testUpdateTCB() {
         volatile TaskControlBlock* head = &tcb1;
         tcb1.next = &tcb0;
 
-        updateTCB(&head, &tcb0, 2);
+        _update_tcb(&head, &tcb0, 2);
         ASSERT_EQUAL_INT(tcb0.priority, 2, "TCB priority not updated");
         ASSERT_EQUAL_PTR(head, &tcb0, "head modified when updating TCB priority");
         ASSERT_EQUAL_PTR(head->next, &tcb1, "TCB order not preserved");
@@ -311,11 +311,11 @@ void testUpdateTCB() {
         volatile TaskControlBlock* head = NULL;
         volatile TaskControlBlock tcb0 = TASKCONTROLBLOCK_DEF();
 
-        updateTCB(&head, &tcb0, 1);
+        _update_tcb(&head, &tcb0, 1);
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_list_head, 1, "invalid list head error not logged");
         JOCKTOS_TCBError.invalid_list_head = 0;
 
-        updateTCB(NULL, &tcb0, 1);
+        _update_tcb(NULL, &tcb0, 1);
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_list_head, 1, "invalid list head error not logged");
         JOCKTOS_TCBError.invalid_list_head = 0;
 
@@ -326,7 +326,7 @@ void testUpdateTCB() {
         volatile TaskControlBlock tcb0 = TASKCONTROLBLOCK_DEF();
         volatile TaskControlBlock* head = &tcb0;
 
-        updateTCB(&head, NULL, 1);
+        _update_tcb(&head, NULL, 1);
         ASSERT_EQUAL_PTR(head, &tcb0, "head modified when updating NULL TCB");
 
         ASSERT_EQUAL_INT(JOCKTOS_TCBError.invalid_tcb, 1, "invalid TCB error not logged");
@@ -337,7 +337,7 @@ void testUpdateTCB() {
 
 void testMoveTCB() {
 
-    TEST_CASE("moveTCB between valid lists") {
+    TEST_CASE("_move_tcb between valid lists") {
 
         volatile TaskControlBlock tcb0 = TASKCONTROLBLOCK_DEF(.priority = 0);
         volatile TaskControlBlock tcb1 = TASKCONTROLBLOCK_DEF(.priority = 1);
@@ -350,7 +350,7 @@ void testMoveTCB() {
         tcb1.next = &tcb0;
         tcb3.next = &tcb2;
 
-        moveTCB(&head0, &tcb0, &head1);
+        _move_tcb(&head0, &tcb0, &head1);
         ASSERT_EQUAL_PTR(head0, &tcb1, "source list head modified when moving TCB");
         ASSERT_NOT_EQUAL_PTR(head0->next, &tcb0, "TCB not removed from source");
 
@@ -365,7 +365,7 @@ void testMoveTCB() {
 int main(void) {
     TEST_EVAL(testCreateTCB);
     TEST_EVAL(testInsertTCB);
-    TEST_EVAL(testRemoveTCB);
+    TEST_EVAL(testRe_move_tcb);
     TEST_EVAL(testUpdateTCB);
     TEST_EVAL(testMoveTCB);
     return testGetStatus();

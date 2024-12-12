@@ -34,7 +34,7 @@ TCBError JOCKTOS_TCBError = {0};
  *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
  *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
  */
-void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
+void _insert_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
     if (head == NULL) {
         JOCKTOS_TCBError.invalid_list_head++;
         return;
@@ -68,7 +68,7 @@ void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
  *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
  *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
  */
-void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
+void _remove_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb) {
     // catch and log invalid linked list head
     if (head == NULL || *head == NULL) {
         JOCKTOS_TCBError.invalid_list_head++;
@@ -106,7 +106,7 @@ void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
  *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
  *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
  */
-void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb, uint8_t priority) {
+void _update_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb, uint8_t priority) {
     // catch and log invalid linked list head
     if (head == NULL ||*head == NULL) {
         JOCKTOS_TCBError.invalid_list_head++;
@@ -118,9 +118,9 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
         return;
     }
     if (tcb->priority == priority) return;
-    removeTCB(head, tcb);
+    _remove_tcb(head, tcb);
     tcb->priority = priority;
-    insertTCB(head, tcb);
+    _insert_tcb(head, tcb);
 }
 
 /**
@@ -132,7 +132,7 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
  *  - If the linked list head is NULL, the function logs an invalid_list_head error and returns with no action.
  *  - If the TaskControlBlock pointer is NULL, the function logs an invalid_tcb error and returns with no action.
  */
-void moveTCB(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination) {
+void _move_tcb(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination) {
     // catch and log invalid linked list head
     if (source == NULL || destination == NULL) {
         JOCKTOS_TCBError.invalid_list_head++;
@@ -143,8 +143,8 @@ void moveTCB(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb,
         JOCKTOS_TCBError.invalid_tcb++;
         return;
     }
-    removeTCB(source, tcb);
-    insertTCB(destination, tcb);
+    _remove_tcb(source, tcb);
+    _insert_tcb(destination, tcb);
 }
 
 /* -- Private Functions --------------------------------------------------- */

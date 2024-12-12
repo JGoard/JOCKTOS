@@ -50,7 +50,7 @@ typedef struct {
  * 
  * @param lock Pointer to the semaphore to be taken.
  */
-void jock_synchro_takeSempahore(Semaphore* lock);
+void jock_synchro_take_sempahore(Semaphore* lock);
 
 /**
  * @brief Gives a semaphore.
@@ -62,7 +62,7 @@ void jock_synchro_takeSempahore(Semaphore* lock);
  * 
  * @param lock Pointer to the semaphore to be given.
  */
-void jock_synchro_giveSempahore(Semaphore* lock);
+void jock_synchro_give_sempahore(Semaphore* lock);
 
 /**
  * @brief Suspends the current running task for a fixed amount of time.

@@ -83,24 +83,24 @@ TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
 
 /* -- Public Functions----------------------------------------------------- */
 
-void jock_os_createTask(TaskControlBlock* tcb) {
+void jock_os_install_task(TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->task_handle) {
         // TODO: better error handling
         JOCKTOS_TCBError.invalid_task_handle++;
         return;
     }
-    tcb->stack_overflow = (uintptr_t*)allocate(&allocator, tcb->stack_size_bytes);
+    tcb->stack_overflow = (uintptr_t*)_allocate(&allocator, tcb->stack_size_bytes);
     if (!tcb->stack_overflow) {
         // TODO: better error handling
         JOCKTOS_TCBError.failed_to_allocate++;
         return;
     }
     initializeStack(tcb);
-    insertTCB(&JOCKTOSScheduler.ready, tcb);
+    _insert_tcb(&JOCKTOSScheduler.ready, tcb);
 }
 
-void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
+void jock_os_switch_running_task(volatile TaskControlBlock** head) {
     // If there is a pending context switch, return immediately
     if (JOCKTOSScheduler.pending)
         return;
@@ -109,15 +109,15 @@ void jock_os_switchRunningTask(volatile TaskControlBlock** head) {
     // If there is a currently running task
     if (JOCKTOSScheduler.running) {
         // Move the running task to the head of the ready list
-        insertTCB(head, JOCKTOSScheduler.running);
+        _insert_tcb(head, JOCKTOSScheduler.running);
     }
     // Iterate through the suspended tasks
     volatile TaskControlBlock* suspended = JOCKTOSScheduler.suspended;
     while (suspended != NULL) {
         // If the delay time for the task has been reached
-        if (jock_os_currentTime() >= suspended->delay_ms) {
+        if (jock_os_get_time() >= suspended->delay_ms) {
             // Move the task from the suspended list to the ready list
-            moveTCB(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
+            _move_tcb(&JOCKTOSScheduler.suspended, suspended, &JOCKTOSScheduler.ready);
             // Set the state of the task to ready
             suspended->state = READY;
         }
@@ -132,13 +132,13 @@ void jock_os_configure(JocktosConfig* config) {
     // Allocate memory for the allocator
     void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
-    initAllocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
+    _init_allocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
-    if (config->enable_monitor) jock_os_createTask(&stack_monitor_tcb);
+    if (config->enable_monitor) jock_os_install_task(&stack_monitor_tcb);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
-    if (config->enable_main) insertTCB(&JOCKTOSScheduler.running, &usr_main_tcb);
+    if (config->enable_main) _insert_tcb(&JOCKTOSScheduler.running, &usr_main_tcb);
     // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
-    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_createTask(&idle_tcb);
+    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_install_task(&idle_tcb);
 }
 
 void jock_os_run(void) {
@@ -157,7 +157,7 @@ void jock_os_run(void) {
     SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
     NVIC_SetPriority(SysTick_IRQn, 0U);
 }
-uint32_t jock_os_enterCriticalSection(void){
+uint32_t jock_os_enter_critical_section(void){
     uint32_t  primask = 0;
     ///<TODO:Need to figure out why __get__PRIMASK crashes PENDSV Handler
     primask = __get_PRIMASK(); 
@@ -165,7 +165,7 @@ uint32_t jock_os_enterCriticalSection(void){
     return primask;
 }
 
-void jock_os_leaveCriticalSection(uint32_t primask){
+void jock_os_leave_critical_section(uint32_t primask){
     if (primask == 0) {
         __enable_irq();
     }
@@ -222,10 +222,10 @@ void initializeStack(TaskControlBlock* tcb) {
  */
 void SysTick_Handler(void) {
     uint32_t primask;
-    primask = jock_os_enterCriticalSection();
+    primask = jock_os_enter_critical_section();
     JOCKTOSScheduler.tick_count++;
-    jock_os_switchRunningTask(&JOCKTOSScheduler.ready);
-    jock_os_leaveCriticalSection(primask);
+    jock_os_switch_running_task(&JOCKTOSScheduler.ready);
+    jock_os_leave_critical_section(primask);
     
 }
 
@@ -305,7 +305,7 @@ void idleJOCKTOS(void* arg) {
     //    * modified between the check in the while condition and the system
     //    * sleep.
     //    */
-        irq_flag = jock_os_enterCriticalSection();
+        irq_flag = jock_os_enter_critical_section();
 
     //   // Check if the busy flag has been set
 
@@ -328,7 +328,7 @@ void idleJOCKTOS(void* arg) {
       }
 
     //     // Enable interrupts again
-        jock_os_leaveCriticalSection(irq_flag);
+        jock_os_leave_critical_section(irq_flag);
 
     // // If the busy flag has been set, exit the loop
       if (irq_flag != 0) {

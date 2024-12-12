@@ -54,7 +54,7 @@ int16_t jock_io_init()
         /* Initialize Inputs as needed*/
         switch (inputList[i].params->mode){
             case jockIoModeInput:
-                    error |= jock_io_initDigitalInput(  inputList[i].port, 
+                    error |= jock_io_init_digital_input(  inputList[i].port, 
                                                         inputList[i].pin, 
                                                         inputList[i].params->res);
                 break;
@@ -67,7 +67,7 @@ int16_t jock_io_init()
                 switch (inputList[i].params->perph)
                 {
                 case jockIoPerphUSART2:
-                    jock_comm_uartInit( outputList[i].port, ///<TODO: Add error checking if possible
+                    jock_comm_uart_init( outputList[i].port, ///<TODO: Add error checking if possible
                                         inputList[i].pin, 
                                         0,
                                         0,
@@ -90,7 +90,7 @@ int16_t jock_io_init()
         /* Enable clock for each port if they're instantiated at least once */
         switch (outputList[i].params->mode){
         case jockIoModeOutput:
-            error |=jock_io_initDigitalOutput(  outputList[i].port, 
+            error |=jock_io_init_digital_output(  outputList[i].port, 
                                                 outputList[i].pin, 
                                                 outputList[i].params->speed, 
                                                 outputList[i].params->type);
@@ -101,7 +101,7 @@ int16_t jock_io_init()
             ///<TODO: insert function for this
             switch (outputList[i].params->perph){
             case jockIoPerphUSART2: 
-                jock_comm_uartInit( outputList[i].port,     ///<TODO: Add error checking if possible
+                jock_comm_uart_init( outputList[i].port,     ///<TODO: Add error checking if possible
                                     outputList[i].pin, 
                                     outputList[i].params->type,
                                     outputList[i].params->speed,
@@ -122,7 +122,7 @@ int16_t jock_io_init()
     return 0;
 }
 
-int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res){
+int16_t jock_io_init_digital_input(GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res){
 
     /* General Error Handling for unexpected inputs*/
     if (pin > PIN_MAX || port == NULL || res > 3)       
@@ -140,7 +140,7 @@ int16_t jock_io_initDigitalInput(GPIO_TypeDef *port, uint8_t pin, jockIoInputRes
     return 0;
 }
 
-int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
+int16_t jock_io_get_digital_input (uint16_t inputId, uint8_t* value){
 
     /* General Error Handling for unexpected inputs*/
     if (inputId > MAX_INPUTS || value == NULL){
@@ -159,7 +159,7 @@ int16_t jock_io_getDigitalInput (uint16_t inputId, uint8_t* value){
     return 0;
 }
 
-int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type){
+int16_t jock_io_init_digital_output(GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type){
     
     /* General Error Handling for unexpected inputs*/
     if (pin > PIN_MAX || port == NULL){
@@ -177,7 +177,7 @@ int16_t jock_io_initDigitalOutput(GPIO_TypeDef *port, uint8_t pin, jockIoOutputS
     return 0;
     }
 
-int16_t  jock_io_setDigitalOutput(uint16_t outputId, uint8_t value){
+int16_t  jock_io_set_digital_output(uint16_t outputId, uint8_t value){
 
     if (outputId > MAX_OUTPUTS || value > 1){
         ///<TODO: Set an error for invalid config. Maybe be specific with failures?
@@ -196,7 +196,7 @@ int16_t  jock_io_setDigitalOutput(uint16_t outputId, uint8_t value){
     return 0;
 }
 
-uint16_t jock_io_getInputIndex(uint16_t inputId){
+uint16_t jock_io_get_input_index(uint16_t inputId){
     for (uint16_t i = 0; i < lengthofInputs; i++)
     {
         if(inputList[i].inputId == inputId){
@@ -206,7 +206,7 @@ uint16_t jock_io_getInputIndex(uint16_t inputId){
     return -1;  // If not found, return -1
 }
 
-uint16_t jock_io_getOutputIndex(uint16_t outputId){
+uint16_t jock_io_get_output_index(uint16_t outputId){
     for (uint16_t i = 0; i < lengthofOutputs; i++)
     {
         if(outputList[i].outputId == outputId){

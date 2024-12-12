@@ -19,5 +19,5 @@
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
-void jock_comm_uartInit(GPIO_TypeDef *port, uint8_t pin, jockIoOutputType type, jockIoOutputSpeed speed, uint8_t altf);
+void jock_comm_uart_init(GPIO_TypeDef *port, uint8_t pin, jockIoOutputType type, jockIoOutputSpeed speed, uint8_t altf);
 #endif /* _COMM_H_ */
