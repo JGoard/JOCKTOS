@@ -1,64 +1,117 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.21)
 
 # definitions
-project(jocktos)
-set(BOARD "-DSTM32F303xE")
-# select linker script
-set(LINKER_SCRIPT "CubeMX/STM32F303RETx_FLASH.ld")
+project(jocktos
+        VERSION 1.0.0
+        DESCRIPTION "This is JOCKTOS"
+)
 
-#define CPU Options
-set(CPU_OPTIONS -mcpu=cortex-m4 -mthumb) # Insert Floating point unit options here whenever it decides to start working
+enable_language(C ASM)
 
-# optimizations and flags
-set(CMAKE_C_FLAGS_DEBUG     "-g -O0" )
-set(CMAKE_C_FLAGS_RELEASE   "-Os")
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED  ON)
+
+set(CMAKE_C_EXTENSIONS OFF)
+
+set(MCU_OPTIONS
+    -mcpu=cortex-m4
+    -mthumb
+)
+
+set (EXTRA_OPTIONS
+    -fdata-sections
+    -ffunction-sections
+)
+
+set (OPTIMIZATION_OPTIONS
+$<$<CONFIG:Debug>:-Og>
+$<$<CONFIG:Release>:-O3>
+)
+
+set(DEPENDENCY_INFO_OPTIONS
+    -MMD
+    -MP
+    -MF "$(@:%.o=%.d)"
+)
+
+set(DEBUG_INFO_OPTIONS
+    -g3
+    -gdwarf-2
+)
 
 add_compile_options(
-    ${CPU_OPTIONS}
-    $<$<COMPILE_LANGUAGE:C>:-std=c99>
-    -fstrict-volatile-bitfields
-    -ffunction-sections
-    -Wall 
-    -Wextra 
-    -Wnull-dereference 
-    -Wno-override-init 
-    -fdata-sections 
-    -ffunction-sections 
-    -fno-exceptions
+    ${MCU_OPTIONS}
+    ${EXTRA_OPTIONS}
+    ${DEBUG_INFO_OPTIONS}
+    ${DEPENDENCY_INFO_OPTIONS}
+    ${OPTIMIZATION_OPTIONS}
 )
 
-include_directories(
-    ${CMAKE_SOURCE_DIR}
-    inc/
-    CubeMx/
+add_link_options(
+    ${MCU_OPTIONS}
+    -specs=nano.specs
+    -T${CMAKE_SOURCE_DIR}/CubeMX/STM32F303RETx_FLASH.ld
+    -Wl,-Map=${PROJECT_NAME}.map,--cref
+    -Wl,--gc-sections
 )
 
-link_directories(
-    ${CMAKE_SOURCE_DIR}
-)
+link_libraries("-lc -lm -lnosys")
+
+# target_include_directories(
+#     ${CMAKE_SOURCE_DIR}
+#     inc/
+#     CubeMx/
+# )
+
+set(EXECUTABLE ${PROJECT_NAME}.elf)
 
 # list of modules to build final firmware
-add_executable(${PROJECT_NAME}
+add_executable(${EXECUTABLE}
     src/main.c
     src/allocator.c
     src/comm.c
     src/io_list.c 
+    src/io.c 
     src/os.c
     src/synchro.c
     src/sys.c
     src/tcb.c
     src/timers.c
     CubeMX/system_stm32f3xx.c
+    CubeMX/startup_stm32f303xe.s
     )
 
-target_link_libraries(${PROJECT_NAME}
-    ${CPU_OPTIONS}
-    -T${LINKER_SCRIPT}
-    -nostartfiles
-    m
-    # -nostdlib
+# target_include_directories(${src}
+# PRIVATE
+#     Inc/
+# )
+target_compile_definitions(${EXECUTABLE}
+PRIVATE 
+    STM32F303xE
+)
+target_compile_options(${EXECUTABLE}
+PRIVATE
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wconversion
+    -Wdouble-promotion
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS ${CMAKE_SOURCE_DIR}/${LINKER_SCRIPT})
+target_include_directories(${EXECUTABLE}
+PRIVATE
+    Inc
+    CubeMX
 
-include("cmake/flash.cmake")
+)
+
+add_custom_command(TARGET ${EXECUTABLE}
+    POST_BUILD
+    COMMAND ${CMAKE_SIZE_UTIL} ${EXECUTABLE}
+)
+
+add_custom_command(TARGET ${EXECUTABLE}
+    POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin
+)
