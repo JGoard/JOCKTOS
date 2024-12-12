@@ -56,12 +56,12 @@
       
     },
     {
-      "label": "Compile Debug",
+      "label": "Configure Debug",
       "type": "shell",
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && make clean && make debug"],
+        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
@@ -76,14 +76,55 @@
         "isDefault": true
       }
     },
-
+    {
+      "label": "Compile Debug",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd ${workspaceFolder}/jocktos/build/debug && make"],
+      "icon": {
+        "id": "tools",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#a8fdbb"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Configure Release",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"],
+      "icon": {
+        "id": "tools",
+        "color": "terminal.ansiGreen"
+      },
+      "options": {
+        "statusbar": {
+          "color" : "#f6fa05"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
     {
       "label": "Compile Release",
       "type": "shell",
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && make clean && make release"],
+        "cd ${workspaceFolder}/jocktos/build/release && make"],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
