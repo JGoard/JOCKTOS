@@ -2,7 +2,7 @@
  * @file allocator.h
  *
  * The allocator divides the memory pool into a series of fixed, equal-size blocks,
- * which is specified by the @c block_size parameter in the @ref initAllocator function. 
+ * which is specified by the @c block_size parameter in the @ref _init_allocator function. 
  * This block size determines the granularity of memory allocation, and all allocations 
  * will be an integer multiple of this block size. An allocation request for a block of 
  * size that is not a multiple of the block size will be rounded up to the next multiple.
@@ -84,7 +84,7 @@ typedef struct {
  * @note
  * The provided `memory` MUST point to a block of free, zero-initialized memory of size `size`.
  */
-void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size);
+void _init_allocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size);
 
 /**
  * @brief Allocates a block of memory from the allocator.
@@ -93,7 +93,7 @@ void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint
  * @param size The size of the memory block to allocate in bytes.
  * @return A pointer to the allocated memory block, or NULL if the space is unavailable.
  */
-void* allocate(Allocator* allocator, uint16_t size);
+void* _allocate(Allocator* allocator, uint16_t size);
 
 /**
  * @brief Deallocates a previously allocated block of memory from the allocator.
@@ -103,6 +103,6 @@ void* allocate(Allocator* allocator, uint16_t size);
  *
  * @return true if the block was successfully deallocated, false otherwise.
  */
-bool deallocate(Allocator* allocator, void* ptr);
+bool de_allocate(Allocator* allocator, void* ptr);
 
 #endif // _ALLOCATOR_H_

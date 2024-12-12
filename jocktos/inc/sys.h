@@ -26,14 +26,14 @@
  *
  * This function must be called before any of the other LED functions.
  */
-void jock_sys_LEDInit(void);
+void jock_sys_led_Init(void);
 
 /**
  * @brief Toggle the LED on the Nucleo board
  *
  * The LED is toggled on and off by calling this function.
  */
-void jock_sys_LEDToggle(void);
+void jock_sys_led_toggle(void);
 
 /**
  * @brief Toggle the error LED based on the error value.
@@ -43,7 +43,7 @@ void jock_sys_LEDToggle(void);
  * @param[in] errorValue
  *            The error value to be indicated by the error LED.
  */
-void jock_sys_ErrorLED(int16_t errorValue);
+void jock_sys_error_led(int16_t errorValue);
 
 
 #endif /* _SYS_H_ */

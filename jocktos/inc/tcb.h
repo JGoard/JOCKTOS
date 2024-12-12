@@ -139,7 +139,7 @@ typedef struct TaskControlBlock {
  * \param head Pointer to the head of the linked list.
  * \param tcb Pointer to the task control block to be inserted.
  */
-void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb);
+void _insert_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb);
 
 /**
  * \brief Remove a task control block from a linked list.
@@ -147,7 +147,7 @@ void insertTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
  * \param head Pointer to the pointer to the head of the linked list.
  * \param tcb Pointer to the task control block to be removed.
  */
-void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb);
+void _remove_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb);
 
 /**
  * \brief Update the priority of a task control block in a linked list.
@@ -156,7 +156,7 @@ void removeTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb)
  * \param tcb Pointer to the task control block to be updated.
  * \param priority The new priority for the task control block.
  */
-void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb, uint8_t priority);
+void _update_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb, uint8_t priority);
 
 /**
  * \brief Move a task control block from one linked list to another.
@@ -166,6 +166,6 @@ void updateTCB(volatile TaskControlBlock** head, volatile TaskControlBlock* tcb,
  * \param tcb Pointer to the task control block to be moved.
  * \param destination Pointer to the pointer to the head of the new linked list.
  */
-void moveTCB(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination);
+void _move_tcb(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination);
 
 #endif // _TCB_H_

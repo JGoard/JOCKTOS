@@ -187,7 +187,7 @@ int16_t jock_io_init();
  *
  * \return 0 if successful, otherwise an error code.
  */
-int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res);
+int16_t jock_io_init_digital_input    (GPIO_TypeDef *port, uint8_t pin, jockIoInputRes res);
 
 /**
  * \brief Gets the current value of a digital input pin.
@@ -200,7 +200,7 @@ int16_t jock_io_initDigitalInput    (GPIO_TypeDef *port, uint8_t pin, jockIoInpu
  *
  * \return 0 if successful, EACCES if the inputId is invalid, or ENOMSG if the pin is not configured as a digital input.
  */
-int16_t jock_io_getDigitalInput     (uint16_t outputId,uint8_t* value);
+int16_t jock_io_get_digital_input     (uint16_t inputIndex, uint8_t* value);
 
 /**
  * \brief Initializes a digital output pin on the specified port.
@@ -216,20 +216,20 @@ int16_t jock_io_getDigitalInput     (uint16_t outputId,uint8_t* value);
  *
  * \return 0 on success, EACCES on error.
  */
-int16_t jock_io_initDigitalOutput   (GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type);
+int16_t jock_io_init_digital_output   (GPIO_TypeDef *port, uint8_t pin, jockIoOutputSpeed speed, jockIoOutputType type);
 
 /**
- * \brief Sets the value of a digital output pin specified by its outputId.
+ * \brief Sets the value of a digital output pin specified by its outputIndex.
  *
  * This function sets the value of a digital output pin to the specified value.
- * It performs error checking to ensure that the outputId is valid and that the pin is configured as a digital output.
+ * It performs error checking to ensure that the outputIndex is valid and that the pin is configured as a digital output.
  *
- * \param outputId The outputId of the digital output pin to set the value for.
+ * \param OutputIndex The outputIndex of the digital output pin to set the value for.
  * \param value The value to set the digital output pin to.
  *
- * \return 0 on success, EACCES if the outputId is invalid, or ENOMSG if the pin is not configured as a digital output.
+ * \return 0 on success, EACCES if the OutputIndex is invalid, or ENOMSG if the pin is not configured as a digital output.
  */
-int16_t jock_io_setDigitalOutput    (uint16_t outputId, uint8_t value);
+int16_t jock_io_set_digital_output    (uint16_t outputIndex, uint8_t value);
 
 /**
  * \brief Gets the index of a digital input in the input list based on its inputId.
@@ -238,7 +238,7 @@ int16_t jock_io_setDigitalOutput    (uint16_t outputId, uint8_t value);
  *
  * \return The index of the digital input in the input list, or -1 if not found.
  */
-uint16_t jock_io_getInputIndex   (uint16_t inputId);
+uint16_t jock_io_get_input_index   (uint16_t inputId);
 
 /**
  * \brief Gets the index of a digital output in the output list based on its outputId.
@@ -247,7 +247,7 @@ uint16_t jock_io_getInputIndex   (uint16_t inputId);
  *
  * \return The index of the digital output in the output list, or -1 if not found.
  */
-uint16_t jock_io_getOutputIndex  (uint16_t outputId);
+uint16_t jock_io_get_output_index  (uint16_t outputId);
 
 
 

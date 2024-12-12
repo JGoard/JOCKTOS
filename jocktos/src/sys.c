@@ -23,7 +23,7 @@
 /* -- Public Functions----------------------------------------------------- */
 
 
-void jock_sys_LEDInit(void){
+void jock_sys_led_Init(void){
     // Enable clock for GPIO Port A and set the 0th pin (PA0) to be general purpose output mode
     RCC->AHBENR         |= RCC_AHBENR_GPIOAEN;  // Enable clock for GPIO Port A
     LED_PORT->MODER     |= GPIO_MODER_MODER5_0; // Set the 5th pin (PA5) to be general purpose output mode
@@ -37,31 +37,31 @@ void jock_sys_LEDInit(void){
     LED_PORT->OTYPER &= ~(1 << LED_PIN);
 }
 
-void jock_sys_LEDToggle(void){
+void jock_sys_led_toggle(void){
     // Toggle the LED pin
     LED_PORT->ODR ^= (1 << LED_PIN);
 }
 
-void jock_sys_ErrorLED(int16_t errorValue){
-    uint32_t currentTime = jock_os_currentTime();
+void jock_sys_error_led(int16_t errorValue){
+    uint32_t currentTime = jock_os_get_time();
 
     uint32_t timeDifference = currentTime - previousTime;
         switch (errorValue){
         case NO_FAILURE:        /* Blinks at 1Hz */
             if (timeDifference > 100) {
-                jock_sys_LEDToggle();
+                jock_sys_led_toggle();
                 previousTime = currentTime;
             }
             break;
         case MILD_FAILURE:      /* Blinks at 5Hz */
             if (timeDifference > 20) {
-                jock_sys_LEDToggle();
+                jock_sys_led_toggle();
                 previousTime = currentTime;
             }
             break;
         case SEVERE_FAILURE:    /* Blinks at 10Hz */
             if (timeDifference > 10) {
-                jock_sys_LEDToggle();
+                jock_sys_led_toggle();
                 previousTime = currentTime;
             }
             break;

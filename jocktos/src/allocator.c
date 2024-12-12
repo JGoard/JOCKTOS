@@ -23,7 +23,7 @@
  * @param bitmap The bitmap to be modified
  * @param index The index of the bit to be enabled
  */
-void setBit(uint16_t* bitmap, uint16_t index);
+void _set_bit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Sets the indexed bit to false.
@@ -31,7 +31,7 @@ void setBit(uint16_t* bitmap, uint16_t index);
  * @param bitmap The bitmap to be modified
  * @param index The index of the bit to be disabled
  */
-void clearBit(uint16_t* bitmap, uint16_t index);
+void _clear_bit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Get the value of the indexed bit.
@@ -39,7 +39,7 @@ void clearBit(uint16_t* bitmap, uint16_t index);
  * @param bitmap The bitmap to be sampled
  * @param index The index of the bit to be sampled
  */
-bool getBit(uint16_t* bitmap, uint16_t index);
+bool _get_bit(uint16_t* bitmap, uint16_t index);
 
 /**
  * @brief Finds a contiguous sequence of free blocks.
@@ -55,7 +55,7 @@ bool getBit(uint16_t* bitmap, uint16_t index);
  * @param size The size of the bitmap
  * @return The index of the first block in the contiguous sequence if found, or UINT16_MAX if not found
  */
-uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t size);
+uint16_t _find_contiguous_free_blocks(uint16_t num_blocks, uint16_t* used, uint16_t size);
 
 /* -- Public Functions----------------------------------------------------- */
 
@@ -67,7 +67,7 @@ uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t 
  *   is calculated based on the number of blocks that can fit in the provided memory.
  * - The other portion of the memory will be used to store the allocated blocks.
  */
-void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size) {
+void _init_allocator(Allocator* allocator, uint16_t block_size, void* memory, uint16_t size) {
     // Calculate the number of blocks that can fit in the provided memory
     uint16_t num_blocks = size / block_size;
     // Calculate the size of the bitmap portion of the memory region
@@ -91,21 +91,21 @@ void initAllocator(Allocator* allocator, uint16_t block_size, void* memory, uint
  * It then returns a pointer to the start of the allocated block.
  * If no contiguous free blocks are available, it returns NULL.
  */
-void* allocate(Allocator* allocator, uint16_t size) {
+void* _allocate(Allocator* allocator, uint16_t size) {
     // Calculate the number of blocks needed to allocate the requested size
     uint16_t num_blocks = (size + allocator->block_size - 1) / allocator->block_size;
     // Find the index of the first contiguous free block in the bitmap
-    uint16_t start_index = findContiguousFreeBlocks(num_blocks, allocator->bitmaps.used, allocator->bitmaps.size);
+    uint16_t start_index = _find_contiguous_free_blocks(num_blocks, allocator->bitmaps.used, allocator->bitmaps.size);
     // If no contiguous free blocks are available, return NULL
     if (start_index == UINT16_MAX) {
         return NULL;
     }
     // Mark the allocated blocks as used in the bitmap
     for (uint16_t i = 0; i < num_blocks; i++) {
-        setBit(allocator->bitmaps.used, start_index + i);
+        _set_bit(allocator->bitmaps.used, start_index + i);
     }
     // Mark the allocated blocks as allocated in the bitmap
-    setBit(allocator->bitmaps.heads, start_index);
+    _set_bit(allocator->bitmaps.heads, start_index);
     // Return a pointer to the head of the allocated block
     return (void*)((uint8_t*)allocator->memory.head + start_index * allocator->block_size);
 }
@@ -117,16 +117,16 @@ void* allocate(Allocator* allocator, uint16_t size) {
  * It then clears the allocated bit for the block and all subsequent blocks in the bitmap.
  * It returns true if the deallocation was successful, false otherwise.
  */
-bool deallocate(Allocator* allocator, void* ptr) {
+bool _deallocate(Allocator* allocator, void* ptr) {
     // Calculate the index of the block in the allocator's memory
     uint16_t index = ((uint8_t*)ptr - (uint8_t*)allocator->memory.head) / allocator->block_size;
     // Check if the block is currently allocated
-    if (!getBit(allocator->bitmaps.heads, index)) return false;
+    if (!_get_bit(allocator->bitmaps.heads, index)) return false;
     // Clear the allocated bit for the block
-    clearBit(allocator->bitmaps.heads, index);
+    _clear_bit(allocator->bitmaps.heads, index);
     // Traverse the bitmap, clearing the used bits for all blocks in the sequence
-    while (getBit(allocator->bitmaps.used, index) && !getBit(allocator->bitmaps.heads, index)) {
-        clearBit(allocator->bitmaps.used, index++);
+    while (_get_bit(allocator->bitmaps.used, index) && !_get_bit(allocator->bitmaps.heads, index)) {
+        _clear_bit(allocator->bitmaps.used, index++);
         // Break if we reach the end of the bitmap
         if (index >= allocator->bitmaps.size) break;
     }
@@ -135,10 +135,10 @@ bool deallocate(Allocator* allocator, void* ptr) {
 
 /* -- Private Functions --------------------------------------------------- */
 
-uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t size) {
+uint16_t _find_contiguous_free_blocks(uint16_t num_blocks, uint16_t* used, uint16_t size) {
     uint16_t count = 0; // Initialize a counter to track consecutive free blocks
     for (uint16_t i = 0; i < size; i++) { // Iterate through each bit in the bitmap
-        if (!getBit(used, i)) { // If the bit is not set (i.e., the block is free)
+        if (!_get_bit(used, i)) { // If the bit is not set (i.e., the block is free)
             count++; // Increment the counter
             if (count == num_blocks) { // If the counter equals the number of blocks needed
                 return i - num_blocks + 1; // Return the starting index of the sequence
@@ -150,14 +150,14 @@ uint16_t findContiguousFreeBlocks(uint16_t num_blocks, uint16_t* used, uint16_t 
     return UINT16_MAX; // Return UINT16_MAX if no suitable sequence is found
 }
 
-void setBit(uint16_t* bitmap, uint16_t index) {
+void _set_bit(uint16_t* bitmap, uint16_t index) {
     bitmap[index / 16] |= (1ULL << (index % 16));
 }
 
-void clearBit(uint16_t* bitmap, uint16_t index) {
+void _clear_bit(uint16_t* bitmap, uint16_t index) {
     bitmap[index / 16] &= ~(1ULL << (index % 16));
 }
 
-bool getBit(uint16_t* bitmap, uint16_t index) {
+bool _get_bit(uint16_t* bitmap, uint16_t index) {
     return (bitmap[index / 16] & (1ULL << (index % 16))) != 0;
 }
