@@ -25,11 +25,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential gcc-arm-none-eabi
 
-    - name: Build JOCKTOS debug
-      run: cd jocktos && make debug
-
+    - name: Build JOCKTOS Debug
+      run: cd jocktos && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake && cd build/release && make
     - name: Build JOCKTOS Release
-      run: cd jocktos && make release
+      run: cd jocktos && cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake && cd build/debug && make
 
    
 
