@@ -103,6 +103,6 @@ void* _allocate(Allocator* allocator, uint16_t size);
  *
  * @return true if the block was successfully deallocated, false otherwise.
  */
-bool de_allocate(Allocator* allocator, void* ptr);
+bool _deallocate(Allocator* allocator, void* ptr);
 
 #endif // _ALLOCATOR_H_
