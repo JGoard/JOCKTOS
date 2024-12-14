@@ -32,7 +32,7 @@
       "servertype": "openocd",
       "serverpath": null,
       "request": "attach",
-      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "executable": "${workspaceFolder}/jocktos/build/debug/jocktos.elf",
       "configFiles": [
         "board/st_nucleo_f3.cfg"
       ],
@@ -42,7 +42,7 @@
     {
       "name": "Launch OpenOCD",
       "cwd": "${workspaceFolder}/jocktos",
-      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "executable": "${workspaceFolder}/jocktos/build/debug/jocktos.elf",
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
