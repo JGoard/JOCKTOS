@@ -1,4 +1,4 @@
-/**
+ /**
 * \brief This header is to act as companion header for timers.c
 */
 #ifndef _TIMERS_H_

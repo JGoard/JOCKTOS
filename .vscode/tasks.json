@@ -6,19 +6,19 @@
       "type": "shell",
       "command": "usbipd",
       "args": [
-        "attach",    
+        "attach",
         "--wsl",
         "--hardware-id",
-        "0483:374b",
+        "0483:374b"
       ],
-      "dependsOn":[
+      "dependsOn": [
         "Bind USB Device"
       ],
       "options": {
         "statusbar": {
-        "id": "gear",
-        "color": "terminal.ansiGreen"
-        }      
+          "id": "gear",
+          "color": "terminal.ansiGreen"
+        }
       }
     },
     {
@@ -26,7 +26,7 @@
       "type": "shell",
       "command": "docker",
       "args": [
-        "run",    
+        "run",
         "-i",
         "--expose=3333",
         "--expose=4444",
@@ -35,10 +35,10 @@
         "jocktos:latest",
         "sh"
       ],
-      "dependsOn":[
+      "dependsOn": [
         "Bind USB Device",
         "Attach USB Device"
-      ], 
+      ],
       "icon": {
         "id": "gear",
         "color": "terminal.ansiGreen"
@@ -46,14 +46,13 @@
       "options": {
         "statusbar": {
           "color": "#09fa05",
-          "hide": true,
+          "hide": true
         }
       },
       "group": {
         "kind": "build",
         "isDefault": true
-      },
-      
+      }
     },
     {
       "label": "Configure Debug",
@@ -61,14 +60,15 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"],
+        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"
+      ],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
       },
       "options": {
         "statusbar": {
-          "color" : "#a8fdbb"
+          "color": "#a8fdbb"
         }
       },
       "group": {
@@ -89,7 +89,7 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#a8fdbb"
+          "color": "#a8fdbb"
         }
       },
       "group": {
@@ -103,14 +103,15 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"],
+        "cd ${workspaceFolder}/jocktos && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake"
+      ],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
       },
       "options": {
         "statusbar": {
-          "color" : "#f6fa05"
+          "color": "#f6fa05"
         }
       },
       "group": {
@@ -124,14 +125,15 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/jocktos/build/release && make"],
+        "cd ${workspaceFolder}/jocktos/build/release && make"
+      ],
       "icon": {
         "id": "tools",
         "color": "terminal.ansiGreen"
       },
       "options": {
         "statusbar": {
-          "color" : "#f6fa05"
+          "color": "#f6fa05"
         }
       },
       "group": {
@@ -144,14 +146,14 @@
       "type": "shell",
       "command": "usbipd",
       "args": [
-        "bind",    
+        "bind",
         "--hardware-id",
-        "0483:374b",
+        "0483:374b"
       ],
       "options": {
         "statusbar": {
-          "hide" : true
-        }     
+          "hide": true
+        }
       }
     },
     {
@@ -159,16 +161,16 @@
       "type": "shell",
       "command": "openocd",
       "args": [
-        "-d",    //Used for Verbose debugging of openocd. Not mandatory
-        "-f", 
+        "-d",
+        "-f",
         "board/st_nucleo_f3.cfg",
-        "-c", 
+        "-c",
         "init",
-        "-c", 
+        "-c",
         "reset init",
-        "-c", 
-        "flash write_image erase jocktos/build/debug/firmware.elf",
-        "-c", 
+        "-c",
+        "flash write_image erase jocktos/build/debug/jocktos.elf",
+        "-c",
         "shutdown"
       ],
       "icon": {
@@ -177,38 +179,10 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#ffa9f8"
+          "color": "#ffa9f8"
         }
-      },
-      
+      }
     },
-    // {
-    //   "label": "Flash Device Local",
-    //   "type": "shell",
-    //   "command": "openocd",
-    //   "args": [
-    //     "-f",
-    //     "board/st_nucleo_f3.cfg",
-    //     "-c",
-    //     "init",
-    //     "-c",
-    //     "reset init",
-    //     "-c",
-    //     "flash write_image erase ./jocktos/build/debug/firmware.elf",
-    //     "-c",
-    //     "shutdown"
-    //   ],
-    //   "icon": {
-    //     "id": "export",
-    //     "color": "terminal.ansiMagenta"
-    //   },
-    //   "options": {
-    //     "statusbar": {
-    //       "color": "#ffa9f8"
-    //     }
-    //   },
-    //   "problemMatcher": []
-    // },
     {
       "label": "Run Unit Tests",
       "type": "shell",
@@ -219,10 +193,10 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#ffffff"
+          "color": "#ffffff"
         }
       }
-    },    
+    },
     {
       "label": "Build Docs",
       "type": "shell",
@@ -245,7 +219,7 @@
       },
       "options": {
         "statusbar": {
-          "color" : "#a2beee"
+          "color": "#a2beee"
         }
       },
       "problemMatcher": []
@@ -260,18 +234,18 @@
       ],
       "options": {
         "statusbar": {
-          "hide" : true
+          "hide": true
         }
       },
       "problemMatcher": {
         "pattern": {
-            "regexp": "^(qemu-system-arm)",
-            "line": 1,
+          "regexp": "^(qemu-system-arm)",
+          "line": 1
         },
         "background": {
-            "activeOnStart": true,
-            "beginsPattern": "^(qemu-system-arm)",
-            "endsPattern": "^(qemu-system-arm)"
+          "activeOnStart": true,
+          "beginsPattern": "^(qemu-system-arm)",
+          "endsPattern": "^(qemu-system-arm)"
         }
       }
     },
@@ -287,20 +261,9 @@
       ],
       "options": {
         "statusbar": {
-          "hide" : true
+          "hide": true
         }
       }
-      // "problemMatcher": {
-      //   "owner": "docker",
-      //   "fileLocation": [
-      //     "relative",
-      //     "${workspaceFolder}"
-      //   ],
-      //   "pattern": {
-      //     "regexp": "^(.*)$",
-      //     "message": 1
-      //   }
-      // }
     },
     {
       "label": "build current unit test",
@@ -308,8 +271,48 @@
       "command": "cd ${workspaceFolder}/jocktos/test; make build/${fileBasenameNoExtension}.test",
       "options": {
         "statusbar": {
-          "hide" : true
+          "hide": true
         }
+      }
+    },
+    {
+      "type": "shell",
+      "label": "QNX: build debug",
+      "command": "q++ -Vgcc_nto${config:qnx.arch} -g -O0 -o ${workspaceFolderBasename}-${config:qnx.arch}-debug *.cpp",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "QNX_HOST": "${env:QNX_HOST}",
+          "QNX_TARGET": "${env:QNX_TARGET}",
+          "MAKEFLAGS": "${env:MAKEFLAGS}",
+          "PATH": "${env:PATH}"
+        }
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "type": "shell",
+      "label": "QNX: clean",
+      "command": "rm -f *-debug",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "QNX_HOST": "${env:QNX_HOST}",
+          "QNX_TARGET": "${env:QNX_TARGET}",
+          "MAKEFLAGS": "${env:MAKEFLAGS}",
+          "PATH": "${env:PATH}"
+        }
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
       }
     }
   ]
