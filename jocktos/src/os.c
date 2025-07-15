@@ -229,6 +229,7 @@ void SysTick_Handler(void) {
     
 }
 
+__attribute__((optimize("O0")))
 void PendSV_Handler(void) {
     uint32_t primask;
     // primask = __get_PRIMASK();
@@ -236,10 +237,10 @@ void PendSV_Handler(void) {
         if (JOCKTOSScheduler.running) {
             // --------------------------------------------------------------------------------------
             // push additional registers onto current process stack and store process stack pointer
-            __asm volatile ("mrs r0, msp"); // TODO: figure out how to use PSP instead
-            // __asm volatile ("mrs r0, psp");
-            __asm volatile ("stmdb r0!, {r4-r11}");
-            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: );
+            __asm volatile ("mrs r0, msp" ::: "memory"); // TODO: figure out how to use PSP instead
+            // __asm volatile ("mrs r0, psp" ::: "memory");
+            __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
+            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
             // --------------------------------------------------------------------------------------
         }
 
@@ -251,11 +252,11 @@ void PendSV_Handler(void) {
         JOCKTOSScheduler.pending = false;
         // ------------------------------------------------------------------------------------------
         // pop additional registers from the new process stack and load new process stack pointer
-        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0");
-        __asm volatile ("ldmia r0!, {r4-r11}");
-        __asm volatile ("msr msp, r0"); // TODO: figure out how to use PSP instead
-        // __asm volatile ("msr psp, r0"); // TODO: figure out how to use PSP instead
-        __asm volatile ("isb");         // Required after modifications to special register MSP (or PSP)
+        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
+        __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
+        __asm volatile ("msr msp, r0" ::: "memory");   // TODO: figure out how to use PSP instead
+        // __asm volatile ("msr psp, r0" ::: "memory"); // TODO: figure out how to use PSP instead
+        __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
         // ------------------------------------------------------------------------------------------
 
     // if(primask == 0) {
