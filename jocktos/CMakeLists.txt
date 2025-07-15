@@ -56,12 +56,6 @@ add_link_options(
 
 link_libraries("-lc -lm -lnosys")
 
-# target_include_directories(
-#     ${CMAKE_SOURCE_DIR}
-#     inc/
-#     CubeMx/
-# )
-
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 
 # list of modules to build final firmware
@@ -80,10 +74,6 @@ add_executable(${EXECUTABLE}
     CubeMX/startup_stm32f303xe.s
     )
 
-# target_include_directories(${src}
-# PRIVATE
-#     Inc/
-# )
 target_compile_definitions(${EXECUTABLE}
 PRIVATE 
     STM32F303xE
@@ -99,7 +89,7 @@ PRIVATE
 
 target_include_directories(${EXECUTABLE}
 PRIVATE
-    Inc
+    inc
     CubeMX
 
 )
