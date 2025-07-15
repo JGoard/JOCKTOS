@@ -24,14 +24,13 @@ set (EXTRA_OPTIONS
 )
 
 set (OPTIMIZATION_OPTIONS
-$<$<CONFIG:Debug>:-Og>
+$<$<CONFIG:Debug>:-O0>
 $<$<CONFIG:Release>:-O3>
 )
 
 set(DEPENDENCY_INFO_OPTIONS
     -MMD
     -MP
-    -MF "$(@:%.o=%.d)"
 )
 
 set(DEBUG_INFO_OPTIONS
