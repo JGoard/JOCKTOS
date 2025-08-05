@@ -83,9 +83,10 @@
 typedef struct {
     volatile bool pending;
     volatile uint32_t tick_count;
-    volatile TaskControlBlock* running;   ///<    Currently running task
-    volatile TaskControlBlock* ready;     ///<    Singly linked list of tasks ready to run, in decending order of priority
-    volatile TaskControlBlock* suspended; ///<    Singly linked list of suspended tasks, in decending order of priority
+    volatile TaskControlBlock* terminated;  ///<    Currently running task
+    volatile TaskControlBlock* running;     ///<    Currently running task
+    volatile TaskControlBlock* ready;       ///<    Singly linked list of tasks ready to run, in decending order of priority
+    volatile TaskControlBlock* suspended;   ///<    Singly linked list of suspended tasks, in decending order of priority
 } Scheduler;
 
 /**

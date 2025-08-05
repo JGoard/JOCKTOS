@@ -18,11 +18,20 @@
 
 /* -- Defines ------------------------------------------------------------- */
 
+#define FILL    0xBABEFACE // for task allocation debugging
+#define CANARY  0xDEADBEEF
+#define CANARY_SIZE     16
 #define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
 /* -- Types --------------------------------------------------------------- */
 
 /* -- Private Function Declarations --------------------------------------- */
+/**
+ * \details Safely catches an unexpected return from a task.
+ * Any task that returns is marked as 'terminated' and moved accordingly.
+ * 
+ */
+void task_exit_guard(void);
 
 /**
  * \brief Updates the task control blocks stack_usage
@@ -182,8 +191,7 @@ void initializeStack(TaskControlBlock* tcb) {
     //  - non-critical registers are initialized to their index
     *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
     *(--stack_ptr) = (uintptr_t)tcb->task_handle;   ///<   Set PC to task function handle
-    *(--stack_ptr) = 0xFFFFFFF9U;                   ///<   Set LR  register for MSP thread mode
-    // *(--stack_ptr) = 0xFFFFFFFDU;                ///<   Set LR  register for PSP thread mode
+    *(--stack_ptr) = (uintptr_t)task_exit_guard;    // LR: Return trap
     *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register deafult to its index
     *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register deafult to its index
     *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register deafult to its index
@@ -201,11 +209,11 @@ void initializeStack(TaskControlBlock* tcb) {
     *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register deafult to its index
     tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
-    while (stack_ptr > tcb->stack_overflow + 8) {
-        *(--stack_ptr) = 0xBABEFACEU;
+    while (stack_ptr > tcb->stack_overflow + CANARY_SIZE) {
+        *(--stack_ptr) = FILL;
     }
     while (stack_ptr > tcb->stack_overflow) {
-        *(--stack_ptr) = 0xDEADBEEFU; ///< set top 8 bytes to something else
+        *(--stack_ptr) = CANARY; ///< set top 8 bytes to something else
     }
 }
 
@@ -224,7 +232,17 @@ void SysTick_Handler(void) {
     uint32_t primask;
     primask = jock_os_enter_critical_section();
     JOCKTOSScheduler.tick_count++;
-    jock_os_switch_running_task(&JOCKTOSScheduler.ready);
+    TaskControlBlock** dest = &JOCKTOSScheduler.ready;
+    TaskControlBlock* tcb = JOCKTOSScheduler.running;
+    uint32_t* ptr = (uint32_t*)tcb->stack_overflow + CANARY_SIZE;
+    for (int i = 0; i < CANARY_SIZE; i++) {
+        if (*(--ptr) != CANARY) {
+            if (tcb == &usr_main_tcb) break; // ignore stack canary for main [TODO]
+            dest = &JOCKTOSScheduler.terminated;
+            break;
+        }
+    }
+    jock_os_switch_running_task(dest);
     jock_os_leave_critical_section(primask);
     
 }
@@ -294,7 +312,7 @@ void monitorJOCKTOS(void* arg) {
 }
 
 
-void idleJOCKTOS(void* arg) {
+void idleJOCKTOS(void* arg __attribute__((unused))) {
   /* Disable interrupts to make sure that the busy flag does not get 
      modified between the check in the while condition and the system
      sleep */
@@ -351,4 +369,10 @@ void idleJOCKTOS(void* arg) {
     // TODO: Figure out how to low power
 }
 
-
+__attribute__((noreturn))
+void task_exit_guard(void) {
+    uint32_t primask = jock_os_enter_critical_section();
+    JOCKTOSScheduler.running->state = TERMINATED;
+    jock_os_switch_running_task(&JOCKTOSScheduler.terminated);
+    jock_os_leave_critical_section(primask);
+}

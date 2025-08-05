@@ -88,7 +88,8 @@ typedef enum {
     RUNNING    = 0,    ///< The task is currently executing on the CPU with priority over others.
     READY      = 1,    ///< The task is ready and waiting for execution by the scheduler.
     BLOCKED    = 2,    ///< The task is waiting for a resource (e.g., semaphore, mutex) to become available.
-    SUSPENDED  = 3     ///< The task is temporarily inactive and can be reactivated by an event.
+    SUSPENDED  = 3,    ///< The task is temporarily inactive and can be reactivated by an event.
+    TERMINATED  = 4    ///< The task has been terminated and is no longer executing.
 } TaskState;
 
 /**
