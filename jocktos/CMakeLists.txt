@@ -21,6 +21,7 @@ set(MCU_OPTIONS
 set (EXTRA_OPTIONS
     -fdata-sections
     -ffunction-sections
+    -fomit-frame-pointer
 )
 
 set (OPTIMIZATION_OPTIONS
