@@ -20,31 +20,16 @@
 
 #define FILL        0xBABEFACE // for task allocation debugging
 #define CANARY      0xDEADBEEF
-#define CANARY_SIZE         16
+#define CANARY_SIZE         64
+#define CANARY_RASR_SIZE     5  // RASR size field: log2(64)=6 -> SIZE field = 6-1 = 5
 #define HANDLER_STACK_SIZE 512
 #define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
 /* -- Types --------------------------------------------------------------- */
 
-uint8_t allocator_stack[ALLOCATOR_SIZE] __attribute__((aligned(8))) = {0};
-uint8_t os_handler_stack[HANDLER_STACK_SIZE] __attribute__((aligned(8))) = {0};
+uint8_t allocator_stack[ALLOCATOR_SIZE]         __attribute__((aligned(8))) = {0};
+uint8_t os_handler_stack[HANDLER_STACK_SIZE]    __attribute__((aligned(8))) = {0};
 /* -- Private Function Declarations --------------------------------------- */
-/**
- * \details Safely catches an unexpected return from a task.
- * Any task that returns is marked as 'terminated' and moved accordingly.
- * 
- */
-void task_exit_guard(void);
-
-/**
- * \brief Updates the task control blocks stack_usage
- * 
- * \param tcb Pointer to task control block to be monitored.
- */
-static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
-    (*tcb)->stack_usage = 100.0 * (1.0 - (sizeof(uintptr_t) * (double)((*tcb)->stack_pointer \
-    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes));
-}
 
 /**
  * @brief Initializes the stack for a task in a real-time operating system (RTOS).
@@ -56,6 +41,8 @@ static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
  * @param tcb Pointer to a TaskControlBlock structure representing the task.
  */
 void initializeStack(TaskControlBlock* tcb);
+
+void mpu_set_stack_guard(const uint32_t stack_base);
 
 /**
 * \brief pre defined OS task for idle.
@@ -76,7 +63,7 @@ void monitorJOCKTOS(void* arg);
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
 static Allocator allocator;
-Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL};
+Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL, NULL};
 extern TCBError JOCKTOS_TCBError;
 
 TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
@@ -136,6 +123,8 @@ void jock_os_switch_running_task(volatile TaskControlBlock** head) {
         // Move to the next task
         suspended = suspended->next;
     }
+    TaskControlBlock* next_task = JOCKTOSScheduler.ready;
+    if (next_task != &usr_main_tcb) mpu_set_stack_guard(next_task->stack_guard);
     // Trigger the PendSV interrupt to cause a context switch
     TRIGGER_PendSV;
 }
@@ -181,6 +170,10 @@ void jock_os_leave_critical_section(uint32_t primask){
 
 void initializeStack(TaskControlBlock* tcb) {
     uintptr_t* stack_ptr = tcb->stack_overflow;
+    const uint32_t guard_base = (uint32_t)stack_ptr;
+    tcb->stack_guard = (guard_base % CANARY_SIZE == 0) ?
+                       (guard_base & ~(CANARY_SIZE - 1u)) : 
+                       (guard_base + CANARY_SIZE - 1u) & ~(CANARY_SIZE - 1u);
     // set intermediate stack pointer to bottom of range
     stack_ptr = (uintptr_t*)(stack_ptr + tcb->stack_size_bytes / sizeof(uintptr_t));
     // define tasks initial exception return stack
@@ -213,69 +206,22 @@ void initializeStack(TaskControlBlock* tcb) {
     }
 }
 
-/**
- * @brief This is the SysTick Interrupt Service Routine (ISR).
- *
- * This function is called by the SysTick timer every millisecond. It increments
- * the tickCount variable in the JOCKTOS scheduler, and then calls the
- * switchRunningTask function to check if any tasks are ready to run. If there
- * are tasks ready to run, this function will switch to the highest priority task
- * and begin executing it.
- *
- * @return None
- */
-void SysTick_Handler(void) {
-    uint32_t primask;
-    primask = jock_os_enter_critical_section();
-    JOCKTOSScheduler.tick_count++;
-    TaskControlBlock** dest = &JOCKTOSScheduler.ready;
-    TaskControlBlock* tcb = JOCKTOSScheduler.running;
-    uint32_t* ptr = (uint32_t*)tcb->stack_overflow + CANARY_SIZE;
-    for (int i = 0; i < CANARY_SIZE; i++) {
-        if (*(--ptr) != CANARY) {
-            if (tcb == &usr_main_tcb) break; // ignore stack canary for main [TODO]
-            dest = &JOCKTOSScheduler.terminated;
-            break;
-        }
-    }
-    jock_os_switch_running_task(dest);
-    jock_os_leave_critical_section(primask);
-    
+// Align down to 32 bytes 
+void mpu_set_stack_guard(const uint32_t stack_base) {
+    MPU->RBAR = stack_base
+              | MPU_RBAR_VALID_Msk
+              | (7u << MPU_RBAR_REGION_Pos);
+    // RASR size field: log2(64)=6 -> SIZE field = 6-1 = 5
+    MPU->RASR = MPU_RASR_ENABLE_Msk
+              | MPU_RASR_XN_Msk
+              | (0u << MPU_RASR_AP_Pos)    // no access
+              | (CANARY_RASR_SIZE << MPU_RASR_SIZE_Pos);
+
+    SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;
+    MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk;
+    __DSB(); __ISB();
 }
 
-__attribute__((optimize("O0")))
-void PendSV_Handler(void) {
-    uint32_t primask;
-    // primask = __get_PRIMASK();
-    __disable_irq();
-        if (JOCKTOSScheduler.running) {
-            // --------------------------------------------------------------------------------------
-            // push additional registers onto current process stack and store process stack pointer
-            __asm volatile ("mrs r0, psp" ::: "memory");
-            __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
-            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
-            // --------------------------------------------------------------------------------------
-        }
-
-        // pop off of ready task list into running
-        JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-        JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
-        JOCKTOSScheduler.running->next = NULL;
-        JOCKTOSScheduler.running->state = RUNNING;
-        JOCKTOSScheduler.pending = false;
-        // ------------------------------------------------------------------------------------------
-        // pop additional registers from the new process stack and load new process stack pointer
-        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
-        __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
-        __asm volatile ("msr psp, r0" ::: "memory");
-        __asm volatile ("mrs r7, msp" ::: "memory"); // because SP gets set to R7(!?!?) in the irq return
-        __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
-        // ------------------------------------------------------------------------------------------
-    
-        // if(primask == 0) {
-        __enable_irq();
-    // }
-    }
 
 void monitorJOCKTOS(void* arg) {
     volatile TaskControlBlock* head = NULL;       // Pointer to the current task

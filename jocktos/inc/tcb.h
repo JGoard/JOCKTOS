@@ -127,6 +127,7 @@ typedef struct TaskControlBlock {
     volatile TaskState state;                   ///< Defines current task state
     uintptr_t*          stack_overflow;         ///< Lowest accessible address for this tasks stack pointer
     volatile uintptr_t* stack_pointer;          ///< Hold's the current task stack pointer
+    uint32_t           stack_guard;             ///< Rounded up to guard size for MPU
     volatile struct TaskControlBlock* next;     ///< Next item for singly linked list
 } TaskControlBlock;
 

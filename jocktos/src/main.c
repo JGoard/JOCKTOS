@@ -87,13 +87,13 @@ int main(void)
         .name="sleep test");
     
     // Sample Stack usage Task
-    TestArgStruct test_val = {.depth=10, .sleep_ms=1000};
+    TestArgStruct test_val = {.depth=100, .sleep_ms=1000};
     TaskControlBlock stack_usage_task = TASKCONTROLBLOCK_DEF(
         .stack_size_bytes=1024,
         .task_handle=stackInflationTest,
         .task_arg=&test_val,
         .name="stack inflation");
-        
+
     jock_os_install_task(&locking_sleep_task);// Create Sleep Task in JOCKTOS
     jock_os_install_task(&stack_usage_task);  // Create Stack Usage Task in JOCKTOS
     jock_os_run();                          // Start JOCKTOS Kernel
@@ -110,23 +110,15 @@ int main(void)
     int y = 0;
     uint8_t value = 1;
     uint8_t DigInvalue = 0;
-    char rxb = 'a';
 
     // Infinite Loop with palce holder calculations for debugging
     while(1) {
-        x++;
+        x--;
         if (x == 0) x = 100;
-        y--;
+        y++;
         if (y == 100) y = 0;
         errorStatus = jock_io_set_digital_output(digB3Index, value);
         errorStatus = jock_io_get_digital_input(digA6Index, &DigInvalue);
-
-    // Wait for a byte of data to arrive.
-    // while( !( USART2->ISR & USART_ISR_RXNE ) ) {};
-    // rxb = USART2->RDR;
-    // // Re-transmit the received byte.
-    // while( !( USART2->ISR & USART_ISR_TXE ) ) {};
-    USART2->TDR = rxb;     
 
     }
 }
@@ -156,17 +148,14 @@ void sleepTest(void* arg) {
 * \param sleep_ms amount of time to sleep
 * \return meaningless, used to avoid compiler optimization and warnings
 */
-int inflateStack(int depth, int sleep_ms) {
-    int local_var = 0;  // This variable will occupy space on the stack
+int inflateStack(int depth, int sleep_ms __attribute__((unused))) {
+    volatile int locals[8]; // consumes 32 bytes per call on 4-byte ints
+    for (int i = 0; i < 8; i++) locals[i] = depth;  // ensure compiler doesn’t optimize
 
     if (depth > 0) {
-        jock_synchro_take_sempahore(&test_mutex);
-        jock_synchro_sleep(sleep_ms);
-        jock_synchro_give_sempahore(&test_mutex);
-        jock_synchro_sleep(sleep_ms);
-        local_var += inflateStack(depth - 1, sleep_ms);  // Recursive call to inflate the stack further
+        return locals[0] + inflateStack(depth - 1, sleep_ms);
     }
-    return local_var;
+    return locals[0];
 }
 
 /**
