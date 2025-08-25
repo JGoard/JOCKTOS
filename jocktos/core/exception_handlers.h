@@ -117,9 +117,9 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void){
 void TIM1_CC_IRQHandler(void)      { 
     while (1) {} 
 }
-// void TIM2_IRQHandler(void)         { 
-//     while (1) {} 
-// }
+
+void TIM2_IRQHandler(void) __attribute__((used));
+
 void TIM3_IRQHandler(void)         { 
     while (1) {} 
 }

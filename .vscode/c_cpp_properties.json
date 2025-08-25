@@ -1,6 +1,13 @@
 {
     "configurations": [
         {
+            "name": "Debug",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86" // TODO: maybe use arm-none-eabi-gcc
+        },
+        {
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**"
