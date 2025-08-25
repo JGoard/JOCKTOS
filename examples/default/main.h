@@ -7,11 +7,8 @@
 // Jocktos
 #include "jocktos.h"
 // Middleware
-// #include "stm32f303xe.h"
-// #include "stm32f3xx_hal.h"
 // Bios
 // Standard C
-#include <stdint.h>
 
 /* -- Defines ------------------------------------------------------------- */
 

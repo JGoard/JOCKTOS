@@ -5,6 +5,7 @@
 #define _COMM_H_
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "io.h"
 // Middleware
 #include "bsp.h"
 // Bios

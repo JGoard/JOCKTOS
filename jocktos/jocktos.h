@@ -7,9 +7,14 @@
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 #include "bsp.h"
-#include "os.h"      ///< createTask(), runJOCKTOS()
-#include "tcb.h"     ///< T_TaskControlBlock, T_TASKCONTROLBLOCK_DEF()
-#include "synchro.h" ///< T_Semaphore, T_SEMAPHORE_DEF()
+#include "comm.h"
+#include "io.h"
+#include "io_list.h"
+#include "timers.h"
+#include "os.h"
+#include "synchro.h"
+#include "sys.h"
+#include "tcb.h"
 // Middleware
 // Bios
 // Standard C
