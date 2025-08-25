@@ -18,13 +18,16 @@
 
 /* -- Defines ------------------------------------------------------------- */
 
-#define FILL    0xBABEFACE // for task allocation debugging
-#define CANARY  0xDEADBEEF
-#define CANARY_SIZE     16
+#define FILL        0xBABEFACE // for task allocation debugging
+#define CANARY      0xDEADBEEF
+#define CANARY_SIZE         16
+#define HANDLER_STACK_SIZE 512
 #define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
 /* -- Types --------------------------------------------------------------- */
 
+uint8_t allocator_stack[ALLOCATOR_SIZE] __attribute__((aligned(8))) = {0};
+uint8_t os_handler_stack[HANDLER_STACK_SIZE] __attribute__((aligned(8))) = {0};
 /* -- Private Function Declarations --------------------------------------- */
 /**
  * \details Safely catches an unexpected return from a task.
@@ -138,10 +141,8 @@ void jock_os_switch_running_task(volatile TaskControlBlock** head) {
 }
 
 void jock_os_configure(JocktosConfig* config) {
-    // Allocate memory for the allocator
-    void* memory = calloc(ALLOCATOR_SIZE, sizeof(uint8_t));
     // Initialize the allocator with the allocated memory and the block size specified in the config
-    _init_allocator(&allocator, config->allocator_block_size, memory, ALLOCATOR_SIZE);
+    _init_allocator(&allocator, config->allocator_block_size, allocator_stack, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
     if (config->enable_monitor) jock_os_install_task(&stack_monitor_tcb);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
@@ -151,16 +152,12 @@ void jock_os_configure(JocktosConfig* config) {
 }
 
 void jock_os_run(void) {
-    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    /** failed attempt to utilize PSP Thread Mode
-    uint32_t initPSP;
-    uint32_t ctrl = 0x2; // set only the SPSEL bit
-    __asm volatile ("mrs %0, msp" : "=r" (initPSP) );
-    __asm volatile ("msr psp, %0" : : "r" (initPSP) : "memory");
-    __asm volatile ("msr control, %0" : : "r" (ctrl) : "memory");
-    __asm volatile ("isb"); // Required after modifications to special register MSP or PSP
-    */
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    uint32_t msp_top = os_handler_stack + sizeof(os_handler_stack) - 1;
+    __set_PSP(__get_MSP());
+    __set_CONTROL(__get_CONTROL() | (CONTROL_SPSEL_Msk));
+    __ISB();
+    __set_MSP(msp_top);
+    __ISB();
     NVIC_SetPriority(PendSV_IRQn, 0xFFU);
     // Configure SysTick to generate an interrupt every 1 ms 
     SysTick_Configuration(127); ///<TODO: where tf does 127 come from...
@@ -192,21 +189,20 @@ void initializeStack(TaskControlBlock* tcb) {
     *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
     *(--stack_ptr) = (uintptr_t)tcb->task_handle;   ///<   Set PC to task function handle
     *(--stack_ptr) = (uintptr_t)task_exit_guard;    // LR: Return trap
-    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register deafult to its index
-    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register deafult to its index
-    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register deafult to its index
-    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register deafult to its index
+    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register default to its index
+    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register default to its index
+    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register default to its index
+    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register default to its index
     *(--stack_ptr) = (uintptr_t)tcb->task_arg;      ///<   Set R0  register to the argument for the tasks function
     init_stack_ptr = stack_ptr - 1;                 ///<   Catch top of initial post-exception stack
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   ISR push / pop "working stack pointer" as R7
-    *(--stack_ptr) = 0x0000000BU;                   ///<   Set R11 register deafult to its index
-    *(--stack_ptr) = 0x0000000AU;                   ///<   Set R10 register deafult to its index
-    *(--stack_ptr) = 0x00000009U;                   ///<   Set R9  register deafult to its index
-    *(--stack_ptr) = 0x00000008U;                   ///<   Set R8  register deafult to its index
-    *(--stack_ptr) = (uintptr_t)init_stack_ptr;     ///<   Set R7 to "working stack pointer"
-    *(--stack_ptr) = 0x00000006U;                   ///<   Set R6  register deafult to its index
-    *(--stack_ptr) = 0x00000005U;                   ///<   Set R5  register deafult to its index
-    *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register deafult to its index
+    *(--stack_ptr) = 0x0000000BU;                   ///<   Set R11 register default to its index
+    *(--stack_ptr) = 0x0000000AU;                   ///<   Set R10 register default to its index
+    *(--stack_ptr) = 0x00000009U;                   ///<   Set R9  register default to its index
+    *(--stack_ptr) = 0x00000008U;                   ///<   Set R8  register default to its index
+    *(--stack_ptr) = 0x00000007U;                   ///<   Set R7  register default to its index
+    *(--stack_ptr) = 0x00000006U;                   ///<   Set R6  register default to its index
+    *(--stack_ptr) = 0x00000005U;                   ///<   Set R5  register default to its index
+    *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register default to its index
     tcb->stack_pointer = stack_ptr;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + CANARY_SIZE) {
@@ -250,37 +246,33 @@ void SysTick_Handler(void) {
 __attribute__((optimize("O0")))
 void PendSV_Handler(void) {
     uint32_t primask;
-    // primask = __get_PRIMASK();
-    __disable_irq();
-        if (JOCKTOSScheduler.running) {
-            // --------------------------------------------------------------------------------------
-            // push additional registers onto current process stack and store process stack pointer
-            __asm volatile ("mrs r0, msp" ::: "memory"); // TODO: figure out how to use PSP instead
-            // __asm volatile ("mrs r0, psp" ::: "memory");
-            __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
-            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
-            // --------------------------------------------------------------------------------------
-        }
-
-        // pop off of ready task list into running
-        JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-        JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
-        JOCKTOSScheduler.running->next = NULL;
-        JOCKTOSScheduler.running->state = RUNNING;
-        JOCKTOSScheduler.pending = false;
-        // ------------------------------------------------------------------------------------------
-        // pop additional registers from the new process stack and load new process stack pointer
-        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
-        __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
-        __asm volatile ("msr msp, r0" ::: "memory");   // TODO: figure out how to use PSP instead
-        // __asm volatile ("msr psp, r0" ::: "memory"); // TODO: figure out how to use PSP instead
-        __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
-        // ------------------------------------------------------------------------------------------
-
-    // if(primask == 0) {
-        __enable_irq();
-    // }
+    primask = jock_os_enter_critical_section();
+    if (JOCKTOSScheduler.running) {
+        // --------------------------------------------------------------------------------------
+        // push additional registers onto current process stack and store process stack pointer
+        __asm volatile ("mrs r0, psp" ::: "memory");
+        __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
+        // --------------------------------------------------------------------------------------
     }
+
+    // pop off of ready task list into running
+    JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
+    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
+    JOCKTOSScheduler.running->next = NULL;
+    JOCKTOSScheduler.running->state = RUNNING;
+    JOCKTOSScheduler.pending = false;
+    // ------------------------------------------------------------------------------------------
+    // pop additional registers from the new process stack and load new process stack pointer
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
+    __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
+    __asm volatile ("msr psp, r0" ::: "memory");
+    __asm volatile ("mrs r7, msp" ::: "memory"); // because SP gets set to R7(!?!?) in the irq return
+    __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
+    // ------------------------------------------------------------------------------------------
+    
+    jock_os_leave_critical_section(primask);
+}
 
 void monitorJOCKTOS(void* arg) {
     volatile TaskControlBlock* head = NULL;       // Pointer to the current task
