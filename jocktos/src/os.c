@@ -246,36 +246,33 @@ void SysTick_Handler(void) {
 __attribute__((optimize("O0")))
 void PendSV_Handler(void) {
     uint32_t primask;
-    // primask = __get_PRIMASK();
-    __disable_irq();
-        if (JOCKTOSScheduler.running) {
-            // --------------------------------------------------------------------------------------
-            // push additional registers onto current process stack and store process stack pointer
-            __asm volatile ("mrs r0, psp" ::: "memory");
-            __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
-            __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
-            // --------------------------------------------------------------------------------------
-        }
-
-        // pop off of ready task list into running
-        JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
-        JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
-        JOCKTOSScheduler.running->next = NULL;
-        JOCKTOSScheduler.running->state = RUNNING;
-        JOCKTOSScheduler.pending = false;
-        // ------------------------------------------------------------------------------------------
-        // pop additional registers from the new process stack and load new process stack pointer
-        __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
-        __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
-        __asm volatile ("msr psp, r0" ::: "memory");
-        __asm volatile ("mrs r7, msp" ::: "memory"); // because SP gets set to R7(!?!?) in the irq return
-        __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
-        // ------------------------------------------------------------------------------------------
-    
-        // if(primask == 0) {
-        __enable_irq();
-    // }
+    primask = jock_os_enter_critical_section();
+    if (JOCKTOSScheduler.running) {
+        // --------------------------------------------------------------------------------------
+        // push additional registers onto current process stack and store process stack pointer
+        __asm volatile ("mrs r0, psp" ::: "memory");
+        __asm volatile ("stmdb r0!, {r4-r11}" ::: "memory");
+        __asm volatile ("mov %0, r0" : "=r" (JOCKTOSScheduler.running->stack_pointer) :: "memory");
+        // --------------------------------------------------------------------------------------
     }
+
+    // pop off of ready task list into running
+    JOCKTOSScheduler.running = JOCKTOSScheduler.ready;
+    JOCKTOSScheduler.ready = JOCKTOSScheduler.ready->next;
+    JOCKTOSScheduler.running->next = NULL;
+    JOCKTOSScheduler.running->state = RUNNING;
+    JOCKTOSScheduler.pending = false;
+    // ------------------------------------------------------------------------------------------
+    // pop additional registers from the new process stack and load new process stack pointer
+    __asm volatile ("mov r0, %0" : : "r" (JOCKTOSScheduler.running->stack_pointer) : "r0", "memory");
+    __asm volatile ("ldmia r0!, {r4-r11}" ::: "memory");
+    __asm volatile ("msr psp, r0" ::: "memory");
+    __asm volatile ("mrs r7, msp" ::: "memory"); // because SP gets set to R7(!?!?) in the irq return
+    __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
+    // ------------------------------------------------------------------------------------------
+    
+    jock_os_leave_critical_section(primask);
+}
 
 void monitorJOCKTOS(void* arg) {
     volatile TaskControlBlock* head = NULL;       // Pointer to the current task
