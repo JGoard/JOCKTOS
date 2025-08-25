@@ -222,7 +222,6 @@ void mpu_set_stack_guard(const uint32_t stack_base) {
     __DSB(); __ISB();
 }
 
-
 void monitorJOCKTOS(void* arg) {
     volatile TaskControlBlock* head = NULL;       // Pointer to the current task
     TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
