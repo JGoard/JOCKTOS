@@ -7,7 +7,6 @@
 #include "io.h"
 #include "io_list.h"
 #include "synchro.h"
-#include "stm32m4cortex_bsp.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
 /**

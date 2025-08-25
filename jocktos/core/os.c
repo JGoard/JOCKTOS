@@ -6,9 +6,9 @@
 #include "os.h"
 #include "tcb.h"
 #include "timers.h"
-#include "allocator.h"
+#include "block_allocator.h"
 // Middleware
-#include "stm32f303xe.h"
+#include "bsp.h"
 #include "core_cm4.h"
 #include "cmsis_gcc.h"
 // Bios
@@ -23,6 +23,7 @@
 #define CANARY_SIZE         64
 #define CANARY_RASR_SIZE     5  // RASR size field: log2(64)=6 -> SIZE field = 6-1 = 5
 #define HANDLER_STACK_SIZE 512
+#define ALLOCATOR_SIZE    4096
 #define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
 /* -- Types --------------------------------------------------------------- */
@@ -62,7 +63,7 @@ void monitorJOCKTOS(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
-static Allocator allocator;
+static BlockAllocator allocator;
 Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL, NULL};
 extern TCBError JOCKTOS_TCBError;
 
@@ -89,7 +90,7 @@ void jock_os_install_task(TaskControlBlock* tcb) {
         JOCKTOS_TCBError.invalid_task_handle++;
         return;
     }
-    tcb->stack_overflow = (uintptr_t*)_allocate(&allocator, tcb->stack_size_bytes);
+    tcb->stack_overflow = (uintptr_t*)blockAllocate(&allocator, tcb->stack_size_bytes);
     if (!tcb->stack_overflow) {
         // TODO: better error handling
         JOCKTOS_TCBError.failed_to_allocate++;
@@ -131,7 +132,7 @@ void jock_os_switch_running_task(volatile TaskControlBlock** head) {
 
 void jock_os_configure(JocktosConfig* config) {
     // Initialize the allocator with the allocated memory and the block size specified in the config
-    _init_allocator(&allocator, config->allocator_block_size, allocator_stack, ALLOCATOR_SIZE);
+    initBlockAllocator(&allocator, config->allocator_block_size, allocator_stack, ALLOCATOR_SIZE);
     // If the monitor is enabled, create a task for the stack usage monitor
     if (config->enable_monitor) jock_os_install_task(&stack_monitor_tcb);
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue

@@ -2,8 +2,8 @@
  * strong definitions for all the interrupt handlers.
  * Helps with debugging.
  * 
- * If there is a conflict just comment out the handler
- * you need to use elsewhere.
+ * If there is a conflict replace the loop with:
+ * __attribute__((used))
  * 
  */
 #pragma once
@@ -14,9 +14,9 @@ void NMI_Handler(void)             {
 void HardFault_Handler(void)       { 
     while (1) {} 
 }
-// void MemManage_Handler(void)       { 
-//     while (1) {} 
-// }
+
+void MemManage_Handler(void) __attribute__((used));
+
 void BusFault_Handler(void)        { 
     while (1) {} 
 }
@@ -29,12 +29,10 @@ void SVC_Handler(void)             {
 void DebugMon_Handler(void)        { 
     while (1) {} 
 }
-// void PendSV_Handler(void)          { 
-//     while (1) {} 
-// }
-// void SysTick_Handler(void)         { 
-//     while (1) {} 
-// }
+void PendSV_Handler(void) __attribute__((used));
+
+void SysTick_Handler(void) __attribute__((used));
+
 void WWDG_IRQHandler(void)         { 
     while (1) {} 
 }

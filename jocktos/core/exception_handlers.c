@@ -2,7 +2,7 @@
 #include "os.h"
 #include "tcb.h"
 
-#include "stm32f303xe.h"
+#include "bsp.h"
 #include "cmsis_gcc.h"
 
 extern Scheduler JOCKTOSScheduler;
