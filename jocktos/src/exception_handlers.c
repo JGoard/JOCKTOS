@@ -28,8 +28,7 @@ void SysTick_Handler(void) {
 __attribute__((optimize("O0")))
 void PendSV_Handler(void) {
     uint32_t primask;
-    // primask = __get_PRIMASK();
-    __disable_irq();
+    primask = jock_os_enter_critical_section();
     if (JOCKTOSScheduler.running) {
         // --------------------------------------------------------------------------------------
         // push additional registers onto current process stack and store process stack pointer
@@ -53,11 +52,8 @@ void PendSV_Handler(void) {
     __asm volatile ("mrs r7, msp" ::: "memory"); // because SP gets set to R7(!?!?) in the irq return
     __asm volatile ("isb" ::: "memory");           // Required after modifications to special register MSP (or PSP)
     // ------------------------------------------------------------------------------------------
-
-    // if(primask == 0) {
-    __enable_irq();
     
-// }
+    jock_os_leave_critical_section(primask);
 }
 
 void MemManage_Handler(void) { 
@@ -79,3 +75,4 @@ void MemManage_Handler(void) {
     __set_PSP(stack_ptr);
     __ISB(); // Ensure the stack pointer is updated before returning
 }
+
