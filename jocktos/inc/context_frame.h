@@ -3,29 +3,29 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t register_t;
+typedef uint32_t memreg_t;
 
 #pragma pack(push, 1)
 typedef struct {
-    register_t r0;
-    register_t r1;
-    register_t r2;
-    register_t r3;
-    register_t r12;
-    register_t lr;
-    register_t pc;
-    register_t xpsr;
+    memreg_t r0;
+    memreg_t r1;
+    memreg_t r2;
+    memreg_t r3;
+    memreg_t r12;
+    memreg_t lr;
+    memreg_t pc;
+    memreg_t xpsr;
 } ExceptionFrame;
 
 typedef struct {
-    register_t r4;
-    register_t r5;
-    register_t r6;
-    register_t r7;
-    register_t r8;
-    register_t r9;
-    register_t r10;
-    register_t r11;
+    memreg_t r4;
+    memreg_t r5;
+    memreg_t r6;
+    memreg_t r7;
+    memreg_t r8;
+    memreg_t r9;
+    memreg_t r10;
+    memreg_t r11;
 } RegisterCache;
 
 typedef struct {
@@ -35,13 +35,13 @@ typedef struct {
 #pragma pack(pop)
 
 #define EXCEPTION_FRAME_INIT(task_fn, arg, ret_reg) {   \
-    .r0  = (register_t)(arg),                           \
+    .r0  = (memreg_t)(arg),                           \
     .r1  = 0x00000001U,                                 \
     .r2  = 0x00000002U,                                 \
     .r3  = 0x00000003U,                                 \
     .r12 = 0x0000000CU,                                 \
-    .lr  = (register_t)(ret_reg),                       \
-    .pc  = (register_t)(task_fn),                       \
+    .lr  = (memreg_t)(ret_reg),                       \
+    .pc  = (memreg_t)(task_fn),                       \
     .xpsr = (1U << 24) /* Thumb state */                \
 }
 

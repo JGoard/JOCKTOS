@@ -187,16 +187,15 @@ void initializeStack(TaskControlBlock* tcb) {
     stack_ptr = (uint8_t*)frame;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + CANARY_SIZE) {
-        stack_ptr -= sizeof(register_t);
-        *(register_t*)stack_ptr = FILL;
+        stack_ptr -= sizeof(memreg_t);
+        *(memreg_t*)stack_ptr = FILL;
     }
     while (stack_ptr > tcb->stack_overflow) {
-        stack_ptr -= sizeof(register_t);
-        *(register_t*)stack_ptr = CANARY;
+        stack_ptr -= sizeof(memreg_t);
+        *(memreg_t*)stack_ptr = CANARY;
     }
 }
 
-// Align down to 32 bytes 
 void mpu_set_stack_guard(const uint32_t stack_base) {
     MPU->RBAR = stack_base
               | MPU_RBAR_VALID_Msk
