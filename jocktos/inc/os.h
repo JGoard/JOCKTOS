@@ -195,8 +195,9 @@ void task_exit_guard(void);
  * \param tcb Pointer to task control block to be monitored.
  */
 static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
-    (*tcb)->stack_usage = 100.0 * (1.0 - (sizeof(uintptr_t) * (double)((*tcb)->stack_pointer \
-    - (*tcb)->stack_overflow)) / (double)((*tcb)->stack_size_bytes));
+    double stack_bytes_free = (double)((uint8_t*)(*tcb)->stack_pointer - (*tcb)->stack_overflow);
+    double free_ratio = stack_bytes_free / (double)(*tcb)->stack_size_bytes;
+    (*tcb)->stack_usage = 100.0 * (1.0 - free_ratio);
 }
 #endif /* _OS_H_ */
 
