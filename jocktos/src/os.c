@@ -7,6 +7,7 @@
 #include "tcb.h"
 #include "timers.h"
 #include "allocator.h"
+#include "context_frame.h"
 // Middleware
 #include "stm32f303xe.h"
 #include "core_cm4.h"
@@ -169,40 +170,29 @@ void jock_os_leave_critical_section(uint32_t primask){
 /* -- Private Functions --------------------------------------------------- */
 
 void initializeStack(TaskControlBlock* tcb) {
-    uintptr_t* stack_ptr = tcb->stack_overflow;
+    uint8_t* stack_ptr = (uint8_t*)tcb->stack_overflow;
     const uint32_t guard_base = (uint32_t)stack_ptr;
     tcb->stack_guard = (guard_base % CANARY_SIZE == 0) ?
                        (guard_base & ~(CANARY_SIZE - 1u)) : 
                        (guard_base + CANARY_SIZE - 1u) & ~(CANARY_SIZE - 1u);
     // set intermediate stack pointer to bottom of range
-    stack_ptr = (uintptr_t*)(stack_ptr + tcb->stack_size_bytes / sizeof(uintptr_t));
-    // define tasks initial exception return stack
-    uintptr_t* init_stack_ptr;
-    //  - non-critical registers are initialized to their index
-    *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
-    *(--stack_ptr) = (uintptr_t)tcb->task_handle;   ///<   Set PC to task function handle
-    *(--stack_ptr) = (uintptr_t)task_exit_guard;    // LR: Return trap
-    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register default to its index
-    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register default to its index
-    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register default to its index
-    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register default to its index
-    *(--stack_ptr) = (uintptr_t)tcb->task_arg;      ///<   Set R0  register to the argument for the tasks function
-    init_stack_ptr = stack_ptr - 1;                 ///<   Catch top of initial post-exception stack
-    *(--stack_ptr) = 0x0000000BU;                   ///<   Set R11 register default to its index
-    *(--stack_ptr) = 0x0000000AU;                   ///<   Set R10 register default to its index
-    *(--stack_ptr) = 0x00000009U;                   ///<   Set R9  register default to its index
-    *(--stack_ptr) = 0x00000008U;                   ///<   Set R8  register default to its index
-    *(--stack_ptr) = 0x00000007U;                   ///<   Set R7  register default to its index
-    *(--stack_ptr) = 0x00000006U;                   ///<   Set R6  register default to its index
-    *(--stack_ptr) = 0x00000005U;                   ///<   Set R5  register default to its index
-    *(--stack_ptr) = 0x00000004U;                   ///<   Set R4  register default to its index
-    tcb->stack_pointer = stack_ptr;
+    stack_ptr += tcb->stack_size_bytes;
+    FullContextFrame* frame = (FullContextFrame*)(stack_ptr - sizeof(FullContextFrame));
+    *frame = (FullContextFrame)FULL_CONTEXT_FRAME_INIT(
+        tcb->task_handle,       // PC / function to fall into
+        tcb->task_arg,          // R0 / argument for function
+        task_exit_guard         // LR / return address
+    );
+    tcb->stack_pointer = frame;
+    stack_ptr = (uint8_t*)frame;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + CANARY_SIZE) {
-        *(--stack_ptr) = FILL;
+        stack_ptr -= sizeof(register_t);
+        *(register_t*)stack_ptr = FILL;
     }
     while (stack_ptr > tcb->stack_overflow) {
-        *(--stack_ptr) = CANARY; ///< set top 8 bytes to something else
+        stack_ptr -= sizeof(register_t);
+        *(register_t*)stack_ptr = CANARY;
     }
 }
 

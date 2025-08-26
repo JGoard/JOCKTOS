@@ -1,4 +1,5 @@
 #include "exception_handlers.h"
+#include "context_frame.h"
 #include "os.h"
 #include "tcb.h"
 
@@ -61,18 +62,14 @@ void MemManage_Handler(void) {
     TaskControlBlock* tcb = JOCKTOSScheduler.running;
     tcb->stack_pointer = __get_PSP();
     monitorStackUsage(&tcb);
-    uintptr_t* stack_ptr = tcb->stack_overflow;
-    // set intermediate stack pointer to bottom of range
-    stack_ptr = (uintptr_t*)(stack_ptr + tcb->stack_size_bytes / sizeof(uintptr_t));
-    *(--stack_ptr) = (1U << 24);                    ///<   Set thumb state bit in EPSR
-    *(--stack_ptr) = (uintptr_t)task_exit_guard;    ///<   Set PC to task function handle
-    *(--stack_ptr) = (uintptr_t)0xFFFFFFFDU;        ///<   Set LR to thread mode 
-    *(--stack_ptr) = 0x0000000CU;                   ///<   Set R12 register default to its index
-    *(--stack_ptr) = 0x00000003U;                   ///<   Set R3  register default to its index
-    *(--stack_ptr) = 0x00000002U;                   ///<   Set R2  register default to its index
-    *(--stack_ptr) = 0x00000001U;                   ///<   Set R1  register default to its index
-    *(--stack_ptr) = 0x00000000U;                   ///<   Set R0  register to the argument for the tasks function
-    __set_PSP(stack_ptr);
+    uint8_t* stack_ptr = (uint8_t*)tcb->stack_overflow + tcb->stack_size_bytes;
+    ExceptionFrame* frame = (ExceptionFrame*)(stack_ptr - sizeof(ExceptionFrame));
+    *frame = (ExceptionFrame)EXCEPTION_FRAME_INIT(
+        task_exit_guard,    // PC / function to fall into
+        0x00000000U,        // R0 / argument to return function
+        0xFFFFFFFDU         // LR / return address
+    );
+    __set_PSP((uint32_t)frame);
     __ISB(); // Ensure the stack pointer is updated before returning
 }
 
