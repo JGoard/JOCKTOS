@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "cmsis_gcc.h"
 
 typedef uint32_t register_t;
 
@@ -61,3 +60,4 @@ typedef struct {
     .registers = REGISTER_CACHE_INIT,                           \
     .exc_frame = EXCEPTION_FRAME_INIT(task_fn, arg, ret_reg)    \
 }
+
