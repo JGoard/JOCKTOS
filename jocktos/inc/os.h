@@ -182,5 +182,22 @@ uint32_t jock_os_enter_critical_section(void); ///<TODO: Maybe we can expose thi
  */
 void jock_os_leave_critical_section(uint32_t primask);
 
+/**
+ * \details Safely catches an unexpected return from a task.
+ * Any task that returns is marked as 'terminated' and moved accordingly.
+ * 
+ */
+void task_exit_guard(void);
+
+/**
+ * \brief Updates the task control blocks stack_usage
+ * 
+ * \param tcb Pointer to task control block to be monitored.
+ */
+static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
+    double stack_bytes_free = (double)((uint8_t*)(*tcb)->stack_pointer - (*tcb)->stack_overflow);
+    double free_ratio = stack_bytes_free / (double)(*tcb)->stack_size_bytes;
+    (*tcb)->stack_usage = 100.0 * (1.0 - free_ratio);
+}
 #endif /* _OS_H_ */
 

@@ -17,10 +17,10 @@
  * 
  * @section methods Task Control Block Methods
  */
-#ifndef _TCB_H_
-#define _TCB_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "context_frame.h"
 // Middleware
 // Bios
 // Standard C
@@ -120,13 +120,15 @@ typedef struct TaskControlBlock {
     volatile double  stack_usage;               ///< Percentage of stack used as of last preemption
     volatile uint8_t priority;                  ///< The priority of the task
     char*            name;                      ///< Name of the task
-    uintptr_t        stack_size_bytes;          ///< Configured task stack size
+    uint16_t         stack_size_bytes;          ///< Configured task stack size
     uint32_t         delay_ms;                  ///< Delay in ms on 
     void             (*task_handle)(void*);     ///< Main function handle for task
     void*            task_arg;                  ///< Argument to be passed into the task function
     volatile TaskState state;                   ///< Defines current task state
-    uintptr_t*          stack_overflow;         ///< Lowest accessible address for this tasks stack pointer
-    volatile uintptr_t* stack_pointer;          ///< Hold's the current task stack pointer
+    uint8_t*          stack_overflow;           ///< Lowest accessible address for this tasks stack pointer
+    volatile FullContextFrame* stack_pointer;   ///< Hold's the current task stack pointer
+    volatile bool fpu_used;                     ///< True if the task uses floating point operations
+    uint32_t           stack_guard;             ///< Rounded up to guard size for MPU
     volatile struct TaskControlBlock* next;     ///< Next item for singly linked list
 } TaskControlBlock;
 
@@ -168,5 +170,3 @@ void _update_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tc
  * \param destination Pointer to the pointer to the head of the new linked list.
  */
 void _move_tcb(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination);
-
-#endif // _TCB_H_

@@ -67,6 +67,7 @@ add_executable(${EXECUTABLE}
     src/io_list.c 
     src/io.c 
     src/os.c
+    src/exception_handlers.c
     src/synchro.c
     src/sys.c
     src/tcb.c
