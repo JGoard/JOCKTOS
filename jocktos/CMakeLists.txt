@@ -41,7 +41,6 @@ add_library(jocktos
 
 )
 
-set(USE_BITMAP_ALLOCATOR ON CACHE BOOL "Use bitmap allocator for buffer allocation")
 target_link_libraries(jocktos PUBLIC 
     bitmap_allocator
     buffers

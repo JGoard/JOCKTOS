@@ -8,6 +8,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 set(EXAMPLE default CACHE STRING "Example folder in examples/")
 set(BOARD STM32F303xE CACHE STRING "Target board folder in boards/")
+set(USE_BITMAP_ALLOCATOR ON CACHE BOOL "Use bitmap allocator for buffer allocation")
 
 set(MCU_OPTIONS
     -mcpu=cortex-m4
