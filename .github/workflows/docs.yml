@@ -13,10 +13,24 @@ on:
     paths:
       - 'docs/**'
       - 'jocktos/**'
+  
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [html, latexpdf]
 
     steps:
     - name: Checkout code
@@ -36,8 +50,26 @@ jobs:
         fonts-freefont-otf \
         xindy
 
-    - name: Build html docs
-      run: cd docs && make html
-    
-    - name: Build PDF docs
-      run: cd docs && make latexpdf
+    - name: Build ${{ matrix.build_type }} docs
+      run: |
+        cd docs
+        make ${{ matrix.build_type }}
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./docs/_build/${{ matrix.build_type }}
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
