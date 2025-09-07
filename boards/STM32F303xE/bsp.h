@@ -3,8 +3,7 @@
 *           It is intended to hold any M4 Cortex specific definitions for any relevant Nucleo board
 *           The macro is intended to be defined at compile time to select a board through defining it in gcc
 */
-#ifndef _STM32M4CORTEX_BSP_H_
-#define _STM32M4CORTEX_BSP_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 // Middleware
@@ -33,7 +32,3 @@
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
-
-
-
-#endif /* _STM32M4CORTEX_BSP_H_ */

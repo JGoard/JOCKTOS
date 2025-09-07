@@ -17,10 +17,10 @@
  * 
  * @section methods Task Control Block Methods
  */
-#ifndef _TCB_H_
-#define _TCB_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "context_frame.h"
 // Middleware
 // Bios
 // Standard C
@@ -59,7 +59,7 @@
 #define TASKCONTROLBLOCK_DEF(...)   \
 {   /* ---- Configured ---*/        \
     .priority = 0,                  \
-    .name     = "\0",               \
+    .name     = 0,                  \
     .delay_ms = 0,                  \
     .stack_size_bytes = 0,          \
     /* ---- Input Data ---*/        \
@@ -73,7 +73,21 @@
      __VA_ARGS__                    \
 }
 
+/**
+ * @brief Must be 8 characters or less, no null terminator
+ */
+#define TASK_NAME(str) *(uint64_t*)(str)
+
 /* -- Types --------------------------------------------------------------- */
+
+/**
+ * @brief A string of up to 8 characters that is used to identify a task.
+ * 
+ */
+typedef union {
+    uint64_t as_int;
+    char as_str[8];
+} TaskName;
 
 /**
  * @brief Enumeration of possible task states.
@@ -117,18 +131,18 @@ typedef struct {
  * See \ref  TASKCONTROLBLOCK_DEF "TASKCONTROLBLOCK_DEF(...)" for information on the default values.
  */
 typedef struct TaskControlBlock {
-    volatile double  stack_usage;               ///< Percentage of stack used as of last preemption
-    volatile uint8_t priority;                  ///< The priority of the task
-    char*            name;                      ///< Name of the task
-    uintptr_t        stack_size_bytes;          ///< Configured task stack size
-    uint32_t         delay_ms;                  ///< Delay in ms on 
-    void             (*task_handle)(void*);     ///< Main function handle for task
-    void*            task_arg;                  ///< Argument to be passed into the task function
-    volatile TaskState state;                   ///< Defines current task state
-    uintptr_t*          stack_overflow;         ///< Lowest accessible address for this tasks stack pointer
-    volatile uintptr_t* stack_pointer;          ///< Hold's the current task stack pointer
-    uint32_t           stack_guard;             ///< Rounded up to guard size for MPU
-    volatile struct TaskControlBlock* next;     ///< Next item for singly linked list
+    volatile double     stack_usage;            ///< Percentage of stack used as of last preemption
+    volatile uint8_t    priority;               ///< The priority of the task
+    TaskName            name;                   ///< Name of the task (limited to 8 characters)
+    uint16_t            stack_size_bytes;       ///< Configured task stack size
+    uint32_t            delay_ms;               ///< Delay in ms on 
+    void                (*task_handle)(void*);  ///< Main function handle for task
+    void*               task_arg;               ///< Argument to be passed into the task function
+    volatile TaskState  state;                  ///< Defines current task state
+    uint8_t*            stack_overflow;         ///< Lowest accessible address for this tasks stack pointer
+    volatile FullContextFrame*          stack_pointer;  ///< Hold's the current task stack pointer
+    uint32_t                            stack_guard;    ///< Rounded up to guard size for MPU
+    volatile struct TaskControlBlock*   next;           ///< Next item for singly linked list
 } TaskControlBlock;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
@@ -169,5 +183,3 @@ void _update_tcb(volatile TaskControlBlock** head, volatile TaskControlBlock* tc
  * \param destination Pointer to the pointer to the head of the new linked list.
  */
 void _move_tcb(volatile TaskControlBlock** source, volatile TaskControlBlock* tcb, volatile TaskControlBlock** destination);
-
-#endif // _TCB_H_

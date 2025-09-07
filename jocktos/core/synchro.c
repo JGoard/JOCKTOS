@@ -24,12 +24,12 @@ extern Scheduler JOCKTOSScheduler;
 void jock_synchro_take_sempahore(Semaphore* lock) {
     uint32_t primask = 0;
     primask = jock_os_enter_critical_section();
-        if (!lock->value_) {
-            JOCKTOSScheduler.running->state = BLOCKED;
-            jock_os_switch_running_task(&lock->pending_queue_);
-        }
+    if (!lock->value_) {
+        JOCKTOSScheduler.running->state = BLOCKED;
+        jock_os_switch_running_task(&lock->pending_queue_);
+    }
     jock_os_leave_critical_section(primask);
-    
+
     primask = jock_os_enter_critical_section();
         lock->value_--;
     jock_os_leave_critical_section(primask);
@@ -52,9 +52,9 @@ void jock_synchro_give_sempahore(Semaphore* lock) {
 void jock_synchro_sleep(uint32_t delay_ms) {
     uint32_t primask = 0;
     primask = jock_os_enter_critical_section();
-        JOCKTOSScheduler.running->delay_ms = jock_os_get_time() + delay_ms;
-        JOCKTOSScheduler.running->state = SUSPENDED;
-        jock_os_switch_running_task(&JOCKTOSScheduler.suspended);
+    JOCKTOSScheduler.running->delay_ms = jock_os_get_time() + delay_ms;
+    JOCKTOSScheduler.running->state = SUSPENDED;
+    jock_os_switch_running_task(&JOCKTOSScheduler.suspended);
     jock_os_leave_critical_section(primask);
 
     return;

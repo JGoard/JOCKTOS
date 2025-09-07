@@ -1,8 +1,7 @@
 /**
 * \brief This module is to act as companion header for main.c
 */
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 #include "jocktos.h"
@@ -19,5 +18,3 @@
 /* -- Function Declarations ----------------------------------------------- */
 
 int main(void);
-
-#endif /* _MAIN_H_ */

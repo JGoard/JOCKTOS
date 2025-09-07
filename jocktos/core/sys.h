@@ -1,8 +1,7 @@
 /**
 * \brief This header is to act as companion header for sys.c
 */
-#ifndef _SYS_H_
-#define _SYS_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 // Middleware
@@ -44,6 +43,3 @@ void jock_sys_led_toggle(void);
  *            The error value to be indicated by the error LED.
  */
 void jock_sys_error_led(int16_t errorValue);
-
-
-#endif /* _SYS_H_ */

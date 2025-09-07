@@ -1,8 +1,7 @@
 /**
 * \brief This header is to act as companion header for synchro.c
 */
-#ifndef _SEMAPHORE_H_
-#define _SEMAPHORE_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 #include "tcb.h"
@@ -70,5 +69,3 @@ void jock_synchro_give_sempahore(Semaphore* lock);
  * @param delay_ms (milliseconds)
  */
 void jock_synchro_sleep(uint32_t delay_ms);
-
-#endif // _SEMAPHORE_H_

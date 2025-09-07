@@ -1,20 +1,22 @@
 /**
 * \brief This header is collect all public JOCKTOS declarations
 */
-#ifndef _JOCKTOS_H_
-#define _JOCKTOS_H_
+#pragma once
 
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 #include "bsp.h"
+/* -- core  --------------*/ 
+#include "os.h"
+#include "sys.h"
+#include "tcb.h"
+#include "synchro.h"
+#include "errors.h"
+/*-- drivers -------------*/
 #include "comm.h"
 #include "io.h"
 #include "io_list.h"
 #include "timers.h"
-#include "os.h"
-#include "synchro.h"
-#include "sys.h"
-#include "tcb.h"
 // Middleware
 // Bios
 // Standard C
@@ -22,4 +24,6 @@
 
 /* -- Types --------------------------------------------------------------- */
 
-#endif /* _JOCKTOS_H_ */
+/* -- Externs (avoid these for library functions) ------------------------- */
+
+/* -- Function Declarations ----------------------------------------------- */
