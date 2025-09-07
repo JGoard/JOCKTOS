@@ -13,6 +13,7 @@
 #include "core_cm4.h"
 #include "cmsis_gcc.h"
 #include "block_allocator.h"
+#include "buffer.h"
 // Bios
 // Standard C
 #include <stdbool.h>
