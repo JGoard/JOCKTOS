@@ -61,10 +61,19 @@ jobs:
     - name: Setup Pages
       uses: actions/configure-pages@v5
 
-    - name: Upload artifact
+    - name: Upload pages
+      if: matrix.build_type == 'html'
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./docs/build/${{ matrix.dir || matrix.build_type }}
+        name: pages-${{ matrix.build_type }}
+
+    - name: Upload artifacts
+      if: matrix.build_type != 'html'
+      uses: actions/upload-artifact@v4
+      with:
+        path: ./docs/build/${{ matrix.dir || matrix.build_type }}
+        name: docs-${{ matrix.build_type }}
 
   deploy:
     environment:
