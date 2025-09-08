@@ -31,6 +31,9 @@ jobs:
     strategy:
       matrix:
         build_type: [html, latexpdf]
+        include:
+          - build_type: latexpdf
+            dir: latex
 
     steps:
     - name: Checkout code
@@ -61,7 +64,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: ./docs/build/${{ matrix.build_type }}
+        path: ./docs/build/${{ matrix.dir || matrix.build_type }}
 
   deploy:
     environment:
