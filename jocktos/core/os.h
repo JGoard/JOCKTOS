@@ -1,13 +1,14 @@
 /**
 * \brief This header is to act as companion header for os.c
 */
-#ifndef _OS_H_
-#define _OS_H_
+#pragma once
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
 #include "tcb.h"
+#include "errors.h"
 // Middleware
 #include "cmsis_gcc.h"
+#include "buffer.h"
 // Bios
 // Standard C
 #include <stdint.h>
@@ -51,6 +52,7 @@
     .enable_main         = false,   \
     .enable_idle         = false,   \
     .allocator_block_size = 256,    \
+    .logger_size         = 256,     \
      __VA_ARGS__                    \
 }
 /* -- Types --------------------------------------------------------------- */
@@ -105,15 +107,17 @@ typedef struct {
  *          amount of memory available on the system.
  */
 typedef struct {
-    bool enable_monitor;         ///< Enable or disable monitoring
-    bool enable_idle;            ///< Enable or disable idle task
-    bool enable_main;            ///< return execution after enabling, with `main` considered a new task
-    size_t allocator_block_size; ///< Size of the allocator block
+    bool enable_monitor;           ///< Enable or disable monitoring
+    bool enable_idle;              ///< Enable or disable idle task
+    bool enable_main;              ///< return execution after enabling, with `main` considered a new task
+    uint16_t allocator_block_size; ///< Size of the allocator block
+    uint16_t logger_size;          ///< Number of log messages to buffer
 } JocktosConfig;
 
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 extern Scheduler JOCKTOSScheduler;
+extern Buffer* JOCKTOS_log_buffer;
 
 /* -- Function Declarations ----------------------------------------------- */
 
@@ -183,11 +187,20 @@ uint32_t jock_os_enter_critical_section(void); ///<TODO: Maybe we can expose thi
 void jock_os_leave_critical_section(uint32_t primask);
 
 /**
+ * \brief Log a message to the OS buffer
+ * 
+ * \param message Pointer to the message to be logged
+ */
+static inline void jock_os_log(JOCKTOSMessage* message) {
+    bufferWrite(JOCKTOS_log_buffer, message);
+}
+
+/**
  * \details Safely catches an unexpected return from a task.
  * Any task that returns is marked as 'terminated' and moved accordingly.
  * 
  */
-void task_exit_guard(void);
+void jock_os_kill_task(void);
 
 /**
  * \brief Updates the task control blocks stack_usage
@@ -199,5 +212,3 @@ static inline void monitorStackUsage(volatile TaskControlBlock** tcb) {
     double free_ratio = stack_bytes_free / (double)(*tcb)->stack_size_bytes;
     (*tcb)->stack_usage = 100.0 * (1.0 - free_ratio);
 }
-#endif /* _OS_H_ */
-

@@ -15,6 +15,11 @@ on:
 jobs:
   build: 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        example: [default]
+        board: [STM32F303xE]
 
     steps:
     - name: Checkout code
@@ -25,11 +30,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential gcc-arm-none-eabi
 
-    - name: Build JOCKTOS Release
-      run: cd jocktos && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake && cd build/release && make
-    - name: Build JOCKTOS Debug
-      run: cd jocktos && cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake && cd build/debug && make
+    - name: Configure Cmake
+      run: |
+        cmake -S . -B build/${{ matrix.build_type }} \
+          -DEXAMPLE=${{ matrix.example }} \
+          -DBOARD=${{ matrix.board }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type}} \
+          -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake
 
-   
+    - name: Build
+      run: cmake --build build/${{ matrix.build_type }} --verbose
 
       

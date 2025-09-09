@@ -3,15 +3,17 @@
 */
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "errors.h"
 #include "os.h"
 #include "tcb.h"
 #include "timers.h"
-#include "allocator.h"
 #include "context_frame.h"
 // Middleware
-#include "stm32f303xe.h"
+#include "bsp.h"
 #include "core_cm4.h"
 #include "cmsis_gcc.h"
+#include "block_allocator.h"
+#include "buffer.h"
 // Bios
 // Standard C
 #include <stdbool.h>
@@ -24,12 +26,11 @@
 #define CANARY_SIZE         64
 #define CANARY_RASR_SIZE     5  // RASR size field: log2(64)=6 -> SIZE field = 6-1 = 5
 #define HANDLER_STACK_SIZE 512
+#define ALLOCATOR_SIZE    8192
 #define TRIGGER_PendSV *(uintptr_t volatile *)0xE000ED04 = (1U << 28)
 
 /* -- Types --------------------------------------------------------------- */
 
-uint8_t allocator_stack[ALLOCATOR_SIZE]         __attribute__((aligned(8))) = {0};
-uint8_t os_handler_stack[HANDLER_STACK_SIZE]    __attribute__((aligned(8))) = {0};
 /* -- Private Function Declarations --------------------------------------- */
 
 /**
@@ -63,47 +64,63 @@ void monitorJOCKTOS(void* arg);
 
 /* -- Local Globals (not for libraries with application instantiation) ---- */
 
-static Allocator allocator;
+uint8_t allocator_stack[ALLOCATOR_SIZE]         __attribute__((aligned(8))) = {0};
+uint8_t os_handler_stack[HANDLER_STACK_SIZE]    __attribute__((aligned(8))) = {0};
+
 Scheduler JOCKTOSScheduler = {false, 0, NULL, NULL, NULL, NULL};
+
+static BlockAllocator allocator;
+Buffer* JOCKTOS_log_buffer;
+
 extern TCBError JOCKTOS_TCBError;
-
-TaskControlBlock usr_main_tcb = TASKCONTROLBLOCK_DEF(
-        .task_handle=NULL,
-        .name="user space `main`");
-
-TaskControlBlock stack_monitor_tcb = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=512, 
-        .task_handle=monitorJOCKTOS,
-        .name="stack usage monitor");
-
-TaskControlBlock idle_tcb = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=512,
-        .task_handle=idleJOCKTOS,
-        .name="default OS idle task");
-
+extern TaskControlBlock usr_main_tcb;
+extern TaskControlBlock stack_monitor_tcb;
+extern TaskControlBlock idle_tcb;
 /* -- Public Functions----------------------------------------------------- */
 
 void jock_os_install_task(TaskControlBlock* tcb) {
     // check if task function handle is valid
     if (!tcb->task_handle) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.invalid_task_handle++;
+        jock_os_log(&(JOCKTOSMessage) {
+            .type = ERROR,
+            .code = FAILED_TO_INSTALL_TASK,
+            .tick_count = jock_os_get_time(),
+            .task_name = tcb->name.as_int
+        });
         return;
     }
-    tcb->stack_overflow = (uintptr_t*)_allocate(&allocator, tcb->stack_size_bytes);
+    tcb->stack_overflow = (uintptr_t*)blockAllocate(&allocator, tcb->stack_size_bytes);
     if (!tcb->stack_overflow) {
-        // TODO: better error handling
-        JOCKTOS_TCBError.failed_to_allocate++;
+        jock_os_log(&(JOCKTOSMessage) {
+            .type = ERROR,
+            .code = ALLOCATION_FAILED,
+            .tick_count = jock_os_get_time(),
+            .task_name = tcb->name.as_int
+        });
         return;
     }
     initializeStack(tcb);
     _insert_tcb(&JOCKTOSScheduler.ready, tcb);
+
+    jock_os_log(&(JOCKTOSMessage) {
+        .type = INFO,
+        .code = TASK_CREATED,
+        .tick_count = jock_os_get_time(),
+        .task_name = tcb->name.as_int
+    });
 }
 
 void jock_os_switch_running_task(volatile TaskControlBlock** head) {
     // If there is a pending context switch, return immediately
-    if (JOCKTOSScheduler.pending)
+    if (JOCKTOSScheduler.pending) {
+        jock_os_log(&(JOCKTOSMessage) {
+            .type = WARNING,
+            .code = CONTEXT_SWITCH_PENDING,
+            .tick_count = jock_os_get_time(),
+            .task_name = JOCKTOSScheduler.running->name.as_int
+        });
         return;
+    }
     // Set the pending flag to indicate that a context switch is pending
     JOCKTOSScheduler.pending = true;
     // If there is a currently running task
@@ -132,13 +149,30 @@ void jock_os_switch_running_task(volatile TaskControlBlock** head) {
 
 void jock_os_configure(JocktosConfig* config) {
     // Initialize the allocator with the allocated memory and the block size specified in the config
-    _init_allocator(&allocator, config->allocator_block_size, allocator_stack, ALLOCATOR_SIZE);
+    initBlockAllocator(&allocator, config->allocator_block_size, allocator_stack, ALLOCATOR_SIZE);
+    JOCKTOS_log_buffer = bufferAllocate(&allocator, config->logger_size, sizeof(JOCKTOSMessage));
+    if (!JOCKTOS_log_buffer) {
+        // TODO: how to handle log buffer allocation failure?
+    }
+    // Always install the idle task
+    idle_tcb.name.as_int = TASK_NAME("_idle_OS_");
+    jock_os_install_task(&idle_tcb);
     // If the monitor is enabled, create a task for the stack usage monitor
-    if (config->enable_monitor) jock_os_install_task(&stack_monitor_tcb);
+    if (config->enable_monitor) {
+        stack_monitor_tcb.name.as_int = TASK_NAME("monitor_");
+        jock_os_install_task(&stack_monitor_tcb);
+    }
     // If the main task is enabled, insert the userMainControlBlock into the JOCKTOSScheduler's running queue
-    if (config->enable_main) _insert_tcb(&JOCKTOSScheduler.running, &usr_main_tcb);
-    // If either the monitor or main task is not enabled, or both are not enabled, create a default OS idle task
-    if (config->enable_idle || (!config->enable_monitor && !config->enable_main)) jock_os_install_task(&idle_tcb);
+    if (config->enable_main) {
+        usr_main_tcb.name.as_int = TASK_NAME("__main__");
+        _insert_tcb(&JOCKTOSScheduler.running, &usr_main_tcb);
+        jock_os_log(&(JOCKTOSMessage) {
+            .type = INFO,
+            .code = TASK_CREATED,
+            .task_name = usr_main_tcb.name.as_int,
+            .tick_count = jock_os_get_time()
+        });
+    }
 }
 
 void jock_os_run(void) {
@@ -161,10 +195,24 @@ uint32_t jock_os_enter_critical_section(void){
     return primask;
 }
 
-void jock_os_leave_critical_section(uint32_t primask){
+void jock_os_leave_critical_section(uint32_t primask) {
     if (primask == 0) {
         __enable_irq();
     }
+}
+
+__attribute__((noreturn))
+void jock_os_kill_task(void) {
+    uint32_t primask = jock_os_enter_critical_section();
+    JOCKTOSScheduler.running->state = TERMINATED;
+    jock_os_log(&(JOCKTOSMessage) {
+        .type = ERROR,
+        .code = TASK_TERMINATED,
+        .task_name = JOCKTOSScheduler.running->name.as_int,
+        .tick_count = jock_os_get_time()
+    });
+    jock_os_switch_running_task(&JOCKTOSScheduler.terminated);
+    jock_os_leave_critical_section(primask);
 }
 
 /* -- Private Functions --------------------------------------------------- */
@@ -181,18 +229,18 @@ void initializeStack(TaskControlBlock* tcb) {
     *frame = (FullContextFrame)FULL_CONTEXT_FRAME_INIT(
         tcb->task_handle,       // PC / function to fall into
         tcb->task_arg,          // R0 / argument for function
-        task_exit_guard         // LR / return address
+        jock_os_kill_task         // LR / return address
     );
     tcb->stack_pointer = frame;
     stack_ptr = (uint8_t*)frame;
     // Fill unused process stack with known value
     while (stack_ptr > tcb->stack_overflow + CANARY_SIZE) {
-        stack_ptr -= sizeof(memreg_t);
-        *(memreg_t*)stack_ptr = FILL;
+        stack_ptr -= sizeof(sysregister_t);
+        *(sysregister_t*)stack_ptr = FILL;
     }
     while (stack_ptr > tcb->stack_overflow) {
-        stack_ptr -= sizeof(memreg_t);
-        *(memreg_t*)stack_ptr = CANARY;
+        stack_ptr -= sizeof(sysregister_t);
+        *(sysregister_t*)stack_ptr = CANARY;
     }
 }
 
@@ -209,99 +257,4 @@ void mpu_set_stack_guard(const uint32_t stack_base) {
     SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;
     MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk;
     __DSB(); __ISB();
-}
-
-void monitorJOCKTOS(void* arg) {
-    volatile TaskControlBlock* head = NULL;       // Pointer to the current task
-    TaskState monitor_scope = RUNNING;            // Keeps track of which list of tasks to monitor next
-    while(true) {                                   // Loop indefinitely
-
-        switch (monitor_scope) {                     // Switch on the current list to monitor
-            case READY: {                          // If the ready list is being monitored
-                head = JOCKTOSScheduler.ready;      // Set the head pointer to the ready list
-                monitor_scope = RUNNING;            // Set the monitor_scope to eRUNNING
-                break;                              // Break out of the switch statement
-            }   
-            case RUNNING: {                        // If the running list is being monitored
-                head = JOCKTOSScheduler.running;    // Set the head pointer to the running list
-                monitor_scope = SUSPENDED;          // Set the monitor_scope to eSUSPENDED
-                break;                              // Break out of the switch statement
-            }
-            default: {
-                head = JOCKTOSScheduler.suspended;
-                monitor_scope = READY;
-                break;
-            }
-        }
-        while(head != NULL) {
-            monitorStackUsage(&head);
-            head = head->next;
-        }
-    }
-}
-
-
-void idleJOCKTOS(void* arg __attribute__((unused))) {
-  /* Disable interrupts to make sure that the busy flag does not get 
-     modified between the check in the while condition and the system
-     sleep */
-    uint32_t irq_flag = UINT32_MAX;
-
-    while (1) {
-    //   /*
-    //    * Disable interrupts to make sure that the busy flag does not get
-    //    * modified between the check in the while condition and the system
-    //    * sleep.
-    //    */
-        irq_flag = jock_os_enter_critical_section();
-
-    //   // Check if the busy flag has been set
-
-      if (irq_flag == 0) {
-    //     /* 
-    //     * __DSB stands for Data Synchronization Barrier. It ensures that all memory
-    //     * accesses before it are completed before any memory accesses after it start.
-    //     * Here, we use __DSB to ensure that all memory accesses before it are
-    //     * completed before any memory accesses after it start.
-    //     */
-        // __DSB();
-
-    //     /*
-    //     *__WFI stands for Wait For Interrupt. It is an ARM instruction that puts the processor
-    //     into a low-power state, where it waits for an interrupt to occur before waking up and
-    //     executing the interrupt handler. This is useful for power saving, as it consumes very
-    //     little power when the processor is in this state.
-    //     */
-        __WFI();
-      }
-
-    //     // Enable interrupts again
-        jock_os_leave_critical_section(irq_flag);
-
-    // // If the busy flag has been set, exit the loop
-      if (irq_flag != 0) {
-        break;
-      }
-
-    // /*
-    //  * __ISB stands for Instruction Synchronization Barrier.
-    //  * It is an ARM instruction that flushes the pipeline in the processor,
-    //  * ensuring that all instructions before it are completed before any
-    //  * instructions after it are started.
-    //  *
-    //  * We use __ISB to flush the pipeline in the processor, so that all
-    //  * instructions before it are completed before any instructions after
-    //  * it are started.
-    //  */
-      __ISB();      ///<TODO: Is this necessary?
-    }
-    // TODO: Figure out how to low power
-}
-
-__attribute__((noreturn))
-void task_exit_guard(void) {
-    uint32_t primask = jock_os_enter_critical_section();
-    JOCKTOSScheduler.running->state = TERMINATED;
-    jock_os_switch_running_task(&JOCKTOSScheduler.terminated);
-    jock_os_leave_critical_section(primask);
 }

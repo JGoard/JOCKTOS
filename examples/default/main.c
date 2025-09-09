@@ -1,13 +1,8 @@
 /**
 * \brief This module contains the main function and basic tasks
 */
+
 #include "main.h"
-#include "sys.h"
-#include "timers.h"
-#include "io.h"
-#include "io_list.h"
-#include "synchro.h"
-#include "stm32m4cortex_bsp.h"
 #include <stdint.h>
 /* -- Defines ------------------------------------------------------------- */
 /**
@@ -73,7 +68,8 @@ int main(void)
         .enable_idle = true,
         .enable_main = true,
         .enable_monitor = true,
-        .allocator_block_size = 256
+        .allocator_block_size = 256,
+        .logger_size = 128
     );
     // Apply configuration to JOCKTOS kernel
     jock_os_configure(&config);
@@ -81,18 +77,18 @@ int main(void)
     // Sample Sleep Task
     uint16_t sleep_ms = 1000;
     TaskControlBlock locking_sleep_task = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=512, 
+        .stack_size_bytes=256, 
         .task_handle=sleepTest,
         .task_arg=&sleep_ms,
-        .name="sleep test");
+        .name=TASK_NAME("_sleep__"));
     
     // Sample Stack usage Task
-    TestArgStruct test_val = {.depth=100, .sleep_ms=1000};
+    TestArgStruct test_val = {.depth=10, .sleep_ms=1000};
     TaskControlBlock stack_usage_task = TASKCONTROLBLOCK_DEF(
-        .stack_size_bytes=1024,
+        .stack_size_bytes=256,
         .task_handle=stackInflationTest,
         .task_arg=&test_val,
-        .name="stack inflation");
+        .name=TASK_NAME("inflate_"));
 
     jock_os_install_task(&locking_sleep_task);// Create Sleep Task in JOCKTOS
     jock_os_install_task(&stack_usage_task);  // Create Stack Usage Task in JOCKTOS

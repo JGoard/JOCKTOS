@@ -1,16 +1,25 @@
- /**
-* \brief This header is to act as companion header for timers.c
+/**
+* \brief This header is collect all public JOCKTOS declarations
 */
-#ifndef _TIMERS_H_
-#define _TIMERS_H_
+#pragma once
+
 /* -- Includes ------------------------------------------------------------ */
 // Jocktos
+#include "bsp.h"
+/* -- core  --------------*/ 
+#include "os.h"
+#include "sys.h"
+#include "tcb.h"
+#include "synchro.h"
+#include "errors.h"
+/*-- drivers -------------*/
+#include "comm.h"
+#include "io.h"
+#include "io_list.h"
+#include "timers.h"
 // Middleware
-#include "stm32m4cortex_bsp.h"
 // Bios
 // Standard C
-#include <stdint.h>
-
 /* -- Defines ------------------------------------------------------------- */
 
 /* -- Types --------------------------------------------------------------- */
@@ -18,8 +27,3 @@
 /* -- Externs (avoid these for library functions) ------------------------- */
 
 /* -- Function Declarations ----------------------------------------------- */
-
-void SysTick_Configuration(int freq);
-void Timer2Init(TIM_TypeDef *TIMx, uint8_t irqPriority, uint16_t milliSeconds);
-
-#endif /* _TIMERS_H_ */

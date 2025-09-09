@@ -1,12 +1,32 @@
-#include "exception_handlers.h"
-#include "context_frame.h"
+/* -- Includes ------------------------------------------------------------ */
+// Jocktos
 #include "os.h"
 #include "tcb.h"
-
-#include "stm32f303xe.h"
+#include "errors.h"
+#include "context_frame.h"
+#include "exception_handlers.h"
+// Middleware
+#include "bsp.h"
 #include "cmsis_gcc.h"
+#include "buffer.h"
+// Bios
+// Standard C
+
+/* -- Defines ------------------------------------------------------------- */
+
+/* -- Types --------------------------------------------------------------- */
+
+/* -- Private Function Declarations --------------------------------------- */
+
+/* -- Local Globals (not for libraries with application instantiation) ---- */
 
 extern Scheduler JOCKTOSScheduler;
+extern Buffer* JOCKTOS_log_buffer;
+
+/* -- Public Functions----------------------------------------------------- */
+
+/* -- Private Functions --------------------------------------------------- */
+
 /**
  * @brief This is the SysTick Interrupt Service Routine (ISR).
  *
@@ -62,14 +82,19 @@ void MemManage_Handler(void) {
     TaskControlBlock* tcb = JOCKTOSScheduler.running;
     tcb->stack_pointer = __get_PSP();
     monitorStackUsage(&tcb);
-    uint8_t* stack_ptr = (uint8_t*)tcb->stack_overflow + tcb->stack_size_bytes;
+    jock_os_log(&(JOCKTOSMessage) {
+        .type = ERROR,
+        .code = STACK_OVERFLOW,
+        .tick_count = jock_os_get_time(),
+        .task_name = tcb->name.as_int
+    });
+    uint8_t* stack_ptr = tcb->stack_overflow + tcb->stack_size_bytes;
     ExceptionFrame* frame = (ExceptionFrame*)(stack_ptr - sizeof(ExceptionFrame));
     *frame = (ExceptionFrame)EXCEPTION_FRAME_INIT(
-        task_exit_guard,    // PC / function to fall into
+        jock_os_kill_task,    // PC / function to fall into
         0x00000000U,        // R0 / argument to return function
         0xFFFFFFFDU         // LR / return address
     );
     __set_PSP((uint32_t)frame);
     __ISB(); // Ensure the stack pointer is updated before returning
 }
-
