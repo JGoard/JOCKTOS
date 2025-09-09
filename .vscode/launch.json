@@ -5,7 +5,7 @@
       "type": "gdb",
       "request": "attach",
       "name": "Attach to gdbserver",
-      "executable": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "executable": "${workspaceFolder}/jocktos/build/firmware.elf",
       "target": "localhost:1234",
       "remote": true,
       "cwd": "${workspaceFolder}/jocktos", 
@@ -17,7 +17,7 @@
       "name": "QEMU debug",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/jocktos/build/debug/firmware.elf",
+      "program": "${workspaceFolder}/jocktos/build/firmware.elf",
       "cwd": "${workspaceFolder}/jocktos",
       "externalConsole": false,
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
@@ -32,7 +32,7 @@
       "servertype": "openocd",
       "serverpath": null,
       "request": "attach",
-      "executable": "${workspaceFolder}/jocktos/build/debug/jocktos.elf",
+      "executable": "${workspaceFolder}/jocktos/build/jocktos.elf",
       "configFiles": [
         "board/st_nucleo_f3.cfg"
       ],
@@ -41,8 +41,8 @@
     },
     {
       "name": "Launch OpenOCD",
-      "cwd": "${workspaceFolder}/jocktos",
-      "executable": "${workspaceFolder}/jocktos/build/debug/jocktos.elf",
+      "cwd": "${workspaceFolder}/examples/default",
+      "executable": "${workspaceFolder}/build/examples/default/default.elf",
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
@@ -50,7 +50,7 @@
       "runToEntryPoint": "main",
       "gdbTarget": "host.docker.internal:50000",
       "showDevDebugOutput": "parsed",
-      "svdFile": "${workspaceFolder}/jocktos/STM32F303.svd",
+      "svdFile": "${workspaceFolder}/boards/STM32F303xE/STM32F303.svd",
       "configFiles": [
         "board/st_nucleo_f3.cfg"
       ],
